@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: deterministic unit tests with fixed seeds",
+    "probabilistic: statistical tests that run multiple seeds/repetitions",
+]
