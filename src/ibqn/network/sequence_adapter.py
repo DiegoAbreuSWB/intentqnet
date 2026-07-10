@@ -24,11 +24,25 @@ class SequenceAdapter:
         self._seed = seed
         config = topology_spec.to_router_net_topo_config(seed=seed)
         self._router_net_topo = RouterNetTopo(config)
+        self._apply_node_physical_params()
         logger.info(
             "topology built: %d routers, %d quantum links, seed=%d",
             len(topology_spec.nodes), len(topology_spec.quantum_links), seed,
         )
         self._initialized = False
+
+    def _apply_node_physical_params(self) -> None:
+        """`raw_fidelity`/`swapping_degradation` are not part of the
+        `RouterNetTopo` config dict schema (see docs/sequence_integration.md)
+        - they must be pushed into the real hardware objects after
+        construction, via the same public hooks the official SeQUeNCe
+        examples use (`MemoryArray.update_memory_params`,
+        `QuantumRouter.swapping_degradation`)."""
+        for node_spec in self._spec.nodes:
+            router = self.get_router(node_spec.id)
+            memory_array = router.get_components_by_type("MemoryArray")[0]
+            memory_array.update_memory_params("raw_fidelity", node_spec.raw_fidelity)
+            router.swapping_degradation = node_spec.swapping_degradation
 
     def get_timeline(self) -> Timeline:
         return self._router_net_topo.get_timeline()

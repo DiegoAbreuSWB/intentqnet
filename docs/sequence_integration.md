@@ -95,10 +95,56 @@ simulação rodar. É exatamente essa lacuna que `planning/feasibility.py`
 
 ## `requested_pairs` não é um teto de entrega
 
-Com memórias reginmisáveis, `NetworkManager.request(..., memory_size=10, ...)`
+Com memórias recicláveis, `NetworkManager.request(..., memory_size=10, ...)`
 não limita quantos pares serão entregues ao longo da janela de reserva — é só
 o tamanho do pool de memórias, que se recicla continuamente. Em um teste de
 fumaça inicial (janela de 0.8s, mesma topologia), uma reserva de 10 memórias
 entregou 4402 pares. O `assurance.evaluator` (Etapa G) deve comparar
 `delivered_pairs` observado contra `requested_pairs` como um piso mínimo, não
 como uma contagem exata esperada.
+
+## Etapa E: o planner precisa forçar a rota escolhida no SeQUeNCe
+
+`RouterNetTopo._generate_forwarding_table` já popula a tabela de
+encaminhamento estática de cada roteador via Dijkstra sobre a **distância**
+dos `qconnections` (ver seção 4.6 da auditoria). Isso significa que, se
+`planning.routing.LeastLossRouting` ou `HighestFidelityRouting` escolherem
+uma rota diferente daquela que o Dijkstra por distância escolheria (por
+exemplo, uma rota mais longa mas com fidelidade/perda melhor), a reserva
+seguiria silenciosamente a rota PADRÃO do SeQUeNCe, não a do plano —
+tornando as estratégias de roteamento decorativas.
+
+`execution/compiler.py::apply_route` resolve isso chamando
+`router.network_manager.routing_protocol.update_forwarding_rule(destino, próximo_salto)`
+em cada nó interior da rota escolhida, sobrescrevendo a entrada
+correspondente antes de `SequenceExecutor.deploy` emitir a reserva.
+Confirmado por teste de integração
+(`test_deploy_forces_a_route_different_from_sequences_own_default_choice`):
+numa topologia em diamante onde a rota "padrão" do SeQUeNCe (menor
+distância) e a rota escolhida por `HighestFidelityRouting` (melhor
+fidelidade) são nós diferentes, a reserva realmente aceita
+(`RSVPProtocol.accepted_reservations[0].path`) reflete a rota do plano, não
+a rota que o Dijkstra por distância teria escolhido.
+
+## Etapa E: estimativa de fidelidade é independente da ordem de swap
+
+`planning.feasibility.estimate_swap_only_fidelity` calcula a fidelidade
+fim-a-fim como `produto(fidelidades por salto) × produto(degradações dos nós
+interiores)` — válido **mesmo sem controlar a ordem de swap** (limitação
+documentada na seção 4.7 da auditoria), porque multiplicação é associativa:
+o resultado analítico não depende de qual par é combinado primeiro na árvore
+de bisseção binária que `generate_load_rules` usa internamente. Confirmado
+por teste (`test_estimate_swap_only_fidelity_is_order_independent_for_more_swaps`,
+`tests/unit/test_feasibility.py`) numa cadeia de 4 nós (2 swaps).
+
+## Etapa E: estimativa de purificação é deliberadamente de uma única rodada
+
+`planning.purification.PurifyUntilTarget` chama
+`BBPSSWCircuit.improved_fidelity` uma única vez. O mecanismo real do
+SeQUeNCe (`Reservation.purification_mode='until_target'`) pode executar
+quantas rodadas forem necessárias dentro da janela de tempo da reserva — o
+planner **subestima conservadoramente** o alcance da purificação (rejeita
+alguns intents que o SeQUeNCe teria conseguido satisfazer com 2+ rodadas),
+em vez de superestimar. Documentado explicitamente em
+`ExecutionPlan.purification_rounds_estimate` e no `reason` de
+`FeasibilityResult` quando essa é a causa da rejeição.

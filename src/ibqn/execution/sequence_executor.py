@@ -1,18 +1,22 @@
 """Centralizes every direct interaction with SeQUeNCe's application/reservation
 API (`RequestApp`, `NetworkManager.request`, `sequence.utils.metrics`), so the
-rest of `ibqn` only ever deals with `EntanglementIntent`/`IntentRepository`
-(see docs/architecture.md).
+rest of `ibqn` only ever deals with `EntanglementIntent`/`ExecutionPlan`/
+`IntentRepository` (see docs/architecture.md).
 
-Scope of this version (Etapa D): there is no planner yet (Etapa E). Route,
-purification, and swap-order decisions are entirely delegated to SeQUeNCe's
-default reservation mechanism (`NetworkManager.request` ->
-`RSVPProtocol`/`ResourceManager.generate_load_rules`, see
-docs/sequence_code_analysis.md section 4.2) - the intent's requirements are
-forwarded almost directly. `submit()` still exercises the full
-PLANNING/PLANNED/DEPLOYING lifecycle transitions so a later planner can slot
-in without changing this class's public shape. Likewise, there is no
-assurance step yet (Etapa G): a submitted intent reaches ACTIVE or FAILED,
-never SATISFIED/VIOLATED/COMPLETED.
+Two entry points:
+- `submit(intent)` (Etapa D): no planning at all - route/purification/swap
+  decisions are entirely delegated to SeQUeNCe's default reservation
+  mechanism (`NetworkManager.request` -> `RSVPProtocol`/
+  `ResourceManager.generate_load_rules`, see docs/sequence_code_analysis.md
+  section 4.2). Kept for callers that don't need `planning.IntentPlanner`.
+- `deploy(intent, plan)` (Etapa E): takes a real `planning.ExecutionPlan`,
+  rejects the intent outright if it was infeasible, otherwise forces the
+  reservation onto `plan.route` (via `execution.compiler.apply_route`)
+  before submitting it - the plan's purification/swapping fields are
+  estimates recorded for later comparison against observed telemetry
+  (`assurance.evaluator`, Etapa G), not additional instructions given to
+  SeQUeNCe: it still decides purification/swap order on its own, exactly as
+  `submit()` does.
 """
 from __future__ import annotations
 
@@ -26,7 +30,9 @@ from sequence.utils.metrics.event_types import EventTypes
 from ..intent.models import EntanglementIntent, IntentStatus
 from ..intent.repository import IntentRepository
 from ..network.sequence_adapter import SequenceAdapter
+from ..planning.models import ExecutionPlan
 from ..utils.logging import get_logger
+from .compiler import apply_route
 
 logger = get_logger(__name__)
 
@@ -115,26 +121,57 @@ class SequenceExecutor:
         self._destination_apps: dict[str, IntentRequestApp] = {}
         metrics.enable(_TELEMETRY_EVENTS)
 
+    def _now_s(self) -> float:
+        return self._adapter.get_timeline().now() / SECOND
+
     def submit(self, intent: EntanglementIntent) -> None:
-        """Registers `intent`, walks it through RECEIVED -> ... -> DEPLOYING,
-        and issues the real `NetworkManager.request(...)` call. The terminal
-        outcome of that request (ACTIVE/FAILED) arrives later, asynchronously,
-        through `IntentRequestApp.get_reservation_result` once the
-        simulation runs.
+        """Registers `intent`, walks it through RECEIVED -> ... -> DEPLOYING
+        with no real planning step, and issues the real
+        `NetworkManager.request(...)` call. The terminal outcome of that
+        request (ACTIVE/FAILED) arrives later, asynchronously, through
+        `IntentRequestApp.get_reservation_result` once the simulation runs.
         """
-        now_s = self._adapter.get_timeline().now() / SECOND
+        now_s = self._now_s()
         self._repository.add(intent, sim_time=now_s)
         self._repository.transition(intent.id, IntentStatus.VALIDATED, "schema validated", sim_time=now_s)
         self._repository.transition(
             intent.id, IntentStatus.PLANNING,
-            "no planner yet: delegating route/purification decisions to SeQUeNCe's default reservation mechanism",
+            "no planner used: delegating route/purification decisions to SeQUeNCe's default reservation mechanism",
             sim_time=now_s,
         )
         self._repository.transition(intent.id, IntentStatus.PLANNED, "trivial pass-through plan", sim_time=now_s)
         self._repository.transition(
             intent.id, IntentStatus.DEPLOYING, "submitting reservation to NetworkManager", sim_time=now_s
         )
+        self._start_reservation(intent)
 
+    def deploy(self, intent: EntanglementIntent, plan: ExecutionPlan) -> None:
+        """Registers `intent` and executes `plan`: rejects it immediately if
+        `plan.feasible` is False, otherwise forces the reservation onto
+        `plan.route` and submits it."""
+        now_s = self._now_s()
+        self._repository.add(intent, sim_time=now_s)
+        self._repository.transition(intent.id, IntentStatus.VALIDATED, "schema validated", sim_time=now_s)
+        self._repository.transition(intent.id, IntentStatus.PLANNING, "invoking IntentPlanner", sim_time=now_s)
+
+        if not plan.feasible:
+            self._repository.transition(
+                intent.id, IntentStatus.REJECTED,
+                plan.infeasibility_reason or "no feasible execution plan", sim_time=now_s,
+            )
+            return
+
+        self._repository.transition(intent.id, IntentStatus.PLANNED, plan.route_rationale, sim_time=now_s)
+        self._repository.transition(
+            intent.id, IntentStatus.DEPLOYING,
+            f"applying route {'->'.join(plan.route)} and submitting reservation to NetworkManager",
+            sim_time=now_s,
+        )
+        if len(plan.route) > 2:
+            apply_route(self._adapter, plan.route)
+        self._start_reservation(intent)
+
+    def _start_reservation(self, intent: EntanglementIntent) -> None:
         source = self._adapter.get_router(intent.endpoints.source)
         destination = self._adapter.get_router(intent.endpoints.destination)
 

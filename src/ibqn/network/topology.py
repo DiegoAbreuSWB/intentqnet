@@ -32,6 +32,17 @@ class NodeSpec(BaseModel):
     id: str = Field(min_length=1)
     type: Literal["quantum_router"] = "quantum_router"
     memories: int = Field(gt=0, description="number of quantum memories in this router's MemoryArray")
+    raw_fidelity: float = Field(
+        default=0.85, gt=0.5, le=1.0,
+        description="dimensionless, initial fidelity of freshly generated elementary pairs "
+                     "(sequence.components.memory.MemoryArray default is 0.85)",
+    )
+    swapping_degradation: float = Field(
+        default=0.95, gt=0.0, le=1.0,
+        description="dimensionless, fidelity degradation factor applied when this node performs an "
+                     "entanglement swap (sequence.entanglement_management.swapping.swapping_circuit "
+                     "default is 0.95); irrelevant for end-of-path nodes that never swap",
+    )
 
 
 class QuantumLinkSpec(BaseModel):

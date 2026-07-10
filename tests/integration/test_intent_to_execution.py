@@ -26,8 +26,12 @@ from ibqn.intent.models import (
     SuccessCondition,
 )
 from ibqn.intent.repository import IntentRepository
+from ibqn.network.capabilities import NetworkCapabilities
 from ibqn.network.sequence_adapter import SequenceAdapter
 from ibqn.network.topology import NetworkTopologySpec, NodeSpec, QuantumLinkSpec
+from ibqn.planning.models import ExecutionPlan
+from ibqn.planning.planner import IntentPlanner
+from ibqn.planning.routing import HighestFidelityRouting
 
 SINGLE_SWAP_FIDELITY = 0.85 * 0.85 * 0.95  # raw_fidelity**2 * default swapping_degradation
 
@@ -152,3 +156,116 @@ def test_collect_trial_metrics_reports_eg_and_es_activity():
     trial_r2 = metrics.collect_trial_metrics("r2")
     assert trial_r2["es_success"] > 0
     assert trial_r2["es_failures"] == 0  # swapping_success_prob defaults to 1
+
+
+# --- planner-driven deploy() ------------------------------------------------
+
+def build_topology_spec(seed=0):
+    return NetworkTopologySpec(
+        nodes=[
+            NodeSpec(id="r1", memories=10),
+            NodeSpec(id="r2", memories=20),
+            NodeSpec(id="r3", memories=10),
+        ],
+        quantum_links=[
+            QuantumLinkSpec(source="r1", destination="r2", distance_m=1000, attenuation_db_per_m=1e-5),
+            QuantumLinkSpec(source="r2", destination="r3", distance_m=1000, attenuation_db_per_m=1e-5),
+        ],
+        classical_delay_s=1e-4,
+        stop_time_s=0.1,
+    )
+
+
+@pytest.mark.unit
+def test_deploy_with_planner_reaches_active_and_delivers_pairs():
+    spec = build_topology_spec()
+    adapter = SequenceAdapter(spec, seed=0)
+    repository = IntentRepository()
+    executor = SequenceExecutor(adapter, repository)
+    planner = IntentPlanner(NetworkCapabilities(spec))
+
+    intent = build_intent(min_fidelity=0.65, requested_pairs=10)
+    plan = planner.plan(intent)
+    assert plan.feasible is True
+
+    executor.deploy(intent, plan)
+    executor.run()
+
+    record = repository.get("intent-001")
+    assert record.lifecycle.status == IntentStatus.ACTIVE
+    assert [t.to_status for t in record.lifecycle.history] == [
+        IntentStatus.RECEIVED, IntentStatus.VALIDATED, IntentStatus.PLANNING,
+        IntentStatus.PLANNED, IntentStatus.DEPLOYING, IntentStatus.ACTIVE,
+    ]
+    app = executor.get_app("intent-001")
+    assert app.memory_counter >= intent.requirements.requested_pairs
+
+
+@pytest.mark.unit
+def test_deploy_infeasible_plan_rejects_without_touching_sequence():
+    spec = build_topology_spec()
+    adapter = SequenceAdapter(spec, seed=0)
+    repository = IntentRepository()
+    executor = SequenceExecutor(adapter, repository)
+
+    intent = build_intent(min_fidelity=0.999, requested_pairs=10)  # unreachable even with purification
+    plan = IntentPlanner(NetworkCapabilities(spec)).plan(intent)
+    assert plan.feasible is False
+
+    executor.deploy(intent, plan)
+
+    record = repository.get("intent-001")
+    assert record.lifecycle.status == IntentStatus.REJECTED
+    assert record.result.satisfied is False
+    with pytest.raises(KeyError):
+        executor.get_app("intent-001")  # no reservation was ever submitted to SeQUeNCe
+
+    executor.run()  # must not raise even though nothing was ever deployed
+    assert repository.get("intent-001").lifecycle.status == IntentStatus.REJECTED  # unchanged
+
+
+@pytest.mark.unit
+def test_deploy_forces_a_route_different_from_sequences_own_default_choice():
+    """Builds a diamond topology where SeQUeNCe's own auto-generated static
+    routing table (shortest *distance*, see
+    docs/sequence_code_analysis.md section 4.6) picks the "bad" node, but
+    `HighestFidelityRouting` picks "good" (shorter distance is outweighed by
+    much better raw_fidelity/degradation). Confirms `execution.compiler.apply_route`
+    actually redirects a real reservation, not just the planner's estimate."""
+    spec = NetworkTopologySpec(
+        nodes=[
+            NodeSpec(id="r1", memories=10),
+            NodeSpec(id="r3", memories=10),
+            NodeSpec(id="good", memories=10, raw_fidelity=0.99, swapping_degradation=0.99),
+            NodeSpec(id="bad", memories=10, raw_fidelity=0.70, swapping_degradation=0.70),
+        ],
+        quantum_links=[
+            # "bad" is physically shorter, so SeQUeNCe's default Dijkstra-by-distance table picks it
+            QuantumLinkSpec(source="r1", destination="bad", distance_m=500, attenuation_db_per_m=1e-5),
+            QuantumLinkSpec(source="bad", destination="r3", distance_m=500, attenuation_db_per_m=1e-5),
+            QuantumLinkSpec(source="r1", destination="good", distance_m=2000, attenuation_db_per_m=1e-5),
+            QuantumLinkSpec(source="good", destination="r3", distance_m=2000, attenuation_db_per_m=1e-5),
+        ],
+        classical_delay_s=1e-4,
+        stop_time_s=0.1,
+    )
+    adapter = SequenceAdapter(spec, seed=0)
+
+    default_next_hop = adapter.get_router("r1").network_manager.get_forwarding_table()["r3"]
+    assert default_next_hop == "bad"  # confirms the premise: SeQUeNCe's own choice differs from ours
+
+    repository = IntentRepository()
+    executor = SequenceExecutor(adapter, repository)
+    planner = IntentPlanner(NetworkCapabilities(spec), routing_strategy=HighestFidelityRouting())
+
+    intent = build_intent(min_fidelity=0.5, requested_pairs=5)
+    plan = planner.plan(intent)
+    assert plan.route == ["r1", "good", "r3"]
+
+    executor.deploy(intent, plan)
+    executor.run()
+
+    assert adapter.get_router("r1").network_manager.get_forwarding_table()["r3"] == "good"
+    reservation_protocol = adapter.get_router("r1").network_manager.protocol_stack[1]
+    assert reservation_protocol.accepted_reservations[0].path == ["r1", "good", "r3"]
+    assert repository.get("intent-001").lifecycle.status == IntentStatus.ACTIVE
