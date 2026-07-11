@@ -1,0 +1,20 @@
+campaign:
+  name: C04_reconciliation_effectiveness
+  description: >
+    Compares reconciliation_enabled=false vs. true on the diamond topology,
+    using the default routing_strategy (shortest_hop_count, which reliably
+    picks the fast-but-lossy "bad" route and ends VIOLATED - notebooks 15/19
+    of Fase H2). With reconciliation_enabled=true, execute_trial retries with
+    LeastLossRouting (the documented fallback heuristic in runner.
+    _reconciliation_routing_strategy_name). Same seeds on both sides of the
+    sweep, so aggregation.align_paired_trials can pair every trial by seed.
+  scenario_file: scenarios/diamond.yaml
+  intents:
+    - intents/diamond_intent.yaml
+  seeds: [0, 1000, 2000]
+  parameter_grid:
+    reconciliation_enabled: [false, true]
+  output_directory: results
+  execution:
+    continue_on_error: true
+    resume: true

@@ -1,0 +1,51 @@
+{
+  "campaign": "C04_reconciliation_effectiveness",
+  "description": "Compares reconciliation_enabled=false vs. true on the diamond topology, using the default routing_strategy (shortest_hop_count, which reliably picks the fast-but-lossy \"bad\" route and ends VIOLATED - notebooks 15/19 of Fase H2). With reconciliation_enabled=true, execute_trial retries with LeastLossRouting (the documented fallback heuristic in runner. _reconciliation_routing_strategy_name). Same seeds on both sides of the sweep, so aggregation.align_paired_trials can pair every trial by seed.\n",
+  "created_at": "2026-07-11T23:02:53.655910+00:00",
+  "updated_at": "2026-07-11T23:03:18.443185+00:00",
+  "project_git_commit": "2931c00757576ebb356bfc8c37dbc5165d5301a3",
+  "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
+  "python_version": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "dependencies": {
+    "pydantic": "2.13.4",
+    "yaml": "6.0.3",
+    "networkx": "3.6.1",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "matplotlib": "3.11.0",
+    "pandas": "3.0.3",
+    "qutip": "5.3.0",
+    "stim": "1.16.0",
+    "gmpy2": "2.3.1",
+    "nbformat": "5.10.4",
+    "nbclient": "0.11.0"
+  },
+  "campaign_file": "configs\\campaigns\\C04_reconciliation_effectiveness.yaml",
+  "scenario_files": [
+    "scenarios/diamond.yaml"
+  ],
+  "intent_files": [
+    "intents/diamond_intent.yaml"
+  ],
+  "parameter_grid": {
+    "reconciliation_enabled": [
+      false,
+      true
+    ]
+  },
+  "strategies": {},
+  "seeds": [
+    0,
+    1000,
+    2000
+  ],
+  "expected_trials": 6,
+  "completed_trials": 6,
+  "skipped_trials": 0,
+  "failed_trials": 0,
+  "output_files": [
+    "results\\raw\\C04_reconciliation_effectiveness\\trials.csv",
+    "results\\raw\\C04_reconciliation_effectiveness\\errors.jsonl"
+  ]
+}

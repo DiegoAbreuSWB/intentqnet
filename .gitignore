@@ -9,6 +9,21 @@ __pycache__/
 .coverage
 htmlcov/
 .ipynb_checkpoints/
-results/raw/
-results/processed/
+# Campaign results (Fase H3): ignored by default - future, larger
+# campaigns should not be committed wholesale. The small C01-C04
+# validation campaigns are explicitly un-ignored below: they double as
+# fixtures the notebooks/article/*.ipynb notebooks read (never
+# re-running a campaign themselves - see docs/campaign_architecture.md).
+results/raw/*
+!results/raw/C01_routing_strategy/
+!results/raw/C02_fidelity_throughput/
+!results/raw/C03_assurance_outcomes/
+!results/raw/C04_reconciliation_effectiveness/
+
+results/processed/*
+!results/processed/C01_routing_strategy/
+!results/processed/C02_fidelity_throughput/
+!results/processed/C03_assurance_outcomes/
+!results/processed/C04_reconciliation_effectiveness/
+
 .DS_Store

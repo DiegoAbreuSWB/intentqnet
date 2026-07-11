@@ -1,0 +1,23 @@
+campaign:
+  name: C02_fidelity_throughput
+  description: >
+    Fidelity/throughput trade-off on the three-node chain (a-r-b), comparing
+    NeverPurify ("disabled") vs. PurifyUntilTarget ("automatic") across five
+    min_fidelity thresholds that straddle the real, observed ceilings of this
+    topology: swap-only ~0.6864, one-round-purified ~0.7203 (see notebook 17 of
+    Fase H2). Expects: 0.65 feasible under both policies; 0.70/0.72 feasible
+    only with purification; 0.75/0.85 REJECTED under both (above even the
+    purified ceiling) - this sweep is designed to capture that ceiling, not to
+    avoid it.
+  scenario_file: scenarios/three_node.yaml
+  intents:
+    - intents/three_node_intent.yaml
+  seeds: [0, 1000]
+  strategies:
+    purification: [disabled, automatic]
+  parameter_grid:
+    min_fidelity: [0.65, 0.70, 0.72, 0.75, 0.85]
+  output_directory: results
+  execution:
+    continue_on_error: true
+    resume: true

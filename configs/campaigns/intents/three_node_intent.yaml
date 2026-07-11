@@ -1,0 +1,25 @@
+intent:
+  id: intent-three-node
+  service: entanglement_distribution
+  endpoints:
+    source: a
+    destination: b
+  requirements:
+    min_fidelity: 0.65
+    min_throughput: 1
+    max_latency: 1.0
+    requested_pairs: 10
+    start_time: 0.02
+    duration: 0.05
+  policy:
+    priority: normal
+    allow_rerouting: true
+    allow_purification: true
+    allow_multiple_paths: false
+  validation:
+    metrics:
+      - delivered_pairs
+      - average_fidelity
+    success_conditions:
+      delivered_pairs: ">= 10"
+      average_fidelity: ">= 0.65"

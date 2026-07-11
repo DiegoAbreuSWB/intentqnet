@@ -113,12 +113,23 @@ def aggregate_records(
 def align_paired_trials(
     df: pd.DataFrame, *, pair_on: list[str], compare: str, metrics: list[str] | None = None,
 ) -> pd.DataFrame:
-    """Aligns trials sharing `pair_on` (typically scenario/parameter_hash/
-    seed/intent_id) but differing in the two-valued column `compare`
-    (typically `strategy` or `reconciliation_enabled`), computing a `_diff`
-    column (`b - a`, alphabetically) per metric. Missing pairs are kept as
-    rows with `paired=False` and `NaN` on the missing side - never dropped
-    silently (see the project brief's Fase H3, section 17)."""
+    """Aligns trials sharing `pair_on` but differing in the two-valued
+    column `compare` (typically `routing_strategy`, `purification_policy`,
+    or `reconciliation_enabled`), computing a `_diff` column (`b - a`,
+    alphabetically) per metric. Missing pairs are kept as rows with
+    `paired=False` and `NaN` on the missing side - never dropped silently
+    (see the project brief's Fase H3, section 17).
+
+    `pair_on` should be `scenario`/`seed`/`intent_id`, plus the *named*
+    column of any other swept parameter that isn't `compare` itself (e.g.
+    `requested_fidelity` if `min_fidelity` was also swept). **Do not**
+    include `parameter_hash`: it is a single hash of the *entire* swept
+    combination, so it necessarily differs whenever `compare` is itself a
+    swept grid parameter (routing_strategy/purification_policy/
+    reconciliation_enabled all are, via `CampaignSpec.
+    effective_parameter_grid`) - using it in `pair_on` would make every row
+    fail to pair (found empirically running campaign C04, see
+    docs/campaign_architecture.md)."""
     if metrics is None:
         metrics = [m for m in NUMERIC_METRICS if m in df.columns]
 

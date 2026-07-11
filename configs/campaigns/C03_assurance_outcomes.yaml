@@ -1,0 +1,26 @@
+campaign:
+  name: C03_assurance_outcomes
+  description: >
+    Produces SATISFIED, VIOLATED, and REJECTED naturally (never forced) on the
+    three-node chain, by crossing attenuation_db_per_m (low: negligible photon
+    loss; high: the same 0.025 dB/m calibration that produces a genuine
+    throughput-driven VIOLATED in notebook 14 of Fase H2) with min_fidelity
+    (0.6: within the swap-only ceiling ~0.6864; 0.95: above even the
+    one-round-purified ceiling ~0.7203, so the planner rejects it before any
+    simulation runs, regardless of attenuation). requested_pairs/duration_s are
+    deliberately not swept here: validation.success_conditions are declared
+    independently of requirements (by design, see notebook 13 of Fase H2), so a
+    swept requested_pairs would not correspondingly change the fixed
+    "delivered_pairs >= 10" condition - sweeping it would not test what this
+    campaign needs it to test (see docs/campaign_architecture.md, limitations).
+  scenario_file: scenarios/three_node.yaml
+  intents:
+    - intents/three_node_intent.yaml
+  seeds: [0, 1]
+  parameter_grid:
+    attenuation_db_per_m: [0.00001, 0.025]
+    min_fidelity: [0.6, 0.95]
+  output_directory: results
+  execution:
+    continue_on_error: true
+    resume: true

@@ -1,0 +1,23 @@
+intent:
+  id: intent-diamond
+  service: entanglement_distribution
+  endpoints:
+    source: r1
+    destination: r3
+  requirements:
+    min_fidelity: 0.6
+    min_throughput: 1
+    max_latency: 1.0
+    requested_pairs: 10
+    start_time: 0.02
+    duration: 0.1
+  policy:
+    priority: normal
+    allow_rerouting: true
+    allow_purification: true
+    allow_multiple_paths: false
+  validation:
+    metrics:
+      - delivered_pairs
+    success_conditions:
+      delivered_pairs: ">= 10"

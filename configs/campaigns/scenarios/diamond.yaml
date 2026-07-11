@@ -1,0 +1,46 @@
+scenario:
+  name: diamond
+  simulation:
+    duration_s: 0.3      # generous stop_time so reconciliation's 2nd episode always has room (C04)
+    seed: 0              # overridden per trial by the campaign runner
+  nodes:
+    - id: r1
+      memories: 20
+    - id: r3
+      memories: 20
+    - id: bad
+      memories: 20
+      raw_fidelity: 0.9
+      swapping_degradation: 0.95
+    - id: good1
+      memories: 20
+      raw_fidelity: 0.9
+      swapping_degradation: 0.95
+    - id: good2
+      memories: 20
+      raw_fidelity: 0.9
+      swapping_degradation: 0.95
+  quantum_links:
+    - source: r1
+      destination: bad
+      distance_m: 1000
+      attenuation_db_per_m: 0.02
+    - source: bad
+      destination: r3
+      distance_m: 1000
+      attenuation_db_per_m: 0.02
+    - source: r1
+      destination: good1
+      distance_m: 500
+      attenuation_db_per_m: 0.00001
+    - source: good1
+      destination: good2
+      distance_m: 500
+      attenuation_db_per_m: 0.00001
+    - source: good2
+      destination: r3
+      distance_m: 500
+      attenuation_db_per_m: 0.00001
+  classical_delay_s: 0.0001
+  intents:
+    - file: ../intents/diamond_intent.yaml

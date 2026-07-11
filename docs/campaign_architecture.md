@@ -168,3 +168,22 @@ Os notebooks `notebooks/article/A00`-`A07` **nunca chamam
 - `requested_pairs` continua sem ser um teto de entrega (ver
   `docs/metrics.md`) - `excess_delivery_pairs`/`delivery_ratio` documentam
   isso quantitativamente, mas não mudam o comportamento do simulador.
+- **`aggregation.align_paired_trials`: nunca inclua `parameter_hash` em
+  `pair_on` quando `compare` for `routing_strategy`/`purification_policy`/
+  `reconciliation_enabled`** - esses três são, eles mesmos, parâmetros
+  varridos via `CampaignSpec.effective_parameter_grid`, então
+  `parameter_hash` (hash da combinação inteira) difere entre os dois lados
+  da comparação por construção, e nenhum par jamais casa. Descoberto
+  executando a campanha C04 pela primeira vez (o script de verificação
+  ad-hoc usou `parameter_hash` em `pair_on` e obteve `paired=False` em
+  100% das linhas); `pair_on` correto usa apenas `scenario`/`seed`/
+  `intent_id` (mais qualquer outro parâmetro varrido que não seja o
+  comparado, pela sua própria coluna nomeada, nunca por `parameter_hash`).
+- O mecanismo de sweep de parâmetros de topologia (`sweeps.
+  _topology_link_field`/`_topology_node_field`) aplica o valor
+  uniformemente a **todos** os enlaces/nós - por isso `C01_routing_strategy`
+  não varre `attenuation_db_per_m` sobre a topologia em diamante: um valor
+  uniforme apagaria a assimetria proposital entre o enlace "bad" e os
+  enlaces "good" (a própria razão das três estratégias divergirem). Varrer
+  atenuação de forma significativa nessa topologia exigiria um alvo de
+  sweep por enlace nomeado, fora do escopo desta fase.
