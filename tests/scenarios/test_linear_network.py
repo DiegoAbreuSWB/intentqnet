@@ -40,7 +40,9 @@ def test_run_scenario_delivers_the_requested_pairs():
     assert result.scenario_name == "linear_three_nodes"
     assert result.seed == 42
     intent_result = result.get("intent-001")
-    assert intent_result.final_status == IntentStatus.ACTIVE
+    assert intent_result.final_status == IntentStatus.SATISFIED
+    assert intent_result.satisfied is True
+    assert intent_result.evaluation is not None
     assert intent_result.plan.feasible is True
     assert intent_result.plan.route == ["A", "R1", "B"]
     assert intent_result.metrics["eg_success"] > 0
@@ -55,7 +57,7 @@ def test_run_scenario_delivers_the_requested_pairs():
 @pytest.mark.probabilistic
 def test_run_scenario_seed_override_reproduces_across_repeated_calls():
     """Same seed -> same eg_success count; different seeds (via
-    `seeds_for_trials`) -> independent trials that all still reach ACTIVE."""
+    `seeds_for_trials`) -> independent trials that all still reach SATISFIED."""
     scenario = Scenario.load(SCENARIO_PATH)
     seeds = seeds_for_trials(base_seed=7, n_trials=2)
 
@@ -65,4 +67,5 @@ def test_run_scenario_seed_override_reproduces_across_repeated_calls():
 
     assert first_run.get("intent-001").metrics["eg_success"] == repeat_run.get("intent-001").metrics["eg_success"]
     for run in (first_run, repeat_run, other_seed_run):
-        assert run.get("intent-001").final_status == IntentStatus.ACTIVE
+        assert run.get("intent-001").final_status == IntentStatus.SATISFIED
+        assert run.get("intent-001").satisfied is True

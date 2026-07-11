@@ -1,15 +1,26 @@
 """Executes a `Scenario` end-to-end: builds the topology, plans and deploys
-every intent it declares, runs the simulation once, and collects results
-straight from `IntentRepository`/`sequence.utils.metrics` - never computed
-independently of the simulation (see docs/sequence_code_analysis.md,
-section 2 constraints).
+every intent it declares, runs the simulation once, evaluates each intent
+that became `ACTIVE` against its own declared success conditions, and
+collects results straight from `IntentRepository`/`sequence.utils.metrics` -
+never computed independently of the simulation (see
+docs/sequence_code_analysis.md, section 2 constraints).
+
+No intent leaves `run_scenario` sitting in `ACTIVE` with `satisfied=None`:
+every intent that reaches `ACTIVE` is evaluated and transitioned to
+`SATISFIED`/`VIOLATED` before results are returned (see
+docs/assurance_design.md, section 9). Intents that never reached `ACTIVE`
+(`REJECTED`/`FAILED`) have no delivery evidence to judge, so `evaluation`
+stays `None` for them.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from sequence.constants import SECOND
 from sequence.utils import metrics
 
+from ..assurance.evaluator import IntentEvaluation, evaluate_intent
+from ..assurance.telemetry import collect_intent_evidence
 from ..execution.sequence_executor import SequenceExecutor
 from ..intent.models import IntentStatus
 from ..intent.repository import IntentRepository
@@ -32,6 +43,7 @@ class IntentRunResult:
     final_status: IntentStatus
     satisfied: bool | None
     plan: ExecutionPlan
+    evaluation: IntentEvaluation | None = None
     metrics: dict = field(default_factory=dict)
 
 
@@ -58,7 +70,9 @@ def run_scenario(
 ) -> ScenarioResult:
     """Builds a fresh `SequenceAdapter` + `IntentPlanner` + `SequenceExecutor`
     for `scenario`, plans and deploys every declared intent, runs the
-    simulation once, and returns each intent's final status/plan/metrics.
+    simulation once, evaluates each intent that reached `ACTIVE` against its
+    own `validation.success_conditions`, and returns each intent's final
+    status/evaluation/plan/metrics.
 
     `sequence.utils.metrics` is a process-wide singleton
     (docs/sequence_code_analysis.md, section 4.1) - reset at the start of
@@ -96,13 +110,27 @@ def run_scenario(
     results = []
     for intent in scenario.intents:
         record = repository.get(intent.id)
+        evaluation: IntentEvaluation | None = None
+
+        if record.lifecycle.status == IntentStatus.ACTIVE:
+            evidence = collect_intent_evidence(intent)
+            evaluation = evaluate_intent(intent, evidence)
+            final_status = IntentStatus.SATISFIED if evaluation.satisfied else IntentStatus.VIOLATED
+            reason = "all success conditions met" if evaluation.satisfied else "; ".join(evaluation.violations)
+            repository.transition(intent.id, final_status, reason, sim_time=adapter.get_timeline().now() / SECOND)
+            record = repository.get(intent.id)
+
+        satisfied = evaluation.satisfied if evaluation is not None else (
+            record.result.satisfied if record.result else None
+        )
         trial_metrics = metrics.collect_trial_metrics(intent.endpoints.source)
         results.append(
             IntentRunResult(
                 intent_id=intent.id,
                 final_status=record.lifecycle.status,
-                satisfied=record.result.satisfied if record.result else None,
+                satisfied=satisfied,
                 plan=plans[intent.id],
+                evaluation=evaluation,
                 metrics=trial_metrics,
             )
         )

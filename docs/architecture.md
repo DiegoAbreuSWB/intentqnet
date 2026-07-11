@@ -15,7 +15,7 @@ flowchart TD
     K --> L[Reconciliation]
 ```
 
-## Estado atual (Fase 3, Etapa F)
+## Estado atual (Fase 3, Etapa G)
 
 | Camada do diagrama | Módulo | Status |
 |---|---|---|
@@ -26,10 +26,10 @@ flowchart TD
 | Execution Plan | `src/ibqn/planning/models.py` | ✅ implementado |
 | SeQUeNCe Adapter | `src/ibqn/network/sequence_adapter.py` + `network/capabilities.py` | ✅ implementado |
 | Quantum Network Simulation | `SeQUeNCe/` (submódulo, commit `1f2680a5`) | reutilizado sem modificação |
-| Telemetry Collector | `sequence.utils.metrics` (nativo, envolvido por `execution/sequence_executor.py`) | ✅ parcial — DELIVERY instrumentado; agregação estatística entre múltiplas campanhas ainda não existe |
-| Cenários / Experiment Runner | `src/ibqn/config/` (`ScenarioSpec`) + `src/ibqn/experiments/` (`Scenario`, `run_scenario`, `seeds_for_trials`) | ✅ implementado — um cenário, uma ou várias seeds; ver `docs/experimental_methodology.md` |
-| Intent Assurance | `src/ibqn/assurance/` | não implementado (Etapa G) |
-| Reconciliation | `src/ibqn/assurance/reconciliation.py` | não implementado (Etapa G) |
+| Telemetry Collector | `sequence.utils.metrics` (nativo) + `assurance/telemetry.py` (evidência por intent) | ✅ implementado — ver `docs/assurance_design.md` |
+| Cenários / Experiment Runner | `src/ibqn/config/` (`ScenarioSpec`) + `src/ibqn/experiments/` (`Scenario`, `run_scenario`, `seeds_for_trials`) | ✅ implementado — `run_scenario` agora avalia e transiciona todo intent que chega a `ACTIVE` |
+| Intent Assurance | `src/ibqn/assurance/evaluator.py` + `violations.py` | ✅ implementado — condições avaliadas via `operator.*`, nunca `eval()` |
+| Reconciliation | `src/ibqn/assurance/reconciliation.py` | ✅ implementado — novo episódio (nova `Timeline`), mesmo `IntentRepository` |
 
 O corte WHAT/HOW é a decisão central da arquitetura: `EntanglementIntent`
 (`src/ibqn/intent/models.py`) descreve apenas requisitos observáveis
