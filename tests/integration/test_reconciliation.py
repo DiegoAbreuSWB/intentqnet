@@ -107,6 +107,47 @@ def test_diamond_scenario_violated_then_reconciled():
 
 
 @pytest.mark.unit
+def test_reconcile_resets_metrics_so_episode_2_evidence_is_not_contaminated_by_episode_1():
+    """Regression test: `reconcile()` used to not reset
+    `sequence.utils.metrics` before running episode 2. Since episode 2's
+    `IntentRequestApp` restarts `pair_number` at 1, a handful of episode
+    1's leftover DELIVERY records (same intent_id, colliding pair_number)
+    would win `collect_intent_evidence`'s dedup (inserted first) and leak
+    into what should be episode 2's evidence only. Found while building
+    the Fase H3 campaign runner - fixed by calling `metrics.configure()`
+    at the top of `reconcile()`."""
+    spec = diamond_spec()
+    intent = build_intent()
+    capabilities = NetworkCapabilities(spec)
+
+    planner = IntentPlanner(capabilities, routing_strategy=ShortestHopCountRouting())
+    plan = planner.plan(intent)
+    adapter = SequenceAdapter(spec, seed=0)
+    repository = IntentRepository()
+    executor = SequenceExecutor(adapter, repository)
+    executor.deploy(intent, plan)
+    executor.run()
+
+    first_evidence = collect_intent_evidence(intent)
+    first_evaluation = evaluate_intent(intent, first_evidence)
+    repository.transition(intent.id, IntentStatus.VIOLATED, "test setup", sim_time=0.0)
+
+    reconciliation_result = reconcile(intent, spec, repository, first_evaluation, seed=1, routing_strategy=LeastLossRouting())
+
+    from sequence.utils import metrics as sequence_metrics
+    from sequence.utils.metrics.event_types import EventTypes
+
+    raw_delivery_records_after_episode_2 = [
+        r for r in sequence_metrics.storage.get_all() if r["event_type"] is EventTypes.DELIVERY
+    ]
+    # after the fix, storage was reset inside reconcile() before episode 2
+    # ran, so every remaining DELIVERY record belongs to episode 2 alone -
+    # its count must match collect_intent_evidence's dedup exactly (no
+    # leftover episode-1 records to collide with and hide behind the dedup)
+    assert len(raw_delivery_records_after_episode_2) == len(collect_intent_evidence(intent).delivered_pairs)
+
+
+@pytest.mark.unit
 def test_reconciliation_with_no_reachable_alternative_reports_rejected():
     """If replanning finds no feasible route at all (here: the topology
     genuinely has none, `r1`/`r3` sit in disconnected components),

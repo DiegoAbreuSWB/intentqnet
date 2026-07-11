@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from sequence.constants import SECOND
+from sequence.utils import metrics
 
 from ..intent.models import EntanglementIntent, IntentStatus
 from ..intent.repository import IntentRepository
@@ -65,10 +66,23 @@ def reconcile(
     Does not retry more than once: if the new plan is infeasible or the new
     run is still violated, `reconcile` returns that outcome directly rather
     than searching further (see docs/assurance_design.md, section 11).
+
+    Resets `sequence.utils.metrics` before running episode 2 (the same
+    process-wide singleton every other independent simulation run in this
+    project resets first - see docs/sequence_code_analysis.md, section 4.1,
+    and notebook 06 of Fase H1). Without this, `collect_intent_evidence`
+    below would still see episode 1's `DELIVERY` records: since a new
+    episode's `IntentRequestApp` restarts `pair_number` at 1, a handful of
+    episode 1's records collide with episode 2's by `pair_number` and win
+    the dedup (they were inserted first) - silently mixing a few stale
+    episode-1 pairs into what should be episode 2's evidence only. Found
+    empirically while building the Fase H3 campaign runner, which reuses
+    this function directly.
     """
     trigger_violations = classify_violations(trigger_evaluation)
     reason = "; ".join(str(v.metric) for v in trigger_violations) or "unspecified violation"
 
+    metrics.configure()
     repository.transition(intent.id, IntentStatus.RECONCILING, f"violation detected: {reason}", sim_time=0.0)
     repository.transition(
         intent.id, IntentStatus.PLANNING, "recompiling with a new plan for a new episode", sim_time=0.0
