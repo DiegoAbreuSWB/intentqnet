@@ -15,7 +15,7 @@ flowchart TD
     K --> L[Reconciliation]
 ```
 
-## Estado atual (Fase 3, Etapa E)
+## Estado atual (Fase 3, Etapa F)
 
 | Camada do diagrama | Módulo | Status |
 |---|---|---|
@@ -26,7 +26,8 @@ flowchart TD
 | Execution Plan | `src/ibqn/planning/models.py` | ✅ implementado |
 | SeQUeNCe Adapter | `src/ibqn/network/sequence_adapter.py` + `network/capabilities.py` | ✅ implementado |
 | Quantum Network Simulation | `SeQUeNCe/` (submódulo, commit `1f2680a5`) | reutilizado sem modificação |
-| Telemetry Collector | `sequence.utils.metrics` (nativo, envolvido por `execution/sequence_executor.py`) | ✅ parcial — DELIVERY instrumentado; agregação por experimento ainda não existe (Etapa F) |
+| Telemetry Collector | `sequence.utils.metrics` (nativo, envolvido por `execution/sequence_executor.py`) | ✅ parcial — DELIVERY instrumentado; agregação estatística entre múltiplas campanhas ainda não existe |
+| Cenários / Experiment Runner | `src/ibqn/config/` (`ScenarioSpec`) + `src/ibqn/experiments/` (`Scenario`, `run_scenario`, `seeds_for_trials`) | ✅ implementado — um cenário, uma ou várias seeds; ver `docs/experimental_methodology.md` |
 | Intent Assurance | `src/ibqn/assurance/` | não implementado (Etapa G) |
 | Reconciliation | `src/ibqn/assurance/reconciliation.py` | não implementado (Etapa G) |
 
