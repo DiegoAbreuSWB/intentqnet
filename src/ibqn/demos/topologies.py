@@ -101,3 +101,36 @@ def three_node_spec(
         classical_delay_s=classical_delay_s,
         stop_time_s=stop_time_s,
     )
+
+
+def star_spec(
+    *,
+    n_leaves: int = 4,
+    leaf_memories: int = 10,
+    center_memories: int = 80,
+    distance_m: float = 1000,
+    attenuation_db_per_m: float = 1e-5,
+    raw_fidelity: float = 0.85,
+    swapping_degradation: float = 0.95,
+    classical_delay_s: float = 1e-4,
+    stop_time_s: float = 0.1,
+) -> NetworkTopologySpec:
+    """One `center` repeater connected to `n_leaves` independent leaf
+    routers (`leaf1`, `leaf2`, ...) - lets multiple intents on disjoint
+    leaf pairs share `center` as an interior swap node, so notebook 18 can
+    demonstrate that per-intent isolation holds even when a node is
+    shared (just never as a source/destination - see
+    `execution.sequence_executor.SequenceExecutor._check_no_node_conflict`)."""
+    leaves = [f"leaf{i + 1}" for i in range(n_leaves)]
+    return NetworkTopologySpec(
+        nodes=[
+            NodeSpec(id="center", memories=center_memories, raw_fidelity=raw_fidelity, swapping_degradation=swapping_degradation),
+            *(NodeSpec(id=leaf, memories=leaf_memories, raw_fidelity=raw_fidelity) for leaf in leaves),
+        ],
+        quantum_links=[
+            QuantumLinkSpec(source="center", destination=leaf, distance_m=distance_m, attenuation_db_per_m=attenuation_db_per_m)
+            for leaf in leaves
+        ],
+        classical_delay_s=classical_delay_s,
+        stop_time_s=stop_time_s,
+    )

@@ -1,6 +1,7 @@
-"""Routing-strategy comparison helpers for notebooks 12 and 16.
+"""Routing-strategy and purification-policy comparison helpers for
+notebooks 12, 16, and 17.
 
-Two comparisons, deliberately kept separate:
+Comparisons, deliberately kept separate:
 - `compare_routing_strategies`: pre-simulation estimates only (every
   candidate route each strategy considers, via `planning.feasibility.
   evaluate_route` - the exact function `IntentPlanner` itself calls).
@@ -8,10 +9,14 @@ Two comparisons, deliberately kept separate:
   routed through `ad_hoc_scenario`/`experiments.runner.run_scenario` so
   `sequence.utils.metrics` is reset before every trial (see
   `demos.scenarios` for why that matters).
+- `compare_purification_policies`: real simulation outcomes across a
+  handful of `min_fidelity` thresholds and purification policies, same
+  reset-per-trial guarantee.
 """
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 
 import pandas as pd
 
@@ -21,6 +26,7 @@ from ..network.capabilities import NetworkCapabilities
 from ..network.topology import NetworkTopologySpec
 from ..planning.feasibility import evaluate_route
 from ..planning.planner import IntentPlanner
+from ..planning.purification import PurificationStrategy
 from ..planning.routing import RoutingStrategy
 from .scenarios import ad_hoc_scenario
 
@@ -106,6 +112,68 @@ def compare_routing_strategies_across_seeds(
                     "observed_throughput_pairs_per_s": round(throughput, 2) if throughput is not None else None,
                     "final_status": trial.final_status.value,
                     "planning_time_s": round(planning_time_s, 6),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def compare_purification_policies(
+    topology_spec: NetworkTopologySpec,
+    make_intent: Callable[[float], EntanglementIntent],
+    policies: dict[str, PurificationStrategy],
+    fidelity_targets: list[float],
+    *,
+    seed: int,
+) -> pd.DataFrame:
+    """Runs `make_intent(target)` once per (fidelity target, policy) pair.
+    `make_intent` must return a fresh `EntanglementIntent` with
+    `requirements.min_fidelity == target`. If the plan is infeasible for a
+    given (target, policy) pair, the row records `feasible=False` and
+    leaves the observed columns empty - no simulation is run for it (an
+    infeasible plan never reaches SeQUeNCe, see notebook 14). Columns:
+    min_fidelity, policy, requires_purification, estimated_fidelity,
+    feasible, final_status, observed_delivered_pairs,
+    observed_average_fidelity."""
+    capabilities = NetworkCapabilities(topology_spec)
+    rows = []
+    for target in fidelity_targets:
+        intent = make_intent(target)
+        for policy_name, policy in policies.items():
+            plan = IntentPlanner(capabilities, purification_strategy=policy).plan(intent)
+            if not plan.feasible:
+                rows.append(
+                    {
+                        "min_fidelity": target, "policy": policy_name,
+                        "requires_purification": False,
+                        "estimated_fidelity": None, "feasible": False,
+                        "final_status": "REJECTED",
+                        "observed_delivered_pairs": None, "observed_average_fidelity": None,
+                    }
+                )
+                continue
+
+            scenario = ad_hoc_scenario(topology_spec, [intent], seed=seed, name=f"{policy_name}-{target}")
+            result = run_scenario(scenario, seed=seed, purification_strategy=policy)
+            trial = result.get(intent.id)
+
+            delivered = None
+            avg_fidelity = None
+            if trial.evaluation is not None:
+                for condition in trial.evaluation.condition_results:
+                    if condition.metric == "delivered_pairs":
+                        delivered = condition.observed
+                    elif condition.metric == "average_fidelity":
+                        avg_fidelity = condition.observed
+
+            rows.append(
+                {
+                    "min_fidelity": target, "policy": policy_name,
+                    "requires_purification": plan.requires_purification,
+                    "estimated_fidelity": round(plan.estimated_metrics.fidelity, 4) if plan.estimated_metrics else None,
+                    "feasible": True,
+                    "final_status": trial.final_status.value,
+                    "observed_delivered_pairs": delivered,
+                    "observed_average_fidelity": round(avg_fidelity, 4) if avg_fidelity is not None else None,
                 }
             )
     return pd.DataFrame(rows)

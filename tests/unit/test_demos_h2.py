@@ -8,15 +8,20 @@ import pytest
 from sequence.utils import metrics
 
 from ibqn.demos.intents import diamond_intent, simple_intent
-from ibqn.demos.planning import compare_routing_strategies, compare_routing_strategies_across_seeds
+from ibqn.demos.planning import (
+    compare_purification_policies,
+    compare_routing_strategies,
+    compare_routing_strategies_across_seeds,
+)
 from ibqn.demos.reconciliation import run_two_episode_reconciliation
 from ibqn.demos.scenarios import ad_hoc_scenario
 from ibqn.demos.tables import intent_table, lifecycle_table, reconciliation_episodes_table
-from ibqn.demos.topologies import diamond_spec, three_node_spec
+from ibqn.demos.topologies import diamond_spec, star_spec, three_node_spec
 from ibqn.demos.visualization import draw_topology
 from ibqn.experiments.runner import run_scenario
 from ibqn.intent.models import IntentStatus
 from ibqn.network.capabilities import NetworkCapabilities
+from ibqn.planning.purification import NeverPurify, PurifyUntilTarget
 from ibqn.planning.routing import HighestFidelityRouting, LeastLossRouting, ShortestHopCountRouting
 
 matplotlib.use("Agg")
@@ -202,3 +207,43 @@ def test_reconciliation_episodes_table_has_expected_columns():
     assert len(df) == 2
     assert df.iloc[0]["status"] == "VIOLATED"
     assert df.iloc[1]["status"] == "SATISFIED"
+
+
+@pytest.mark.unit
+def test_compare_purification_policies_distinguishes_feasible_from_rejected():
+    spec = three_node_spec()
+
+    def make_intent(target):
+        return simple_intent(intent_id=f"purif-{target}", source="a", destination="b", min_fidelity=target, requested_pairs=10, duration=0.1)
+
+    df = compare_purification_policies(
+        spec, make_intent,
+        {"NeverPurify": NeverPurify(), "PurifyUntilTarget": PurifyUntilTarget()},
+        fidelity_targets=[0.65, 0.70],
+        seed=0,
+    )
+
+    assert set(df.columns) == {
+        "min_fidelity", "policy", "requires_purification", "estimated_fidelity",
+        "feasible", "final_status", "observed_delivered_pairs", "observed_average_fidelity",
+    }
+    row = df[(df["min_fidelity"] == 0.65) & (df["policy"] == "NeverPurify")].iloc[0]
+    assert bool(row["feasible"]) is True
+    assert bool(row["requires_purification"]) is False
+
+    row_never = df[(df["min_fidelity"] == 0.70) & (df["policy"] == "NeverPurify")].iloc[0]
+    assert bool(row_never["feasible"]) is False
+    assert row_never["final_status"] == "REJECTED"
+
+    row_purify = df[(df["min_fidelity"] == 0.70) & (df["policy"] == "PurifyUntilTarget")].iloc[0]
+    assert bool(row_purify["feasible"]) is True
+    assert bool(row_purify["requires_purification"]) is True
+    assert row_purify["final_status"] == "SATISFIED"
+
+
+@pytest.mark.unit
+def test_star_spec_has_one_center_and_n_leaves():
+    spec = star_spec(n_leaves=4)
+    assert {n.id for n in spec.nodes} == {"center", "leaf1", "leaf2", "leaf3", "leaf4"}
+    assert len(spec.quantum_links) == 4
+    assert all(link.source == "center" for link in spec.quantum_links)
