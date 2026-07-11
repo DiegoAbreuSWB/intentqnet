@@ -21,6 +21,7 @@ from sequence.utils import metrics
 from ibqn.assurance.evaluator import evaluate_intent
 from ibqn.assurance.reconciliation import reconcile
 from ibqn.assurance.telemetry import collect_intent_evidence
+from ibqn.demos.topologies import diamond_spec
 from ibqn.execution.sequence_executor import SequenceExecutor
 from ibqn.intent.models import (
     EntanglementIntent, IntentEndpoints, IntentRequirements, IntentStatus, IntentValidation, SuccessCondition,
@@ -31,32 +32,6 @@ from ibqn.network.sequence_adapter import SequenceAdapter
 from ibqn.network.topology import NetworkTopologySpec, NodeSpec, QuantumLinkSpec
 from ibqn.planning.planner import IntentPlanner
 from ibqn.planning.routing import LeastLossRouting, ShortestHopCountRouting
-
-BAD_ATTENUATION = 0.02
-GOOD_ATTENUATION = 1e-5
-NODE_FIDELITY = 0.9
-NODE_DEGRADATION = 0.95
-
-
-def diamond_spec(stop_time_s: float = 0.2) -> NetworkTopologySpec:
-    return NetworkTopologySpec(
-        nodes=[
-            NodeSpec(id="r1", memories=20),
-            NodeSpec(id="r3", memories=20),
-            NodeSpec(id="bad", memories=20, raw_fidelity=NODE_FIDELITY, swapping_degradation=NODE_DEGRADATION),
-            NodeSpec(id="good1", memories=20, raw_fidelity=NODE_FIDELITY, swapping_degradation=NODE_DEGRADATION),
-            NodeSpec(id="good2", memories=20, raw_fidelity=NODE_FIDELITY, swapping_degradation=NODE_DEGRADATION),
-        ],
-        quantum_links=[
-            QuantumLinkSpec(source="r1", destination="bad", distance_m=1000, attenuation_db_per_m=BAD_ATTENUATION),
-            QuantumLinkSpec(source="bad", destination="r3", distance_m=1000, attenuation_db_per_m=BAD_ATTENUATION),
-            QuantumLinkSpec(source="r1", destination="good1", distance_m=500, attenuation_db_per_m=GOOD_ATTENUATION),
-            QuantumLinkSpec(source="good1", destination="good2", distance_m=500, attenuation_db_per_m=GOOD_ATTENUATION),
-            QuantumLinkSpec(source="good2", destination="r3", distance_m=500, attenuation_db_per_m=GOOD_ATTENUATION),
-        ],
-        classical_delay_s=1e-4,
-        stop_time_s=stop_time_s,
-    )
 
 
 def build_intent(requested_pairs=10, min_fidelity=0.6, start_time=0.02, duration=0.1) -> EntanglementIntent:

@@ -178,5 +178,5 @@ def test_evaluation_table_has_expected_columns():
     evaluation = evaluate_intent(intent, evidence)
     df = evaluation_table(evaluation)
 
-    assert list(df.columns) == ["metric", "operator", "expected", "observed", "passed"]
+    assert list(df.columns) == ["metric", "operator", "expected", "observed", "passed", "evidence_source"]
     assert len(df) == len(evaluation.condition_results)
