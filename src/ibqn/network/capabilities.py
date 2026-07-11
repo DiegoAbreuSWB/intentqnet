@@ -92,5 +92,15 @@ class NetworkCapabilities:
         independently set to *its own* node's `raw_fidelity` on success
         (`sequence/entanglement_management/generation/barret_kok.py:228`) -
         for a heterogeneous pair this is conservatively estimated as the
-        minimum of the two endpoints' configured value."""
+        minimum of the two endpoints' configured value.
+
+        Confirmed (campaign C01, Fase H3, `notebooks/article/
+        A05_planner_estimation_error.ipynb`) that this genuinely
+        *underestimates* whenever a swap happens at a node whose
+        `raw_fidelity` exceeds a neighbor's: both memories feeding that
+        swap belong to the swap node itself, so the real result depends on
+        the swap node's own `raw_fidelity`, not `min(a, b)` - up to 0.083
+        (12%) off on the diamond topology's heterogeneous nodes, exactly 0
+        on every uniform-fidelity topology this project otherwise uses.
+        See `docs/limitations.md`."""
         return min(self.node(a).raw_fidelity, self.node(b).raw_fidelity)
