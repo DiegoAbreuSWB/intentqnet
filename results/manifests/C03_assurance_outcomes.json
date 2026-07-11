@@ -1,9 +1,9 @@
 {
   "campaign": "C03_assurance_outcomes",
   "description": "Produces SATISFIED, VIOLATED, and REJECTED naturally (never forced) on the three-node chain, by crossing attenuation_db_per_m (low: negligible photon loss; high: the same 0.025 dB/m calibration that produces a genuine throughput-driven VIOLATED in notebook 14 of Fase H2) with min_fidelity (0.6: within the swap-only ceiling ~0.6864; 0.95: above even the one-round-purified ceiling ~0.7203, so the planner rejects it before any simulation runs, regardless of attenuation). requested_pairs/duration_s are deliberately not swept here: validation.success_conditions are declared independently of requirements (by design, see notebook 13 of Fase H2), so a swept requested_pairs would not correspondingly change the fixed \"delivered_pairs >= 10\" condition - sweeping it would not test what this campaign needs it to test (see docs/campaign_architecture.md, limitations).\n",
-  "created_at": "2026-07-11T23:02:37.823727+00:00",
-  "updated_at": "2026-07-11T23:02:43.253552+00:00",
-  "project_git_commit": "2931c00757576ebb356bfc8c37dbc5165d5301a3",
+  "created_at": "2026-07-11T23:18:53.095459+00:00",
+  "updated_at": "2026-07-11T23:18:58.428177+00:00",
+  "project_git_commit": "4adf848c8adfbaff901f8ec6a5b1cbac31ae3768",
   "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
   "python_version": "3.13.14",
   "platform": "Windows-11-10.0.26200-SP0",

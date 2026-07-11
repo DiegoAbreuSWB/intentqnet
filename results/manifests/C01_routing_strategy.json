@@ -1,9 +1,9 @@
 {
   "campaign": "C01_routing_strategy",
   "description": "Compares ShortestHopCountRouting, LeastLossRouting and HighestFidelityRouting on the diamond topology (see docs/campaign_architecture.md), where they genuinely disagree (notebooks 12/16 of Fase H2). Deliberately does NOT sweep attenuation_db_per_m here: the current sweep mechanism applies a swept topology parameter to every quantum link uniformly, which would erase the diamond's deliberate bad/good link asymmetry (the whole reason the three strategies diverge) instead of scaling it. A per-link-targeted sweep would be needed to vary attenuation meaningfully on this topology - out of scope for this validation campaign (see docs/campaign_architecture.md, limitations).\n",
-  "created_at": "2026-07-11T23:01:39.027736+00:00",
-  "updated_at": "2026-07-11T23:02:03.708288+00:00",
-  "project_git_commit": "2931c00757576ebb356bfc8c37dbc5165d5301a3",
+  "created_at": "2026-07-11T23:18:09.793897+00:00",
+  "updated_at": "2026-07-11T23:18:34.256601+00:00",
+  "project_git_commit": "4adf848c8adfbaff901f8ec6a5b1cbac31ae3768",
   "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
   "python_version": "3.13.14",
   "platform": "Windows-11-10.0.26200-SP0",

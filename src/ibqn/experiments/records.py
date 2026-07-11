@@ -49,6 +49,7 @@ class TrialRecord:
     hop_count: int | None
     requested_pairs: int
     requested_fidelity: float
+    estimated_fidelity: float | None
     duration_s: float
     attenuation_db_per_m: float | None
     distance_m: float | None

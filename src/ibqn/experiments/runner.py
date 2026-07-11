@@ -288,6 +288,7 @@ def execute_trial(
             routing_strategy=params.routing_strategy_name, purification_policy=params.purification_policy_name,
             reconciliation_enabled=params.reconciliation_enabled,
             route="", hop_count=None, requested_pairs=requested_pairs, requested_fidelity=intent.requirements.min_fidelity,
+            estimated_fidelity=plan.estimated_metrics.fidelity if plan.estimated_metrics else None,
             duration_s=duration_s, attenuation_db_per_m=attenuation, distance_m=distance, coherence_time_s=coherence,
             accepted=False, satisfied=False, recovered=None, final_status="REJECTED",
             delivered_pairs=None, excess_delivery_pairs=None, delivery_ratio=None,
@@ -342,6 +343,7 @@ def execute_trial(
     trial_metrics = metrics.collect_trial_metrics(intent.endpoints.source)
 
     recovered = None
+    estimated_fidelity = plan.estimated_metrics.fidelity if plan.estimated_metrics else None
     if final_status == IntentStatus.VIOLATED and params.reconciliation_enabled:
         reconciliation_routing_strategy = resolve_routing_strategy(
             _reconciliation_routing_strategy_name(params.routing_strategy_name)
@@ -358,6 +360,10 @@ def execute_trial(
         route_str = " -> ".join(reconciliation_result.new_plan.route)
         hop_count = max(len(reconciliation_result.new_plan.route) - 1, 0)
         final_status = reconciliation_result.final_status
+        estimated_fidelity = (
+            reconciliation_result.new_plan.estimated_metrics.fidelity
+            if reconciliation_result.new_plan.estimated_metrics else None
+        )
 
         if reconciliation_result.new_evaluation is not None:
             evaluation = reconciliation_result.new_evaluation
@@ -373,7 +379,7 @@ def execute_trial(
     violations_str = "; ".join(evaluation.violations) if evaluation is not None else ""
 
     return _record(
-        route=route_str, hop_count=hop_count,
+        route=route_str, hop_count=hop_count, estimated_fidelity=estimated_fidelity,
         accepted=accepted, satisfied=satisfied, recovered=recovered, final_status=final_status.value,
         simulation_wall_time_s=round(simulation_wall_time_s, 6),
         violations=violations_str,

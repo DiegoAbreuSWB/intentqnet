@@ -16,6 +16,7 @@ from .sweeps import (
 from .validation import ValidationIssue, validate_trials
 from .aggregation import aggregate_records, align_paired_trials
 from .status import CampaignStatus, compute_campaign_status
+from .export import save_figure, save_table
 
 __all__ = [
     "Scenario",
@@ -45,4 +46,6 @@ __all__ = [
     "align_paired_trials",
     "CampaignStatus",
     "compute_campaign_status",
+    "save_figure",
+    "save_table",
 ]

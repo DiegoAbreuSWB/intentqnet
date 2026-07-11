@@ -1,7 +1,4 @@
-scenario,parameter_hash,seed,intent_id,delivered_pairs_False,simulation_wall_time_s_False,delivered_pairs_True,simulation_wall_time_s_True,paired,delivered_pairs_diff,simulation_wall_time_s_diff
-diamond,3de783ae02207aec,0,intent-diamond,4.0,1.653962,,,False,,
-diamond,3de783ae02207aec,1000,intent-diamond,5.0,1.893458,,,False,,
-diamond,3de783ae02207aec,2000,intent-diamond,4.0,1.707481,,,False,,
-diamond,cf61d7085cd7c128,0,intent-diamond,,,453.0,6.346278,False,,
-diamond,cf61d7085cd7c128,1000,intent-diamond,,,457.0,6.500793,False,,
-diamond,cf61d7085cd7c128,2000,intent-diamond,,,440.0,6.327156,False,,
+scenario,seed,intent_id,delivered_pairs_False,simulation_wall_time_s_False,delivered_pairs_True,simulation_wall_time_s_True,paired,delivered_pairs_diff,simulation_wall_time_s_diff
+diamond,0,intent-diamond,4,1.679689,453,6.221104,True,449,4.541415000000001
+diamond,1000,intent-diamond,5,1.746177,457,6.31442,True,452,4.568243
+diamond,2000,intent-diamond,4,1.655747,440,6.25921,True,436,4.6034630000000005
