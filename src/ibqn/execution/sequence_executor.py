@@ -3,20 +3,25 @@ API (`RequestApp`, `NetworkManager.request`, `sequence.utils.metrics`), so the
 rest of `ibqn` only ever deals with `EntanglementIntent`/`ExecutionPlan`/
 `IntentRepository` (see docs/architecture.md).
 
-Two entry points:
+Three entry points:
 - `submit(intent)` (Etapa D): no planning at all - route/purification/swap
   decisions are entirely delegated to SeQUeNCe's default reservation
   mechanism (`NetworkManager.request` -> `RSVPProtocol`/
   `ResourceManager.generate_load_rules`, see docs/sequence_code_analysis.md
   section 4.2). Kept for callers that don't need `planning.IntentPlanner`.
-- `deploy(intent, plan)` (Etapa E): takes a real `planning.ExecutionPlan`,
-  rejects the intent outright if it was infeasible, otherwise forces the
-  reservation onto `plan.route` (via `execution.compiler.apply_route`)
-  before submitting it - the plan's purification/swapping fields are
-  estimates recorded for later comparison against observed telemetry
-  (`assurance.evaluator`, Etapa G), not additional instructions given to
-  SeQUeNCe: it still decides purification/swap order on its own, exactly as
-  `submit()` does.
+- `deploy(intent, plan)` (Etapa E): registers a brand-new `intent` and
+  executes `plan` - rejects it outright if it was infeasible, otherwise
+  forces the reservation onto `plan.route` (via
+  `execution.compiler.apply_route`) before submitting it. The plan's
+  purification/swapping fields are estimates recorded for later comparison
+  against observed telemetry (`assurance.evaluator`, Etapa G), not
+  additional instructions given to SeQUeNCe: it still decides
+  purification/swap order on its own, exactly as `submit()` does.
+- `redeploy(intent, plan)` (Etapa G, `assurance.reconciliation`): same as
+  `deploy`, but for an `intent` that is *already registered* in `repository`
+  (typically mid-reconciliation, sitting in status `PLANNING`) - does not
+  call `repository.add()`/re-validate, so the intent's lifecycle history
+  continues instead of restarting.
 """
 from __future__ import annotations
 
@@ -62,7 +67,21 @@ class IntentRequestApp(RequestApp):
     source router, never from the destination one. The destination app is
     still required though: without *any* app attached, `Node.get_idle_memory`
     never resets delivered memories back to RAW, which would starve any
-    reservation asking for more pairs than it has memories for."""
+    reservation asking for more pairs than it has memories for.
+
+    CRITICAL: `RequestApp.get_memory` (`sequence/app/request_app.py:133`)
+    starts with `if info.state != "ENTANGLED": return` - it silently ignores
+    memories in the `"PURIFIED"` state. A successfully purified end-to-end
+    pair (`MemoryInfo.to_purified()` populates the exact same `remote_node`/
+    `fidelity`/`index` fields as `to_entangled()`, see
+    docs/sequence_code_analysis.md section 4.5) would therefore NEVER be
+    counted, reset to RAW, or reported as delivered by the stock `RequestApp`
+    - confirmed empirically: a purification-forcing scenario produced 9
+    EP_SUCCESS events but `memory_counter` stayed at 0 for the entire run
+    (see docs/assurance_design.md). `get_memory` below mirrors the same
+    matching/counting logic for `"PURIFIED"` that `RequestApp.get_memory`
+    already applies to `"ENTANGLED"`, since SeQUeNCe's core does not expose a
+    way to do this without duplicating those four lines."""
 
     def __init__(self, node: QuantumRouter, intent_id: str, repository: IntentRepository):
         super().__init__(node)
@@ -85,15 +104,23 @@ class IntentRequestApp(RequestApp):
             )
 
     def get_memory(self, info: MemoryInfo) -> None:
-        # `info.fidelity` must be read *before* calling super(): on a
-        # successful match, RequestApp.get_memory resets the memory to RAW
-        # (MemoryInfo.to_raw() zeroes `fidelity` in place on this same,
-        # mutable `info` object) as a side effect - reading it afterwards
-        # would always observe 0.
+        # `info.fidelity`/`info.remote_node` must be read *before* any state
+        # change: a successful match resets the memory to RAW
+        # (MemoryInfo.to_raw() zeroes these fields in place on this same,
+        # mutable `info` object) as a side effect - reading them afterwards
+        # would always observe stale/zeroed values.
         fidelity_at_delivery = info.fidelity
-        pairs_before = self.memory_counter
-        super().get_memory(info)
-        if self.memory_counter > pairs_before:
+
+        if info.state == "ENTANGLED":
+            pairs_before = self.memory_counter
+            super().get_memory(info)
+            newly_delivered = self.memory_counter > pairs_before
+        elif info.state == "PURIFIED":
+            newly_delivered = self._count_purified_delivery(info)
+        else:
+            return
+
+        if newly_delivered:
             self._delivered_pairs += 1
             metrics.record(
                 EventTypes.DELIVERY,
@@ -103,15 +130,35 @@ class IntentRequestApp(RequestApp):
                 pair_number=self._delivered_pairs,
             )
 
+    def _count_purified_delivery(self, info: MemoryInfo) -> bool:
+        """Mirrors `RequestApp.get_memory`'s matching/counting/reset logic
+        (`sequence/app/request_app.py:136-143`) for the `"PURIFIED"` state,
+        which the stock method never handles (see the class docstring)."""
+        if info.index not in self.memo_to_reservation:
+            return False
+        reservation = self.memo_to_reservation[info.index]
+        if info.fidelity < reservation.fidelity:
+            return False
+        if info.remote_node == reservation.initiator:
+            self.node.resource_manager.update(None, info.memory, "RAW")
+            return False
+        if info.remote_node == reservation.responder:
+            self.memory_counter += 1
+            self.node.resource_manager.update(None, info.memory, "RAW")
+            return True
+        return False
+
 
 class SequenceExecutor:
-    """Compiles one `EntanglementIntent` at a time into a real SeQUeNCe
-    reservation and runs the simulation. One `IntentRequestApp` is attached
+    """Compiles one or more `EntanglementIntent`s into real SeQUeNCe
+    reservations and runs the simulation. One `IntentRequestApp` is attached
     to the source and destination router of each intent - since
     `QuantumRouter` supports only one application at a time (see
-    docs/sequence_code_analysis.md, section 4.6), submitting a second intent
-    that shares a source or destination router with an already-submitted one
-    is not supported in this version.
+    docs/sequence_code_analysis.md, section 4.6), two intents cannot share a
+    source or destination router; `_start_reservation` raises `ValueError`
+    rather than silently letting the second intent's app overwrite the
+    first's (which would misroute `get_reservation_result`/`get_memory`
+    callbacks to the wrong `intent_id` - see docs/assurance_design.md).
     """
 
     def __init__(self, adapter: SequenceAdapter, repository: IntentRepository):
@@ -146,14 +193,23 @@ class SequenceExecutor:
         self._start_reservation(intent)
 
     def deploy(self, intent: EntanglementIntent, plan: ExecutionPlan) -> None:
-        """Registers `intent` and executes `plan`: rejects it immediately if
-        `plan.feasible` is False, otherwise forces the reservation onto
-        `plan.route` and submits it."""
+        """Registers a brand-new `intent` and executes `plan`."""
         now_s = self._now_s()
         self._repository.add(intent, sim_time=now_s)
         self._repository.transition(intent.id, IntentStatus.VALIDATED, "schema validated", sim_time=now_s)
         self._repository.transition(intent.id, IntentStatus.PLANNING, "invoking IntentPlanner", sim_time=now_s)
+        self._deploy_plan(intent, plan)
 
+    def redeploy(self, intent: EntanglementIntent, plan: ExecutionPlan) -> None:
+        """Executes `plan` for an `intent` that is *already registered* in
+        `repository` and currently sitting in status `PLANNING` (see
+        `assurance.reconciliation.reconcile`) - does not call
+        `repository.add()`/re-validate, so the intent's lifecycle history
+        continues rather than restarting."""
+        self._deploy_plan(intent, plan)
+
+    def _deploy_plan(self, intent: EntanglementIntent, plan: ExecutionPlan) -> None:
+        now_s = self._now_s()
         if not plan.feasible:
             self._repository.transition(
                 intent.id, IntentStatus.REJECTED,
@@ -174,6 +230,8 @@ class SequenceExecutor:
     def _start_reservation(self, intent: EntanglementIntent) -> None:
         source = self._adapter.get_router(intent.endpoints.source)
         destination = self._adapter.get_router(intent.endpoints.destination)
+        self._check_no_node_conflict(intent.id, source)
+        self._check_no_node_conflict(intent.id, destination)
 
         source_app = IntentRequestApp(source, intent.id, self._repository)
         destination_app = IntentRequestApp(destination, intent.id, self._repository)
@@ -192,6 +250,18 @@ class SequenceExecutor:
             intent.endpoints.destination, start_ps, end_ps,
             intent.requirements.requested_pairs, intent.requirements.min_fidelity,
         )
+
+    @staticmethod
+    def _check_no_node_conflict(intent_id: str, router: QuantumRouter) -> None:
+        existing_app = router.app
+        existing_intent_id = getattr(existing_app, "intent_id", None)
+        if existing_app is not None and existing_intent_id != intent_id:
+            raise ValueError(
+                f"cannot deploy intent '{intent_id}': node '{router.name}' already hosts the app for "
+                f"intent '{existing_intent_id}' - a QuantumRouter supports only one application at a "
+                f"time (see docs/sequence_code_analysis.md, section 4.6), so these two intents cannot "
+                f"share this node as a source or destination"
+            )
 
     def run(self) -> None:
         self._adapter.run()
