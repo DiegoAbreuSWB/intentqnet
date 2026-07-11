@@ -43,6 +43,11 @@ class NodeSpec(BaseModel):
                      "entanglement swap (sequence.entanglement_management.swapping.swapping_circuit "
                      "default is 0.95); irrelevant for end-of-path nodes that never swap",
     )
+    coherence_time_s: float = Field(
+        default=-1.0,
+        description="seconds, average usable memory lifetime before decoherence "
+                     "(sequence.components.memory.Memory default is -1, meaning infinite coherence)",
+    )
 
 
 class QuantumLinkSpec(BaseModel):

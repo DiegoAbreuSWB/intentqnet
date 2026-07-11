@@ -34,15 +34,14 @@ class EnvironmentInfo:
     sequence_version: str
     sequence_commit: str | None
     ibqn_version: str
+    project_commit: str | None
     default_formalism: str
     dependency_versions: dict[str, str] = field(default_factory=dict)
 
 
-def _sequence_commit() -> str | None:
-    """Returns the git HEAD commit of the SeQUeNCe checkout backing the
-    imported `sequence` package, or `None` if it isn't a git checkout
-    (e.g. installed from a wheel) or `git` is unavailable."""
-    repo_root = Path(sequence.__file__).resolve().parent.parent
+def _git_commit(repo_root: Path) -> str | None:
+    """Returns the git HEAD commit for `repo_root`, or `None` if it isn't a
+    git checkout (e.g. installed from a wheel) or `git` is unavailable."""
     try:
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=repo_root, capture_output=True, text=True, timeout=10, check=True,
@@ -50,6 +49,20 @@ def _sequence_commit() -> str | None:
         return result.stdout.strip()
     except Exception:
         return None
+
+
+def _sequence_commit() -> str | None:
+    """Git HEAD commit of the SeQUeNCe checkout backing the imported
+    `sequence` package."""
+    return _git_commit(Path(sequence.__file__).resolve().parent.parent)
+
+
+def project_git_commit() -> str | None:
+    """Git HEAD commit of this project's own repository (not the vendored
+    SeQUeNCe submodule) - recorded on every `TrialRecord` (Fase H3) so a
+    persisted result can be traced back to the exact `ibqn` code that
+    produced it."""
+    return _git_commit(Path(ibqn.__file__).resolve().parent.parent.parent)
 
 
 def _dependency_versions() -> dict[str, str]:
@@ -71,6 +84,7 @@ def collect_environment_info() -> EnvironmentInfo:
         sequence_version=sequence.__version__,
         sequence_commit=_sequence_commit(),
         ibqn_version=ibqn.__version__,
+        project_commit=project_git_commit(),
         default_formalism="ket_vector",
         dependency_versions=_dependency_versions(),
     )
