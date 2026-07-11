@@ -12,6 +12,13 @@ Comparisons, deliberately kept separate:
 - `compare_purification_policies`: real simulation outcomes across a
   handful of `min_fidelity` thresholds and purification policies, same
   reset-per-trial guarantee.
+
+`run_scenario` is imported lazily, inside each function that needs it
+(not at module load time): `experiments.runner` itself imports from
+`demos.environment` (Fase H3, for git-commit provenance), and importing
+any `demos.*` submodule always runs `demos/__init__.py` first, which
+imports this very module - a plain top-level `from ..experiments.runner
+import run_scenario` here would deadlock that import cycle.
 """
 from __future__ import annotations
 
@@ -20,7 +27,6 @@ from collections.abc import Callable
 
 import pandas as pd
 
-from ..experiments.runner import run_scenario
 from ..intent.models import EntanglementIntent
 from ..network.capabilities import NetworkCapabilities
 from ..network.topology import NetworkTopologySpec
@@ -77,6 +83,8 @@ def compare_routing_strategies_across_seeds(
     Columns: strategy, seed, route, hops, estimated_fidelity,
     observed_delivered_pairs, observed_average_fidelity,
     observed_throughput_pairs_per_s, final_status, planning_time_s."""
+    from ..experiments.runner import run_scenario  # deferred: experiments.runner also imports from demos, see module docstring
+
     capabilities = NetworkCapabilities(topology_spec)
     rows = []
     for strategy_name, strategy in strategies.items():
@@ -134,6 +142,8 @@ def compare_purification_policies(
     min_fidelity, policy, requires_purification, estimated_fidelity,
     feasible, final_status, observed_delivered_pairs,
     observed_average_fidelity."""
+    from ..experiments.runner import run_scenario  # deferred: experiments.runner also imports from demos, see module docstring
+
     capabilities = NetworkCapabilities(topology_spec)
     rows = []
     for target in fidelity_targets:

@@ -1,5 +1,5 @@
 from .scenarios import Scenario
-from .runner import IntentRunResult, ScenarioResult, run_scenario
+from .runner import CampaignRunner, CampaignRunSummary, IntentRunResult, ScenarioResult, execute_trial, run_scenario
 from .seeds import seeds_for_trials
 from .campaigns import CampaignSpec, ExecutionOptions, load_campaign_file
 from .records import TrialIdentity, TrialRecord
@@ -19,6 +19,9 @@ __all__ = [
     "IntentRunResult",
     "ScenarioResult",
     "run_scenario",
+    "CampaignRunner",
+    "CampaignRunSummary",
+    "execute_trial",
     "seeds_for_trials",
     "CampaignSpec",
     "ExecutionOptions",
