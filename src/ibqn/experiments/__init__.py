@@ -13,6 +13,9 @@ from .sweeps import (
     resolve_purification_policy,
     resolve_routing_strategy,
 )
+from .validation import ValidationIssue, validate_trials
+from .aggregation import aggregate_records, align_paired_trials
+from .status import CampaignStatus, compute_campaign_status
 
 __all__ = [
     "Scenario",
@@ -36,4 +39,10 @@ __all__ = [
     "expand_parameter_grid",
     "resolve_routing_strategy",
     "resolve_purification_policy",
+    "ValidationIssue",
+    "validate_trials",
+    "aggregate_records",
+    "align_paired_trials",
+    "CampaignStatus",
+    "compute_campaign_status",
 ]

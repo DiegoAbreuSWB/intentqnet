@@ -325,6 +325,15 @@ def execute_trial(
             simulation_wall_time_s=round(simulation_wall_time_s, 6),
         )
 
+    source_router = adapter.get_router(intent.endpoints.source)
+    accepted_reservation = source_router.network_manager.protocol_stack[-1].accepted_reservations[0]
+    if accepted_reservation.path != plan.route:
+        raise AssertionError(
+            f"planned route {plan.route} does not match the route SeQUeNCe actually accepted "
+            f"{accepted_reservation.path} for trial {identity.trial_id} - see docs/campaign_architecture.md, "
+            f"section 15 (this invariant is enforced here, not post-hoc on persisted data)"
+        )
+
     evidence = collect_intent_evidence(intent)
     evaluation = evaluate_intent(intent, evidence)
     final_status = IntentStatus.SATISFIED if evaluation.satisfied else IntentStatus.VIOLATED
@@ -396,7 +405,11 @@ class CampaignRunner:
         self._campaign_file = Path(campaign_file)
         self._base_dir = self._campaign_file.parent
 
-    def run(self) -> CampaignRunSummary:
+    def run(self, *, force_resume: bool = False) -> CampaignRunSummary:
+        """`force_resume=True` (used by the CLI's `resume` command) allows
+        continuing regardless of `CampaignSpec.execution.resume` - explicit
+        user intent overrides the spec's own default for this one
+        invocation."""
         start = time.perf_counter()
         scenario = Scenario.load(self._base_dir / self._spec.scenario_file)
         base_topology = scenario.topology_spec()
@@ -413,7 +426,7 @@ class CampaignRunner:
         manifest_file = manifest_path(self._spec.output_directory, self._spec.name)
 
         known_trial_ids = read_trial_ids(trials_path)
-        if known_trial_ids and not self._spec.execution.resume:
+        if known_trial_ids and not (self._spec.execution.resume or force_resume):
             raise RuntimeError(
                 f"campaign '{self._spec.name}' already has {len(known_trial_ids)} trial(s) in {trials_path} "
                 f"and execution.resume is False - delete existing results or set resume: true to continue"
