@@ -104,12 +104,15 @@ class IntentRequestApp(RequestApp):
             )
 
     def get_memory(self, info: MemoryInfo) -> None:
-        # `info.fidelity`/`info.remote_node` must be read *before* any state
-        # change: a successful match resets the memory to RAW
-        # (MemoryInfo.to_raw() zeroes these fields in place on this same,
+        # `info.fidelity`/`info.remote_node`/`info.remote_memo` must be read
+        # *before* any state change: a successful match resets the memory to
+        # RAW (MemoryInfo.to_raw() zeroes these fields in place on this same,
         # mutable `info` object) as a side effect - reading them afterwards
         # would always observe stale/zeroed values.
         fidelity_at_delivery = info.fidelity
+        local_memory = info.memory.name
+        remote_node_at_delivery = info.remote_node
+        remote_memory_at_delivery = info.remote_memo
 
         if info.state == "ENTANGLED":
             pairs_before = self.memory_counter
@@ -128,6 +131,9 @@ class IntentRequestApp(RequestApp):
                 intent_id=self.intent_id,
                 fidelity=fidelity_at_delivery,
                 pair_number=self._delivered_pairs,
+                local_memory=local_memory,
+                remote_node=remote_node_at_delivery,
+                remote_memory=remote_memory_at_delivery,
             )
 
     def _count_purified_delivery(self, info: MemoryInfo) -> bool:

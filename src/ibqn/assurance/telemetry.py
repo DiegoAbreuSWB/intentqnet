@@ -35,6 +35,9 @@ class DeliveredPair:
     pair_number: int
     sim_time_s: float
     fidelity: float
+    local_memory: str = ""
+    remote_node: str = ""
+    remote_memory: str = ""
 
 
 @dataclass(frozen=True)
@@ -75,7 +78,14 @@ def collect_intent_evidence(intent: EntanglementIntent, *, storage=None) -> Inte
             continue
         seen_pair_numbers.add(pair_number)
         delivered.append(
-            DeliveredPair(pair_number=pair_number, sim_time_s=record["sim_time"] / SECOND, fidelity=record["fidelity"])
+            DeliveredPair(
+                pair_number=pair_number,
+                sim_time_s=record["sim_time"] / SECOND,
+                fidelity=record["fidelity"],
+                local_memory=record.get("local_memory", ""),
+                remote_node=record.get("remote_node", ""),
+                remote_memory=record.get("remote_memory", ""),
+            )
         )
 
     delivered.sort(key=lambda pair: pair.pair_number)
