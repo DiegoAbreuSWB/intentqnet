@@ -32,7 +32,7 @@ configuração, execução, resultados, interpretação, limitações, conclusã
 `tests/notebooks/test_notebooks.py` descobre todo `.ipynb` em `notebooks/`
 (não recursivo em `notebooks/article/`) e, para cada um:
 
-1. confirma que os notebooks obrigatórios da Fase H1 existem;
+1. confirma que os notebooks obrigatórios das Fases H1 e H2 existem;
 2. executa cada notebook do início ao fim em kernel limpo (`nbclient`,
    `NotebookClient.execute`) — qualquer exceção em qualquer célula
    (`CellExecutionError`) falha o teste imediatamente;
@@ -45,6 +45,13 @@ configuração, execução, resultados, interpretação, limitações, conclusã
    (`SequenceAdapter(`/`run_scenario(`), existe uma seed explícita
    (`seed=`) em algum lugar do notebook;
 7. confirma a presença de seções Markdown mínimas (objetivo, limitações).
+
+Além disso, checks específicos por notebook (Fase H2): `11` mostra
+`SATISFIED`; `14` mostra os três status terminais
+(`SATISFIED`/`VIOLATED`/`REJECTED`); `15` mostra os dois episódios e a
+recuperação (`VIOLATED` -> `SATISFIED`); `18` mostra o `ValueError` real
+de conflito de nó; `19` mostra o ciclo completo
+(`VIOLATED` -> `RECONCILING` -> ... -> `SATISFIED`).
 
 ### Pré-requisito: kernel Jupyter
 
@@ -87,5 +94,20 @@ jupyter nbconvert --execute --to notebook --inplace notebooks/01_sequence_two_no
 | `05_sequence_memory_lifecycle.ipynb` | Transições reais de estado de memória (via `ibqn.demos.instrumentation.MemoryLifecycleRecorder`), com protocolo responsável por cada transição |
 | `06_sequence_metrics_and_callbacks.ipynb` | Métricas nativas do SeQUeNCe vs. eventos `DELIVERY` tagueados por intent; por que métricas globais não bastam para assurance por intent |
 
-Os notebooks das Fases H2 e H3 (arquitetura intent-based e campanhas do
+## Notebooks da Fase H2 (arquitetura intent-based)
+
+| Notebook | Objetivo |
+|---|---|
+| `10_intent_schema_and_validation.ipynb` | Carga de um intent YAML real, modelo tipado, conversão de condições, nove exceções reais de validação, transições de lifecycle válidas/inválidas |
+| `11_single_intent_end_to_end.ipynb` | Ciclo completo Intent → Validation → Planning → ExecutionPlan → Deployment → Reservation → Simulation → Assurance → `SATISFIED`, confirmando que a rota aceita pelo SeQUeNCe é a rota planejada |
+| `12_execution_plan_and_strategy_selection.ipynb` | `ShortestHopCountRouting`/`LeastLossRouting`/`HighestFidelityRouting` numa topologia em diamante onde realmente divergem; confirmação por execução real |
+| `13_intent_assurance.ipynb` | Quatro casos isolados de assurance (tudo passa; pares insuficientes; fidelidade insuficiente; zero pares), com `evidence_source` por condição |
+| `14_satisfied_violated_rejected.ipynb` | `SATISFIED`/`VIOLATED`/`REJECTED` lado a lado, com a distinção entre inviabilidade de planejamento e violação observada |
+| `15_reconciliation_between_episodes.ipynb` | Reconciliation real entre dois episódios (`VIOLATED` → `SATISFIED`) na topologia em diamante, com classificação da violação |
+| `16_routing_strategy_comparison.ipynb` | As três estratégias de roteamento comparadas em poucas seeds (descritivo, não uma campanha estatística) |
+| `17_purification_policy_comparison.ipynb` | `NeverPurify` vs. `PurifyUntilTarget` em quatro requisitos de fidelidade, incluindo o teto real de um round de purificação |
+| `18_multiple_intents_and_constraints.ipynb` | `ValueError` real de conflito de nó, caso suportado de intents em nós disjuntos, e alternativas arquiteturais documentadas (não implementadas) |
+| `19_complete_ibqn_demonstration.ipynb` | Demonstração de ponta a ponta da arquitetura completa, incluindo reconciliation, com diagrama de arquitetura |
+
+Os notebooks da Fase H3 (infraestrutura de campanhas e notebooks do
 artigo) serão adicionados a este documento conforme forem implementados.
