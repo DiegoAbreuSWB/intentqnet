@@ -1,10 +1,11 @@
 """Automatic notebook validation (see docs/notebooks.md and the project
 brief's Fase H, section 2).
 
-Discovers every `.ipynb` file directly under `notebooks/` (not recursing
-into `notebooks/article/`, which holds long-running campaign-consuming
-notebooks validated separately once Fase H3 exists), executes each one in
-a clean kernel, and checks:
+Discovers every `.ipynb` file directly under `notebooks/` plus every
+`.ipynb` file under `notebooks/article/` (the Fase H3 article notebooks,
+which only read already-persisted campaign data - see
+`docs/campaign_architecture.md` - and never run a simulation themselves),
+executes each one in a clean kernel, and checks:
 
 - it runs end to end without raising (`nbclient` surfaces any cell
   exception as `CellExecutionError`, which fails the test);
@@ -59,7 +60,19 @@ REQUIRED_H2_NOTEBOOKS = [
     "19_complete_ibqn_demonstration.ipynb",
 ]
 
+REQUIRED_ARTICLE_NOTEBOOKS = [
+    "article/A00_campaign_validation.ipynb",
+    "article/A01_routing_strategy_comparison.ipynb",
+    "article/A02_fidelity_throughput_tradeoff.ipynb",
+    "article/A03_assurance_outcomes.ipynb",
+    "article/A04_reconciliation_effectiveness.ipynb",
+    "article/A05_planner_estimation_error.ipynb",
+    "article/A06_delivery_overprovisioning.ipynb",
+    "article/A07_summary_tables_and_figures.ipynb",
+]
+
 REQUIRED_NOTEBOOKS = REQUIRED_H1_NOTEBOOKS + REQUIRED_H2_NOTEBOOKS
+ALL_REQUIRED_NOTEBOOKS = REQUIRED_NOTEBOOKS + REQUIRED_ARTICLE_NOTEBOOKS
 
 _EXTERNAL_TEMP_PATTERNS = [
     re.compile(r"AppData[\\/]Local[\\/]Temp", re.IGNORECASE),
@@ -71,7 +84,16 @@ _SIMULATION_TRIGGERS = ("SequenceAdapter(", "run_scenario(")
 
 
 def _discovered_notebooks() -> list[Path]:
-    return sorted(NOTEBOOKS_DIR.glob("*.ipynb"))
+    top_level = NOTEBOOKS_DIR.glob("*.ipynb")
+    article = (NOTEBOOKS_DIR / "article").glob("*.ipynb")
+    return sorted(top_level) + sorted(article)
+
+
+def _notebook_id(path: Path) -> str:
+    """Path relative to `notebooks/`, POSIX-separated (e.g.
+    `article/A00_campaign_validation.ipynb`), used as the stable
+    identifier in `ALL_REQUIRED_NOTEBOOKS`."""
+    return path.relative_to(NOTEBOOKS_DIR).as_posix()
 
 
 def _code_cells(notebook) -> list:
@@ -119,24 +141,24 @@ def executed_notebooks():
     return executed
 
 
-@pytest.mark.parametrize("required_name", REQUIRED_NOTEBOOKS)
+@pytest.mark.parametrize("required_name", ALL_REQUIRED_NOTEBOOKS)
 def test_required_notebook_exists(required_name):
     assert (NOTEBOOKS_DIR / required_name).exists(), f"missing required notebook: {required_name}"
 
 
 def test_at_least_the_required_notebooks_are_discovered():
-    discovered_names = {path.name for path in _discovered_notebooks()}
-    missing = set(REQUIRED_NOTEBOOKS) - discovered_names
+    discovered_ids = {_notebook_id(path) for path in _discovered_notebooks()}
+    missing = set(ALL_REQUIRED_NOTEBOOKS) - discovered_ids
     assert not missing, f"required notebooks not found under notebooks/: {missing}"
 
 
 def test_all_notebooks_execute_without_exception(executed_notebooks):
     # the `executed_notebooks` fixture already raises via pytest.fail on
     # any CellExecutionError; reaching this point means every notebook ran
-    assert len(executed_notebooks) >= len(REQUIRED_NOTEBOOKS)
+    assert len(executed_notebooks) >= len(ALL_REQUIRED_NOTEBOOKS)
 
 
-@pytest.mark.parametrize("notebook_name", REQUIRED_NOTEBOOKS)
+@pytest.mark.parametrize("notebook_name", ALL_REQUIRED_NOTEBOOKS)
 def test_notebook_produced_visible_output(executed_notebooks, notebook_name):
     path = NOTEBOOKS_DIR / notebook_name
     notebook = executed_notebooks[path]
@@ -145,7 +167,7 @@ def test_notebook_produced_visible_output(executed_notebooks, notebook_name):
     assert cells_with_output, f"{notebook_name} produced no visible output in any code cell"
 
 
-@pytest.mark.parametrize("notebook_name", REQUIRED_NOTEBOOKS)
+@pytest.mark.parametrize("notebook_name", ALL_REQUIRED_NOTEBOOKS)
 def test_notebook_does_not_reference_external_temp_paths(notebook_name):
     notebook = nbformat.read(NOTEBOOKS_DIR / notebook_name, as_version=4)
     code = _code_text(notebook)
@@ -153,7 +175,7 @@ def test_notebook_does_not_reference_external_temp_paths(notebook_name):
         assert not pattern.search(code), f"{notebook_name} references an external temp path ({pattern.pattern})"
 
 
-@pytest.mark.parametrize("notebook_name", REQUIRED_NOTEBOOKS)
+@pytest.mark.parametrize("notebook_name", ALL_REQUIRED_NOTEBOOKS)
 def test_notebook_uses_an_explicit_seed_when_it_simulates(notebook_name):
     notebook = nbformat.read(NOTEBOOKS_DIR / notebook_name, as_version=4)
     code = _code_text(notebook)
@@ -163,7 +185,7 @@ def test_notebook_uses_an_explicit_seed_when_it_simulates(notebook_name):
         )
 
 
-@pytest.mark.parametrize("notebook_name", REQUIRED_NOTEBOOKS)
+@pytest.mark.parametrize("notebook_name", ALL_REQUIRED_NOTEBOOKS)
 def test_notebook_has_required_markdown_sections(notebook_name):
     """Each notebook must at least mention its objective and limitations in
     Markdown (see the project brief's per-notebook structure requirement)."""
@@ -207,3 +229,25 @@ def test_notebook_19_completes_the_full_cycle(executed_notebooks):
     assert "VIOLATED" in text
     assert "RECONCILING" in text
     assert "SATISFIED" in text
+
+
+# --- H3 article-notebook invariants (see the project brief's Fase H3: article
+# notebooks must never run campaigns/simulations themselves, only load/
+# validate/plot data already persisted under results/) ---
+
+@pytest.mark.parametrize("notebook_name", REQUIRED_ARTICLE_NOTEBOOKS)
+def test_article_notebook_never_runs_a_campaign_or_simulation(notebook_name):
+    notebook = nbformat.read(NOTEBOOKS_DIR / notebook_name, as_version=4)
+    code = _code_text(notebook)
+    assert "CampaignRunner(" not in code, (
+        f"{notebook_name} must never run a campaign - it should only read already-persisted results"
+    )
+    assert not any(trigger in code for trigger in _SIMULATION_TRIGGERS), (
+        f"{notebook_name} must never run a simulation directly - it should only read already-persisted results"
+    )
+
+
+def test_notebook_A00_confirms_all_campaigns_pass_validation(executed_notebooks):
+    notebook = executed_notebooks[NOTEBOOKS_DIR / "article/A00_campaign_validation.ipynb"]
+    text = _output_text(notebook)
+    assert "0 validation issues" in text
