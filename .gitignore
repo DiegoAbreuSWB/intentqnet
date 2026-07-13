@@ -19,11 +19,13 @@ results/raw/*
 !results/raw/C02_fidelity_throughput/
 !results/raw/C03_assurance_outcomes/
 !results/raw/C04_reconciliation_effectiveness/
+!results/raw/P00_variability_study/
 
 results/processed/*
 !results/processed/C01_routing_strategy/
 !results/processed/C02_fidelity_throughput/
 !results/processed/C03_assurance_outcomes/
 !results/processed/C04_reconciliation_effectiveness/
+!results/processed/P00_variability_study/
 
 .DS_Store

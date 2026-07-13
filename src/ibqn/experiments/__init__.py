@@ -27,6 +27,14 @@ from .baselines import (
 from .topology_catalog import linear_chain_spec, near_equivalent_paths_spec, small_mesh_spec
 from .reconciliation_metrics import compute_reconciliation_metrics
 from .overhead import TrialTiming, run_instrumented_trial
+from .variability_study import (
+    PilotScenario,
+    build_pilot_scenarios,
+    compute_ranking_stability,
+    compute_satisfaction_rate,
+    compute_variability_metrics,
+    run_pilot_trials,
+)
 from .planner_operation_matrix import (
     EXECUTION_FAILED,
     FEASIBLE_AND_SATISFIED,
@@ -89,4 +97,10 @@ __all__ = [
     "compute_reconciliation_metrics",
     "TrialTiming",
     "run_instrumented_trial",
+    "PilotScenario",
+    "build_pilot_scenarios",
+    "run_pilot_trials",
+    "compute_variability_metrics",
+    "compute_satisfaction_rate",
+    "compute_ranking_stability",
 ]

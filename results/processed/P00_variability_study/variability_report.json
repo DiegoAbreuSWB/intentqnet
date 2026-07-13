@@ -1,0 +1,580 @@
+{
+  "linear_favoravel": {
+    "default": {
+      "delivered_pairs_by_n": {
+        "5": {
+          "n": 5,
+          "mean": 747.8,
+          "std": 15.401298646542765,
+          "median": 750.0,
+          "coefficient_of_variation": 0.020595478264967593,
+          "ci95_width": 38.24647610999302,
+          "relative_ci95_width": 0.051145327774796766
+        },
+        "10": {
+          "n": 10,
+          "mean": 756.5,
+          "std": 20.30462454165991,
+          "median": 757.0,
+          "coefficient_of_variation": 0.02684021750384654,
+          "ci95_width": 29.050106778035715,
+          "relative_ci95_width": 0.03840066989826268
+        },
+        "20": {
+          "n": 20,
+          "mean": 751.9,
+          "std": 18.603621605539747,
+          "median": 751.0,
+          "coefficient_of_variation": 0.024742148697353035,
+          "ci95_width": 17.413525845954954,
+          "relative_ci95_width": 0.023159364072290137
+        },
+        "30": {
+          "n": 30,
+          "mean": 747.9333333333333,
+          "std": 19.26750584816819,
+          "median": 746.0,
+          "coefficient_of_variation": 0.025760993646717432,
+          "ci95_width": 14.389209847457169,
+          "relative_ci95_width": 0.019238626233341435
+        }
+      },
+      "satisfaction_rate_by_n": {
+        "5": 1.0,
+        "10": 1.0,
+        "20": 1.0,
+        "30": 1.0
+      },
+      "final_statuses": [
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED"
+      ]
+    }
+  },
+  "linear_intermediario": {
+    "default": {
+      "delivered_pairs_by_n": {
+        "5": {
+          "n": 5,
+          "mean": 31.8,
+          "std": 3.63318042491699,
+          "median": 31.0,
+          "coefficient_of_variation": 0.1142509567583959,
+          "ci95_width": 9.022378665196161,
+          "relative_ci95_width": 0.2837225995344705
+        },
+        "10": {
+          "n": 10,
+          "mean": 34.0,
+          "std": 4.618802153517006,
+          "median": 34.0,
+          "coefficient_of_variation": 0.13584712216226488,
+          "ci95_width": 6.608184035661136,
+          "relative_ci95_width": 0.1943583539900334
+        },
+        "20": {
+          "n": 20,
+          "mean": 35.1,
+          "std": 4.27846504694087,
+          "median": 35.0,
+          "coefficient_of_variation": 0.12189359108093645,
+          "ci95_width": 4.00476655866481,
+          "relative_ci95_width": 0.11409591335227377
+        },
+        "30": {
+          "n": 30,
+          "mean": 35.0,
+          "std": 3.796550158163102,
+          "median": 35.0,
+          "coefficient_of_variation": 0.10847286166180292,
+          "ci95_width": 2.8353102551360756,
+          "relative_ci95_width": 0.0810088644324593
+        }
+      },
+      "satisfaction_rate_by_n": {
+        "5": 1.0,
+        "10": 1.0,
+        "20": 1.0,
+        "30": 1.0
+      },
+      "final_statuses": [
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED"
+      ]
+    }
+  },
+  "diamante_divergencia": {
+    "shortest_hop_count": {
+      "delivered_pairs_by_n": {
+        "5": {
+          "n": 5,
+          "mean": 8.8,
+          "std": 3.8340579025361627,
+          "median": 8.0,
+          "coefficient_of_variation": 0.435688398015473,
+          "ci95_width": 9.52122332921558,
+          "relative_ci95_width": 1.0819571965017705
+        },
+        "10": {
+          "n": 10,
+          "mean": 7.1,
+          "std": 3.478505426185217,
+          "median": 7.0,
+          "coefficient_of_variation": 0.4899303417162278,
+          "ci95_width": 4.97674575815605,
+          "relative_ci95_width": 0.7009501067825423
+        },
+        "20": {
+          "n": 20,
+          "mean": 7.85,
+          "std": 3.013565819319104,
+          "median": 8.0,
+          "coefficient_of_variation": 0.3838937349451088,
+          "ci95_width": 2.8207844362719783,
+          "relative_ci95_width": 0.3593355969773221
+        },
+        "30": {
+          "n": 30,
+          "mean": 7.633333333333334,
+          "std": 2.6714755490543802,
+          "median": 8.0,
+          "coefficient_of_variation": 0.3499749627582157,
+          "ci95_width": 1.9950907284322408,
+          "relative_ci95_width": 0.2613655976112106
+        }
+      },
+      "satisfaction_rate_by_n": {
+        "5": 0.4,
+        "10": 0.2,
+        "20": 0.25,
+        "30": 0.2
+      },
+      "final_statuses": [
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "SATISFIED",
+        "SATISFIED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "SATISFIED",
+        "VIOLATED",
+        "SATISFIED",
+        "VIOLATED",
+        "SATISFIED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "SATISFIED"
+      ]
+    },
+    "least_loss": {
+      "delivered_pairs_by_n": {
+        "5": {
+          "n": 5,
+          "mean": 446.4,
+          "std": 8.61974477580398,
+          "median": 444.0,
+          "coefficient_of_variation": 0.01930946410350354,
+          "ci95_width": 21.405653523641554,
+          "relative_ci95_width": 0.047951732803856534
+        },
+        "10": {
+          "n": 10,
+          "mean": 443.2,
+          "std": 9.566144004305555,
+          "median": 444.0,
+          "coefficient_of_variation": 0.021584259937512534,
+          "ci95_width": 13.686414353979693,
+          "relative_ci95_width": 0.030880898813131077
+        },
+        "20": {
+          "n": 20,
+          "mean": 446.1,
+          "std": 10.437281356045892,
+          "median": 446.0,
+          "coefficient_of_variation": 0.023396730230992806,
+          "ci95_width": 9.769596076975024,
+          "relative_ci95_width": 0.021900013622450174
+        },
+        "30": {
+          "n": 30,
+          "mean": 446.3333333333333,
+          "std": 9.792091577965577,
+          "median": 445.5,
+          "coefficient_of_variation": 0.021938965447271645,
+          "ci95_width": 7.312854173819308,
+          "relative_ci95_width": 0.016384288664270295
+        }
+      },
+      "satisfaction_rate_by_n": {
+        "5": 1.0,
+        "10": 1.0,
+        "20": 1.0,
+        "30": 1.0
+      },
+      "final_statuses": [
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED"
+      ]
+    },
+    "highest_fidelity": {
+      "delivered_pairs_by_n": {
+        "5": {
+          "n": 5,
+          "mean": 8.8,
+          "std": 3.8340579025361627,
+          "median": 8.0,
+          "coefficient_of_variation": 0.435688398015473,
+          "ci95_width": 9.52122332921558,
+          "relative_ci95_width": 1.0819571965017705
+        },
+        "10": {
+          "n": 10,
+          "mean": 7.1,
+          "std": 3.478505426185217,
+          "median": 7.0,
+          "coefficient_of_variation": 0.4899303417162278,
+          "ci95_width": 4.97674575815605,
+          "relative_ci95_width": 0.7009501067825423
+        },
+        "20": {
+          "n": 20,
+          "mean": 7.85,
+          "std": 3.013565819319104,
+          "median": 8.0,
+          "coefficient_of_variation": 0.3838937349451088,
+          "ci95_width": 2.8207844362719783,
+          "relative_ci95_width": 0.3593355969773221
+        },
+        "30": {
+          "n": 30,
+          "mean": 7.633333333333334,
+          "std": 2.6714755490543802,
+          "median": 8.0,
+          "coefficient_of_variation": 0.3499749627582157,
+          "ci95_width": 1.9950907284322408,
+          "relative_ci95_width": 0.2613655976112106
+        }
+      },
+      "satisfaction_rate_by_n": {
+        "5": 0.4,
+        "10": 0.2,
+        "20": 0.25,
+        "30": 0.2
+      },
+      "final_statuses": [
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "SATISFIED",
+        "SATISFIED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "SATISFIED",
+        "VIOLATED",
+        "SATISFIED",
+        "VIOLATED",
+        "SATISFIED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "VIOLATED",
+        "SATISFIED"
+      ]
+    }
+  },
+  "com_purificacao": {
+    "default": {
+      "delivered_pairs_by_n": {
+        "5": {
+          "n": 5,
+          "mean": 139.2,
+          "std": 6.760177512462228,
+          "median": 141.0,
+          "coefficient_of_variation": 0.04856449362401026,
+          "ci95_width": 16.787738077382052,
+          "relative_ci95_width": 0.12060156664785958
+        },
+        "10": {
+          "n": 10,
+          "mean": 144.4,
+          "std": 8.395766128763288,
+          "median": 143.5,
+          "coefficient_of_variation": 0.0581424247144272,
+          "ci95_width": 12.01193856225082,
+          "relative_ci95_width": 0.08318517009868989
+        },
+        "20": {
+          "n": 20,
+          "mean": 143.85,
+          "std": 6.722115894959202,
+          "median": 143.5,
+          "coefficient_of_variation": 0.04673003750406119,
+          "ci95_width": 6.292094160930477,
+          "relative_ci95_width": 0.043740661528887566
+        },
+        "30": {
+          "n": 30,
+          "mean": 143.1,
+          "std": 6.624666549838695,
+          "median": 142.0,
+          "coefficient_of_variation": 0.04629396610648984,
+          "ci95_width": 4.947382287371757,
+          "relative_ci95_width": 0.03457290207806958
+        }
+      },
+      "satisfaction_rate_by_n": {
+        "5": 1.0,
+        "10": 1.0,
+        "20": 1.0,
+        "30": 1.0
+      },
+      "final_statuses": [
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED"
+      ]
+    }
+  },
+  "proximo_violacao": {
+    "default": {
+      "delivered_pairs_by_n": {
+        "5": {
+          "n": 5,
+          "mean": 17.8,
+          "std": 3.03315017762062,
+          "median": 19.0,
+          "coefficient_of_variation": 0.17040169537194494,
+          "ci95_width": 7.532306753393753,
+          "relative_ci95_width": 0.423163300752458
+        },
+        "10": {
+          "n": 10,
+          "mean": 18.8,
+          "std": 2.7406406388125952,
+          "median": 19.5,
+          "coefficient_of_variation": 0.14577875738364868,
+          "ci95_width": 3.921072415516888,
+          "relative_ci95_width": 0.20856768167643022
+        },
+        "20": {
+          "n": 20,
+          "mean": 19.7,
+          "std": 3.495862215760076,
+          "median": 20.0,
+          "coefficient_of_variation": 0.17745493481015615,
+          "ci95_width": 3.272227759669554,
+          "relative_ci95_width": 0.16610293196292153
+        },
+        "30": {
+          "n": 30,
+          "mean": 19.766666666666666,
+          "std": 3.1037611591959413,
+          "median": 20.0,
+          "coefficient_of_variation": 0.15701995746353836,
+          "ci95_width": 2.3179269277503978,
+          "relative_ci95_width": 0.11726443142076212
+        }
+      },
+      "satisfaction_rate_by_n": {
+        "5": 0.8,
+        "10": 0.9,
+        "20": 0.95,
+        "30": 0.9666666666666667
+      },
+      "final_statuses": [
+        "VIOLATED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED",
+        "SATISFIED"
+      ]
+    }
+  },
+  "diamante_divergencia_ranking_stability": {
+    "5": [
+      "least_loss",
+      "shortest_hop_count",
+      "highest_fidelity"
+    ],
+    "10": [
+      "least_loss",
+      "shortest_hop_count",
+      "highest_fidelity"
+    ],
+    "20": [
+      "least_loss",
+      "shortest_hop_count",
+      "highest_fidelity"
+    ],
+    "30": [
+      "least_loss",
+      "shortest_hop_count",
+      "highest_fidelity"
+    ]
+  }
+}
