@@ -11,9 +11,14 @@ scope for this planner version (see docs/sequence_integration.md). The
 interface is kept here, ready for that future strategy, rather than left
 unmodeled.
 
-This does not bias fidelity estimates: `feasibility.estimate_swap_only_fidelity`
-is a simple product over hops, which is order-independent regardless of
-which concrete `SwappingStrategy` (if any) ends up controlling execution.
+This does not bias `ConservativeMinEstimator`'s fidelity estimate (a
+simple product over hops, order-independent by construction) - but Fase
+J1's `SequenceConsistentEstimator` genuinely IS sensitive to swap order
+(see `planning.fidelity_estimation` and docs/fidelity_estimation_model.md),
+since it reproduces the real per-node mechanism where swap order
+determines how many times each interior node's own `raw_fidelity`
+contributes. `SwappingStrategy` still doesn't control that order either
+way - only describes it.
 """
 from __future__ import annotations
 

@@ -54,6 +54,7 @@ def reconcile(
     purification_strategy: PurificationStrategy | None = None,
     swapping_strategy: SwappingStrategy | None = None,
     fidelity_estimator: LinkFidelityEstimator | None = None,
+    intent_override: EntanglementIntent | None = None,
 ) -> ReconciliationResult:
     """Attempts to satisfy `intent` again, on a fresh episode.
 
@@ -61,9 +62,21 @@ def reconcile(
     status `VIOLATED` (the outcome of a prior `evaluate_intent` call,
     `trigger_evaluation`). Builds a brand-new `SequenceAdapter` (new
     `Timeline`, simulation time restarts at 0) over the same `topology_spec`,
-    replans `intent` (optionally with different strategies), and - if a
-    feasible plan exists - deploys and runs it, then evaluates the outcome
-    the same way `experiments.runner.run_scenario` does.
+    replans (optionally with different strategies), and - if a feasible
+    plan exists - deploys and runs it, then evaluates the outcome the
+    same way `experiments.runner.run_scenario` does.
+
+    `intent_override` (Fase J6, see
+    `assurance.reconciliation_policy.apply_reconciliation_decision`): when
+    a `ReconciliationDecision` calls for a duration or reserved-slot
+    increase rather than a route change, episode 2 needs to plan/deploy/
+    evaluate against a MODIFIED intent (same `id`, different
+    `requirements.duration_s`/`reserved_memory_slots`) - `intent_override`
+    must share `intent`'s `id` if given; everything downstream (planning,
+    deployment, evidence collection, evaluation) uses it instead of
+    `intent`, while repository bookkeeping stays keyed by the same `id`.
+    Defaults to `None` (use `intent` unchanged), preserving this
+    function's exact prior behavior for every existing caller.
 
     Does not retry more than once: if the new plan is infeasible or the new
     run is still violated, `reconcile` returns that outcome directly rather
@@ -81,6 +94,13 @@ def reconcile(
     empirically while building the Fase H3 campaign runner, which reuses
     this function directly.
     """
+    if intent_override is not None and intent_override.id != intent.id:
+        raise ValueError(
+            f"intent_override.id ({intent_override.id!r}) must match intent.id ({intent.id!r}) - "
+            f"reconciliation continues the SAME intent's lifecycle, it never starts a new one"
+        )
+    working_intent = intent_override if intent_override is not None else intent
+
     trigger_violations = classify_violations(trigger_evaluation)
     reason = "; ".join(str(v.metric) for v in trigger_violations) or "unspecified violation"
 
@@ -98,11 +118,11 @@ def reconcile(
         swapping_strategy=swapping_strategy,
         fidelity_estimator=fidelity_estimator,
     )
-    new_plan = planner.plan(intent)
+    new_plan = planner.plan(working_intent)
 
     adapter = SequenceAdapter(topology_spec, seed=seed)
     executor = SequenceExecutor(adapter, repository)
-    executor.redeploy(intent, new_plan)
+    executor.redeploy(working_intent, new_plan)
 
     if not new_plan.feasible:
         logger.info("reconciliation found no feasible plan", extra={"intent_id": intent.id})
@@ -121,8 +141,8 @@ def reconcile(
             new_evaluation=None, final_status=record.lifecycle.status,
         )
 
-    evidence = collect_intent_evidence(intent)
-    new_evaluation = evaluate_intent(intent, evidence)
+    evidence = collect_intent_evidence(working_intent)
+    new_evaluation = evaluate_intent(working_intent, evidence)
     final_status = IntentStatus.SATISFIED if new_evaluation.satisfied else IntentStatus.VIOLATED
     reason = "all success conditions met after reconciliation" if new_evaluation.satisfied else "; ".join(new_evaluation.violations)
     repository.transition(intent.id, final_status, reason, sim_time=adapter.get_timeline().now() / SECOND)

@@ -25,6 +25,7 @@ from .baselines import (
     run_static_provisioning_baseline,
 )
 from .topology_catalog import linear_chain_spec, near_equivalent_paths_spec, small_mesh_spec
+from .reconciliation_metrics import compute_reconciliation_metrics
 from .planner_operation_matrix import (
     EXECUTION_FAILED,
     FEASIBLE_AND_SATISFIED,
@@ -84,4 +85,5 @@ __all__ = [
     "upgrade_rejected_with_oracle",
     "build_matrix",
     "compute_gap_metrics",
+    "compute_reconciliation_metrics",
 ]
