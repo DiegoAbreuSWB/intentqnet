@@ -24,6 +24,7 @@ from .baselines import (
     run_offline_oracle_baseline,
     run_static_provisioning_baseline,
 )
+from .topology_catalog import linear_chain_spec, near_equivalent_paths_spec, small_mesh_spec
 
 __all__ = [
     "Scenario",
@@ -60,4 +61,7 @@ __all__ = [
     "run_native_sequence_baseline",
     "run_static_provisioning_baseline",
     "run_offline_oracle_baseline",
+    "linear_chain_spec",
+    "small_mesh_spec",
+    "near_equivalent_paths_spec",
 ]
