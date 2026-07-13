@@ -18,6 +18,7 @@ from ..intent.models import EntanglementIntent
 from ..network.capabilities import NetworkCapabilities
 from ..utils.logging import get_logger
 from .feasibility import estimate_latency_s, evaluate_route
+from .fidelity_estimation import ConservativeMinEstimator, LinkFidelityEstimator
 from .models import EstimatedMetrics, ExecutionPlan
 from .purification import PurificationStrategy, PurifyUntilTarget
 from .routing import RoutingStrategy, ShortestHopCountRouting
@@ -34,11 +35,13 @@ class IntentPlanner:
         routing_strategy: RoutingStrategy | None = None,
         purification_strategy: PurificationStrategy | None = None,
         swapping_strategy: SwappingStrategy | None = None,
+        fidelity_estimator: LinkFidelityEstimator | None = None,
     ):
         self._capabilities = capabilities
         self._routing_strategy = routing_strategy or ShortestHopCountRouting()
         self._purification_strategy = purification_strategy or PurifyUntilTarget()
         self._swapping_strategy = swapping_strategy or DefaultSequenceSwappingStrategy()
+        self._fidelity_estimator = fidelity_estimator or ConservativeMinEstimator()
 
     def plan(self, intent: EntanglementIntent) -> ExecutionPlan:
         source, destination = intent.endpoints.source, intent.endpoints.destination
@@ -49,7 +52,10 @@ class IntentPlanner:
             return ExecutionPlan.infeasible(intent.id, reason)
 
         evaluated = [
-            evaluate_route(self._capabilities, route, intent, purification_strategy=self._purification_strategy)
+            evaluate_route(
+                self._capabilities, route, intent, purification_strategy=self._purification_strategy,
+                fidelity_estimator=self._fidelity_estimator,
+            )
             for route in candidates
         ]
         feasible = [result for result in evaluated if result.feasible]
@@ -77,6 +83,7 @@ class IntentPlanner:
             purification_rounds_estimate=best.purification_rounds_estimate,
             swapping_strategy_note=self._swapping_strategy.describe(best.route),
             estimated_metrics=EstimatedMetrics(fidelity=estimated_fidelity, latency_s=latency_s),
+            fidelity_estimator=self._fidelity_estimator.name,
             fallback_routes=[result.route for result in feasible[1:]],
         )
         logger.info(

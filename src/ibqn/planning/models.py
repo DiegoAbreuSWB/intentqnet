@@ -66,6 +66,12 @@ class ExecutionPlan(BaseModel):
 
     estimated_metrics: EstimatedMetrics | None = None
 
+    fidelity_estimator: str = "conservative_min"
+    """Name of the `planning.fidelity_estimation.LinkFidelityEstimator`
+    used to compute `estimated_metrics.fidelity` (Fase J1) - part of what
+    makes a trial's identity change when the estimator changes (see
+    `experiments.records.TrialIdentity`)."""
+
     fallback_routes: list[list[str]] = Field(
         default_factory=list, description="other feasible candidate routes, in the routing strategy's cost order"
     )

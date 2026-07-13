@@ -19,6 +19,7 @@ from ..intent.repository import IntentRepository
 from ..network.capabilities import NetworkCapabilities
 from ..network.sequence_adapter import SequenceAdapter
 from ..network.topology import NetworkTopologySpec
+from ..planning.fidelity_estimation import LinkFidelityEstimator
 from ..planning.models import ExecutionPlan
 from ..planning.planner import IntentPlanner
 from ..planning.purification import PurificationStrategy
@@ -52,6 +53,7 @@ def reconcile(
     routing_strategy: RoutingStrategy | None = None,
     purification_strategy: PurificationStrategy | None = None,
     swapping_strategy: SwappingStrategy | None = None,
+    fidelity_estimator: LinkFidelityEstimator | None = None,
 ) -> ReconciliationResult:
     """Attempts to satisfy `intent` again, on a fresh episode.
 
@@ -94,6 +96,7 @@ def reconcile(
         routing_strategy=routing_strategy,
         purification_strategy=purification_strategy,
         swapping_strategy=swapping_strategy,
+        fidelity_estimator=fidelity_estimator,
     )
     new_plan = planner.plan(intent)
 

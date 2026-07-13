@@ -3,14 +3,17 @@ using the same closed-form formulas SeQUeNCe's own protocols use at
 simulation time - never an independently invented physics model (see
 docs/sequence_code_analysis.md, section 2 constraints).
 
-Swap fidelity: `EntanglementSwappingA_Circuit.updated_fidelity`
-(`sequence/entanglement_management/swapping/swapping_circuit.py`) is
-`f1 * f2 * degradation`. Because multiplication is associative, the total
-end-to-end fidelity of a linear route is `product(hop_fidelities) *
-product(interior_degradations)` *regardless of swap order/tree shape* -
-so this estimate is valid even though swap order itself is not
-parametrizable in this version (see `planning.swapping`). Purification
-fidelity is delegated to a `planning.purification.PurificationStrategy`.
+Fase J1 note: the ORIGINAL claim here was that swap order never matters
+because multiplication is associative - true for `ConservativeMinEstimator`
+(a single scalar per hop), but FALSE for the real, per-node fidelity
+assignment `SequenceConsistentEstimator` reproduces, where swap order
+determines how many times each interior node's own `raw_fidelity`
+contributes (see `planning.fidelity_estimation` and
+docs/fidelity_estimation_model.md). Fidelity estimation itself is now
+delegated to a `planning.fidelity_estimation.LinkFidelityEstimator`
+(default `ConservativeMinEstimator`, preserving this module's original
+behavior exactly); purification fidelity is delegated to a
+`planning.purification.PurificationStrategy`, as before.
 """
 from __future__ import annotations
 
@@ -18,6 +21,7 @@ from dataclasses import dataclass, field
 
 from ..intent.models import EntanglementIntent
 from ..network.capabilities import NetworkCapabilities
+from .fidelity_estimation import ConservativeMinEstimator, FidelityEstimate, LinkFidelityEstimator
 from .purification import PurificationStrategy, PurifyUntilTarget
 from .resource_allocation import build_reservations
 
@@ -34,6 +38,11 @@ class FeasibilityResult:
     feasible: bool
     reason: str = ""
     reservations: list = field(default_factory=list)
+    fidelity_estimate: FidelityEstimate | None = None
+    """The full estimator output (Fase J1) - `swap_only_fidelity`/
+    `hop_fidelities`/etc. above are convenience views over this, kept for
+    backward compatibility with code written before estimators were
+    pluggable."""
 
 
 def estimate_swap_only_fidelity(capabilities: NetworkCapabilities, route: list[str]) -> tuple[float, list[float]]:
@@ -67,19 +76,29 @@ def evaluate_route(
     intent: EntanglementIntent,
     *,
     purification_strategy: PurificationStrategy = PurifyUntilTarget(),
+    fidelity_estimator: LinkFidelityEstimator | None = None,
 ) -> FeasibilityResult:
-    """Evaluates one candidate `route` against `intent`'s requirements/policy."""
-    swap_only_fidelity, hop_fidelities = estimate_swap_only_fidelity(capabilities, route)
-    reservations = build_reservations(route, intent.requirements.requested_pairs, capabilities)
+    """Evaluates one candidate `route` against `intent`'s requirements/policy.
+
+    `fidelity_estimator` defaults to `ConservativeMinEstimator` - this
+    function's behavior is byte-for-byte unchanged from before Fase J1
+    unless a caller explicitly passes a different estimator (see
+    `planning.fidelity_estimation`)."""
+    estimator = fidelity_estimator or ConservativeMinEstimator()
+    fidelity_estimate = estimator.estimate_path(
+        route, capabilities, purification_strategy=purification_strategy,
+        target_fidelity=intent.requirements.min_fidelity, allow_purification=intent.policy.allow_purification,
+    )
+    hop_fidelities = [min(a, b) for a, b in fidelity_estimate.per_link_endpoint_fidelities.values()]
+    swap_only_fidelity = fidelity_estimate.pre_swap_fidelity
+
+    reservations = build_reservations(route, intent.requirements.reserved_memory_slots, capabilities)
     memory_feasible = all(r.satisfied for r in reservations)
     memory_reason = "insufficient memory at: " + ", ".join(
         r.node_id for r in reservations if not r.satisfied
     )
 
-    decision = purification_strategy.decide(
-        swap_only_fidelity, intent.requirements.min_fidelity, intent.policy.allow_purification
-    )
-    achieved_fidelity = decision.fidelity_estimate
+    achieved_fidelity = fidelity_estimate.estimated_end_to_end_fidelity
 
     if achieved_fidelity >= intent.requirements.min_fidelity:
         feasible = memory_feasible
@@ -88,12 +107,16 @@ def evaluate_route(
         feasible = False
         reason = (
             f"min_fidelity {intent.requirements.min_fidelity:.3f} exceeds the achievable estimate "
-            f"{achieved_fidelity:.3f} ({decision.note})"
+            f"{achieved_fidelity:.3f} ({fidelity_estimate.purification_note})"
         )
 
     return FeasibilityResult(
         route=route, hop_fidelities=hop_fidelities, swap_only_fidelity=swap_only_fidelity,
-        requires_purification=decision.attempt, purified_fidelity_estimate=decision.fidelity_estimate if decision.attempt else None,
-        purification_rounds_estimate=decision.rounds_estimate,
+        requires_purification=fidelity_estimate.purification_required,
+        purified_fidelity_estimate=(
+            fidelity_estimate.estimated_end_to_end_fidelity if fidelity_estimate.purification_required else None
+        ),
+        purification_rounds_estimate=fidelity_estimate.purification_rounds_estimate,
         memory_feasible=memory_feasible, feasible=feasible, reason=reason, reservations=reservations,
+        fidelity_estimate=fidelity_estimate,
     )

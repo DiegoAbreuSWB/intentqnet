@@ -102,5 +102,11 @@ class NetworkCapabilities:
         the swap node's own `raw_fidelity`, not `min(a, b)` - up to 0.083
         (12%) off on the diamond topology's heterogeneous nodes, exactly 0
         on every uniform-fidelity topology this project otherwise uses.
-        See `docs/limitations.md`."""
+
+        This `min()` approximation is exactly what
+        `planning.fidelity_estimation.ConservativeMinEstimator` uses (Fase
+        J1) - kept as the default estimator for reproducibility, but
+        `planning.fidelity_estimation.SequenceConsistentEstimator` now
+        reproduces the real per-node mechanism instead. See
+        docs/fidelity_estimation_model.md and docs/limitations.md."""
         return min(self.node(a).raw_fidelity, self.node(b).raw_fidelity)
