@@ -10,6 +10,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from ..planning.fidelity_estimation import FIDELITY_ESTIMATORS
 from ..utils.serialization import load_dict_from_file
 from .sweeps import (
     PURIFICATION_POLICIES,
@@ -17,6 +18,12 @@ from .sweeps import (
     ensure_known_parameters,
     ensure_valid_values,
 )
+
+_STRATEGY_CATEGORIES: dict[str, dict[str, type]] = {
+    "routing": ROUTING_STRATEGIES,
+    "purification": PURIFICATION_POLICIES,
+    "fidelity_estimator": FIDELITY_ESTIMATORS,
+}
 
 
 class ExecutionOptions(BaseModel):
@@ -43,14 +50,14 @@ class CampaignSpec(BaseModel):
     @model_validator(mode="after")
     def _strategies_reference_known_names(self) -> "CampaignSpec":
         for category, names in self.strategies.items():
-            if category not in ("routing", "purification"):
+            if category not in _STRATEGY_CATEGORIES:
                 raise ValueError(
                     f"unknown strategy category '{category}' in campaign '{self.name}' - "
-                    f"supported categories: 'routing', 'purification'"
+                    f"supported categories: {sorted(_STRATEGY_CATEGORIES)}"
                 )
             if not names:
                 raise ValueError(f"strategy category '{category}' has an empty list of names")
-            known = ROUTING_STRATEGIES if category == "routing" else PURIFICATION_POLICIES
+            known = _STRATEGY_CATEGORIES[category]
             unknown = sorted(set(names) - known.keys())
             if unknown:
                 raise ValueError(
@@ -71,15 +78,17 @@ class CampaignSpec(BaseModel):
     def effective_parameter_grid(self) -> dict[str, list[Any]]:
         """Merges `strategies` into `parameter_grid` under the sweep
         parameter names the runner actually expands over
-        (`routing_strategy`/`purification_policy`), so campaigns can use
-        the more readable `strategies: {routing: [...]}` shape while
-        everything downstream goes through the same
+        (`routing_strategy`/`purification_policy`/`fidelity_estimator`), so
+        campaigns can use the more readable `strategies: {routing: [...]}`
+        shape while everything downstream goes through the same
         `sweeps.expand_parameter_grid` mechanism."""
         merged = dict(self.parameter_grid)
         if "routing" in self.strategies:
             merged["routing_strategy"] = list(self.strategies["routing"])
         if "purification" in self.strategies:
             merged["purification_policy"] = list(self.strategies["purification"])
+        if "fidelity_estimator" in self.strategies:
+            merged["fidelity_estimator"] = list(self.strategies["fidelity_estimator"])
         return merged
 
 

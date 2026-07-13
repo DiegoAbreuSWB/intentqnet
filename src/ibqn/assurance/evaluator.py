@@ -59,20 +59,24 @@ def _throughput(evidence: IntentEvidence, intent: EntanglementIntent) -> float:
     definition `sequence.app.request_app.RequestApp.get_throughput` uses
     (`memory_counter / (end_t - start_t)`), recomputed here from
     intent-scoped evidence instead of the app's own raw counter."""
-    return len(evidence.delivered_pairs) / intent.requirements.duration
+    return len(evidence.delivered_pairs) / intent.requirements.duration_s
 
 
 def _completion_time(evidence: IntentEvidence, intent: EntanglementIntent) -> float | None:
-    """Seconds from `start_time` to the delivery of the `requested_pairs`-th
-    pair, or `None` if fewer than `requested_pairs` were ever delivered -
-    the same concept as `sequence.utils.metrics.DeliveryTimeMetric`,
-    recomputed here filtered by `intent_id` instead of `owner_name` (see
-    docs/assurance_design.md, section 3)."""
-    target = intent.requirements.requested_pairs
+    """Seconds from `start_time_s` to the delivery of the Nth pair, or
+    `None` if fewer than N were ever delivered - the same concept as
+    `sequence.utils.metrics.DeliveryTimeMetric`, recomputed here filtered
+    by `intent_id` instead of `owner_name` (see docs/assurance_design.md,
+    section 3). N is `min_delivered_pairs` when the intent declares an
+    explicit service-level delivery goal (Fase J2), falling back to
+    `reserved_memory_slots` for intents that don't - matching this
+    metric's pre-J2 behavior exactly (see
+    docs/intent_resource_semantics.md)."""
+    target = intent.requirements.min_delivered_pairs or intent.requirements.reserved_memory_slots
     if len(evidence.delivered_pairs) < target:
         return None
     nth_pair = evidence.delivered_pairs[target - 1]
-    return nth_pair.sim_time_s - intent.requirements.start_time
+    return nth_pair.sim_time_s - intent.requirements.start_time_s
 
 
 _METRIC_FUNCTIONS: dict[str, Callable[[IntentEvidence, EntanglementIntent], float | None]] = {

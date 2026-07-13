@@ -244,17 +244,17 @@ class SequenceExecutor:
         self._source_apps[intent.id] = source_app
         self._destination_apps[intent.id] = destination_app
 
-        start_ps = int(intent.requirements.start_time * SECOND)
-        end_ps = int((intent.requirements.start_time + intent.requirements.duration) * SECOND)
+        start_ps = int(intent.requirements.start_time_s * SECOND)
+        end_ps = int((intent.requirements.start_time_s + intent.requirements.duration_s) * SECOND)
         logger.info(
-            "submitting reservation %s -> %s, pairs=%d, min_fidelity=%.3f",
+            "submitting reservation %s -> %s, reserved_memory_slots=%d, min_fidelity=%.3f",
             intent.endpoints.source, intent.endpoints.destination,
-            intent.requirements.requested_pairs, intent.requirements.min_fidelity,
+            intent.requirements.reserved_memory_slots, intent.requirements.min_fidelity,
             extra={"intent_id": intent.id},
         )
         source_app.start(
             intent.endpoints.destination, start_ps, end_ps,
-            intent.requirements.requested_pairs, intent.requirements.min_fidelity,
+            intent.requirements.reserved_memory_slots, intent.requirements.min_fidelity,
         )
 
     @staticmethod

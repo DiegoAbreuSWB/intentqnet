@@ -34,6 +34,7 @@ from ..intent.parser import load_intent_file
 from ..intent.repository import IntentRepository
 from ..network.capabilities import NetworkCapabilities
 from ..network.sequence_adapter import SequenceAdapter
+from ..planning.fidelity_estimation import LinkFidelityEstimator
 from ..planning.models import ExecutionPlan
 from ..planning.planner import IntentPlanner
 from ..planning.purification import PurificationStrategy
@@ -50,6 +51,7 @@ from .sweeps import (
     apply_parameters,
     compute_parameter_hash,
     expand_parameter_grid,
+    resolve_fidelity_estimator,
     resolve_purification_policy,
     resolve_routing_strategy,
 )
@@ -89,6 +91,7 @@ def run_scenario(
     routing_strategy: RoutingStrategy | None = None,
     purification_strategy: PurificationStrategy | None = None,
     swapping_strategy: SwappingStrategy | None = None,
+    fidelity_estimator: LinkFidelityEstimator | None = None,
 ) -> ScenarioResult:
     """Builds a fresh `SequenceAdapter` + `IntentPlanner` + `SequenceExecutor`
     for `scenario`, plans and deploys every declared intent, runs the
@@ -113,6 +116,7 @@ def run_scenario(
         routing_strategy=routing_strategy,
         purification_strategy=purification_strategy,
         swapping_strategy=swapping_strategy,
+        fidelity_estimator=fidelity_estimator,
     )
     repository = IntentRepository()
     executor = SequenceExecutor(adapter, repository)
@@ -170,7 +174,8 @@ def _now_iso() -> str:
 
 
 def _delivery_metrics(
-    evidence: IntentEvidence | None, *, requested_pairs: int, duration_s: float, start_time_s: float,
+    evidence: IntentEvidence | None, *,
+    reserved_memory_slots: int, min_delivered_pairs: int | None, duration_s: float, start_time_s: float,
 ) -> dict:
     """Derives every delivery-based `TrialRecord` field from `evidence` -
     `None` (not `0`) whenever there is genuinely no evidence to derive
@@ -178,10 +183,18 @@ def _delivery_metrics(
     `evidence is None` means no episode ran at all (e.g. reconciliation's
     replan was infeasible); an empty `evidence.delivered_pairs` means an
     episode ran but delivered nothing - both are distinct from "not
-    applicable"."""
+    applicable".
+
+    Fase J2: `excess_delivery_pairs`/`delivery_ratio` are computed against
+    `min_delivered_pairs` (the service-level GOAL) - both are `None`
+    whenever the intent doesn't declare one, never silently substituted
+    with `reserved_memory_slots`. `deliveries_per_reserved_slot` is a
+    separate, RESOURCE-efficiency view, always computable from
+    `reserved_memory_slots` (see docs/intent_resource_semantics.md)."""
     if evidence is None:
         return {
             "delivered_pairs": None, "excess_delivery_pairs": None, "delivery_ratio": None,
+            "deliveries_per_reserved_slot": None,
             "average_fidelity": None, "minimum_fidelity": None,
             "throughput_active_window": None, "throughput_delivery_interval": None,
             "first_pair_latency_s": None, "completion_time_s": None,
@@ -189,9 +202,14 @@ def _delivery_metrics(
 
     pairs = evidence.delivered_pairs
     delivered = len(pairs)
+    excess = max(0, delivered - min_delivered_pairs) if min_delivered_pairs is not None else None
+    ratio = (delivered / min_delivered_pairs) if min_delivered_pairs is not None else None
+    per_slot = delivered / reserved_memory_slots
+
     if not pairs:
         return {
-            "delivered_pairs": 0, "excess_delivery_pairs": 0, "delivery_ratio": 0.0,
+            "delivered_pairs": 0, "excess_delivery_pairs": excess, "delivery_ratio": ratio,
+            "deliveries_per_reserved_slot": per_slot,
             "average_fidelity": None, "minimum_fidelity": None,
             "throughput_active_window": 0.0, "throughput_delivery_interval": None,
             "first_pair_latency_s": None, "completion_time_s": None,
@@ -199,16 +217,21 @@ def _delivery_metrics(
 
     fidelities = [p.fidelity for p in pairs]
     first_time, last_time = pairs[0].sim_time_s, pairs[-1].sim_time_s
+    completion_time_s = (
+        pairs[min_delivered_pairs - 1].sim_time_s - start_time_s
+        if min_delivered_pairs is not None and delivered >= min_delivered_pairs else None
+    )
     return {
         "delivered_pairs": delivered,
-        "excess_delivery_pairs": max(0, delivered - requested_pairs),
-        "delivery_ratio": delivered / requested_pairs,
+        "excess_delivery_pairs": excess,
+        "delivery_ratio": ratio,
+        "deliveries_per_reserved_slot": per_slot,
         "average_fidelity": sum(fidelities) / len(fidelities),
         "minimum_fidelity": min(fidelities),
         "throughput_active_window": delivered / duration_s,
         "throughput_delivery_interval": (delivered / (last_time - first_time)) if last_time > first_time else None,
         "first_pair_latency_s": first_time - start_time_s,
-        "completion_time_s": (pairs[requested_pairs - 1].sim_time_s - start_time_s) if delivered >= requested_pairs else None,
+        "completion_time_s": completion_time_s,
     }
 
 
@@ -264,22 +287,37 @@ def execute_trial(
 
     intent = params.intent
     topology_spec = params.topology_spec
-    requested_pairs = intent.requirements.requested_pairs
-    duration_s = intent.requirements.duration
-    start_time_s = intent.requirements.start_time
+    reserved_memory_slots = intent.requirements.reserved_memory_slots
+    min_delivered_pairs = intent.requirements.min_delivered_pairs
+    duration_s = intent.requirements.duration_s
+    start_time_s = intent.requirements.start_time_s
     attenuation = topology_spec.quantum_links[0].attenuation_db_per_m if topology_spec.quantum_links else None
     distance = topology_spec.quantum_links[0].distance_m if topology_spec.quantum_links else None
     coherence = topology_spec.nodes[0].coherence_time_s if topology_spec.nodes else None
 
     routing_strategy = resolve_routing_strategy(params.routing_strategy_name)
     purification_strategy = resolve_purification_policy(params.purification_policy_name)
+    fidelity_estimator = resolve_fidelity_estimator(params.fidelity_estimator_name)
 
     capabilities = NetworkCapabilities(topology_spec)
-    planner = IntentPlanner(capabilities, routing_strategy=routing_strategy, purification_strategy=purification_strategy)
+    planner = IntentPlanner(
+        capabilities, routing_strategy=routing_strategy, purification_strategy=purification_strategy,
+        fidelity_estimator=fidelity_estimator,
+    )
 
     t0 = time.perf_counter()
     plan = planner.plan(intent)
     planning_time_s = time.perf_counter() - t0
+
+    def _fidelity_error_fields(estimated: float | None, observed: float | None) -> dict:
+        if estimated is None or observed is None:
+            return {"observed_fidelity": observed, "absolute_fidelity_error": None, "relative_fidelity_error": None}
+        absolute_error = observed - estimated
+        relative_error = (absolute_error / estimated) if estimated != 0 else None
+        return {
+            "observed_fidelity": observed, "absolute_fidelity_error": absolute_error,
+            "relative_fidelity_error": relative_error,
+        }
 
     def _record(**overrides) -> TrialRecord:
         fields = dict(
@@ -287,11 +325,14 @@ def execute_trial(
             parameter_hash=identity.parameter_hash, seed=identity.seed, intent_id=identity.intent_id,
             routing_strategy=params.routing_strategy_name, purification_policy=params.purification_policy_name,
             reconciliation_enabled=params.reconciliation_enabled,
-            route="", hop_count=None, requested_pairs=requested_pairs, requested_fidelity=intent.requirements.min_fidelity,
+            route="", hop_count=None, reserved_memory_slots=reserved_memory_slots,
+            min_delivered_pairs=min_delivered_pairs, requested_fidelity=intent.requirements.min_fidelity,
+            fidelity_estimator=plan.fidelity_estimator,
             estimated_fidelity=plan.estimated_metrics.fidelity if plan.estimated_metrics else None,
+            observed_fidelity=None, absolute_fidelity_error=None, relative_fidelity_error=None,
             duration_s=duration_s, attenuation_db_per_m=attenuation, distance_m=distance, coherence_time_s=coherence,
             accepted=False, satisfied=False, recovered=None, final_status="REJECTED",
-            delivered_pairs=None, excess_delivery_pairs=None, delivery_ratio=None,
+            delivered_pairs=None, excess_delivery_pairs=None, delivery_ratio=None, deliveries_per_reserved_slot=None,
             average_fidelity=None, minimum_fidelity=None,
             throughput_active_window=None, throughput_delivery_interval=None,
             first_pair_latency_s=None, completion_time_s=None,
@@ -344,6 +385,7 @@ def execute_trial(
 
     recovered = None
     estimated_fidelity = plan.estimated_metrics.fidelity if plan.estimated_metrics else None
+    fidelity_estimator_used = plan.fidelity_estimator
     if final_status == IntentStatus.VIOLATED and params.reconciliation_enabled:
         reconciliation_routing_strategy = resolve_routing_strategy(
             _reconciliation_routing_strategy_name(params.routing_strategy_name)
@@ -353,6 +395,7 @@ def execute_trial(
             intent, topology_spec, repository, evaluation,
             seed=identity.seed + RECONCILIATION_SEED_OFFSET,
             routing_strategy=reconciliation_routing_strategy, purification_strategy=purification_strategy,
+            fidelity_estimator=fidelity_estimator,
         )
         simulation_wall_time_s += time.perf_counter() - t0
 
@@ -364,6 +407,7 @@ def execute_trial(
             reconciliation_result.new_plan.estimated_metrics.fidelity
             if reconciliation_result.new_plan.estimated_metrics else None
         )
+        fidelity_estimator_used = reconciliation_result.new_plan.fidelity_estimator
 
         if reconciliation_result.new_evaluation is not None:
             evaluation = reconciliation_result.new_evaluation
@@ -378,12 +422,19 @@ def execute_trial(
     satisfied = evaluation.satisfied if evaluation is not None else False
     violations_str = "; ".join(evaluation.violations) if evaluation is not None else ""
 
+    delivery_fields = _delivery_metrics(
+        evidence, reserved_memory_slots=reserved_memory_slots, min_delivered_pairs=min_delivered_pairs,
+        duration_s=duration_s, start_time_s=start_time_s,
+    )
+
     return _record(
-        route=route_str, hop_count=hop_count, estimated_fidelity=estimated_fidelity,
+        route=route_str, hop_count=hop_count, fidelity_estimator=fidelity_estimator_used,
+        estimated_fidelity=estimated_fidelity,
         accepted=accepted, satisfied=satisfied, recovered=recovered, final_status=final_status.value,
         simulation_wall_time_s=round(simulation_wall_time_s, 6),
         violations=violations_str,
-        **_delivery_metrics(evidence, requested_pairs=requested_pairs, duration_s=duration_s, start_time_s=start_time_s),
+        **delivery_fields,
+        **_fidelity_error_fields(estimated_fidelity, delivery_fields["average_fidelity"]),
         **_native_counter_metrics(trial_metrics),
     )
 
@@ -456,7 +507,10 @@ class CampaignRunner:
                 for seed in self._spec.seeds:
                     identity = TrialIdentity(
                         campaign=self._spec.name, scenario=scenario_name, parameter_hash=parameter_hash,
-                        strategy=f"{params.routing_strategy_name}__{params.purification_policy_name}",
+                        strategy=(
+                            f"{params.routing_strategy_name}__{params.purification_policy_name}"
+                            f"__{params.fidelity_estimator_name}"
+                        ),
                         seed=seed, intent_id=base_intent.id,
                     )
                     if identity.trial_id in known_trial_ids:

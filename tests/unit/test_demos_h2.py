@@ -46,7 +46,7 @@ def test_diamond_intent_targets_r1_to_r3():
     intent = diamond_intent(requested_pairs=7, min_fidelity=0.6)
     assert intent.endpoints.source == "r1"
     assert intent.endpoints.destination == "r3"
-    assert intent.requirements.requested_pairs == 7
+    assert intent.requirements.reserved_memory_slots == 7
     assert intent.requirements.min_fidelity == 0.6
 
 

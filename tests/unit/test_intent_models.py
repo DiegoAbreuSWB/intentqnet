@@ -83,7 +83,7 @@ def test_parse_intent_dict_from_yaml_example_matches_prompt_schema():
     assert intent.endpoints.source == "node_a"
     assert intent.endpoints.destination == "node_b"
     assert intent.requirements.min_fidelity == pytest.approx(0.90)
-    assert intent.requirements.requested_pairs == 100
+    assert intent.requirements.reserved_memory_slots == 100
     assert intent.policy.allow_multiple_paths is False
 
     conditions_by_metric = {c.metric: c for c in intent.validation.success_conditions}

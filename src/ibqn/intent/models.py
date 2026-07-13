@@ -10,13 +10,23 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from ..utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 _CONDITION_PATTERN = re.compile(r"^(>=|<=|==|!=|>|<)\s*(-?\d+(?:\.\d+)?)$")
 
 ComparisonOperator = Literal[">=", "<=", ">", "<", "==", "!="]
+
+_LEGACY_REQUIREMENT_KEY_MAP: dict[str, str] = {
+    "requested_pairs": "reserved_memory_slots",
+    "start_time": "start_time_s",
+    "duration": "duration_s",
+}
 
 
 class IntentStatus(str, Enum):
@@ -60,16 +70,79 @@ class IntentEndpoints(BaseModel):
 class IntentRequirements(BaseModel):
     """Application-level requirements. Units are documented per field since
     the prompt that produced this project explicitly forbids unitless
-    parameters."""
+    parameters.
+
+    `reserved_memory_slots` and `min_delivered_pairs` are deliberately
+    separate fields (Fase J2, see docs/intent_resource_semantics.md):
+    `reserved_memory_slots` sizes the memory pool handed to SeQUeNCe's
+    `RSVPProtocol.schedule` (a RESOURCE), while `min_delivered_pairs` is an
+    OPTIONAL service-level delivery GOAL. Conflating the two under one name
+    (`requested_pairs`, this project's original field) made
+    `delivered_pairs >> requested_pairs` look like a bug instead of the
+    expected consequence of memory reuse during the reservation window
+    (see docs/metrics.md). Legacy intents that only ever declared
+    `requested_pairs` keep working unchanged - the value is migrated to
+    `reserved_memory_slots` below - and their delivery success continues
+    to be judged by `validation.success_conditions` exactly as before;
+    `min_delivered_pairs` is never silently inferred from either of those,
+    it stays `None` unless an intent explicitly declares it."""
 
     model_config = ConfigDict(frozen=True)
 
     min_fidelity: float = Field(ge=0.0, le=1.0, description="dimensionless, in [0, 1]")
     min_throughput: float = Field(gt=0.0, description="entangled pairs per second")
     max_latency: float = Field(gt=0.0, description="seconds, per-pair end-to-end latency budget")
-    requested_pairs: int = Field(gt=0, description="number of end-to-end entangled pairs requested")
-    start_time: float = Field(ge=0.0, description="seconds, relative to scenario/simulation start")
-    duration: float = Field(gt=0.0, description="seconds, length of the reservation window")
+    min_delivered_pairs: int | None = Field(
+        default=None, gt=0,
+        description=(
+            "OPTIONAL service-level delivery goal, distinct from reserved_memory_slots - "
+            "see docs/intent_resource_semantics.md. None for intents that only rely on "
+            "validation.success_conditions['delivered_pairs'] for their delivery bar."
+        ),
+    )
+    reserved_memory_slots: int = Field(
+        gt=0,
+        description=(
+            "memory pool size handed to SeQUeNCe's RSVPProtocol.schedule - a RESOURCE, not "
+            "a delivery cap: memories are recycled during the reservation window, so "
+            "delivered_pairs routinely exceeds this (see docs/metrics.md). Formerly named "
+            "'requested_pairs'; that name is still accepted on input and migrated here, but "
+            "is no longer produced anywhere downstream."
+        ),
+    )
+    start_time_s: float = Field(ge=0.0, description="seconds, relative to scenario/simulation start")
+    duration_s: float = Field(gt=0.0, description="seconds, length of the reservation window")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_legacy_field_names(cls, data: Any) -> Any:
+        """Explicit, documented migration (Fase J2): accepts the legacy
+        flat field names (`requested_pairs`, `start_time`, `duration`) and
+        renames them to their new counterparts *before* validation, so
+        every intent constructed with the old shape - in Python, YAML, or
+        JSON - keeps working without modification. Never accepts both an
+        old and a new name with conflicting values (that would be exactly
+        the kind of silent double-interpretation this migration must
+        avoid)."""
+        if not isinstance(data, dict):
+            return data
+        migrated = dict(data)
+        for legacy_name, new_name in _LEGACY_REQUIREMENT_KEY_MAP.items():
+            if legacy_name not in migrated:
+                continue
+            legacy_value = migrated.pop(legacy_name)
+            if new_name in migrated and migrated[new_name] != legacy_value:
+                raise ValueError(
+                    f"IntentRequirements received both legacy '{legacy_name}'={legacy_value!r} and "
+                    f"'{new_name}'={migrated[new_name]!r} with different values - specify only one "
+                    f"(see docs/intent_resource_semantics.md)"
+                )
+            migrated.setdefault(new_name, legacy_value)
+            logger.info(
+                "IntentRequirements: migrating legacy field '%s' -> '%s' (see docs/intent_resource_semantics.md)",
+                legacy_name, new_name,
+            )
+        return migrated
 
 
 class IntentPolicy(BaseModel):

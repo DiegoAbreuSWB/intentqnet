@@ -10,6 +10,7 @@ from .sweeps import (
     apply_parameters,
     compute_parameter_hash,
     expand_parameter_grid,
+    resolve_fidelity_estimator,
     resolve_purification_policy,
     resolve_routing_strategy,
 )
@@ -40,6 +41,7 @@ __all__ = [
     "expand_parameter_grid",
     "resolve_routing_strategy",
     "resolve_purification_policy",
+    "resolve_fidelity_estimator",
     "ValidationIssue",
     "validate_trials",
     "aggregate_records",

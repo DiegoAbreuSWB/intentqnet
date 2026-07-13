@@ -14,8 +14,9 @@ import pandas as pd
 from scipy import stats
 
 NUMERIC_METRICS: tuple[str, ...] = (
-    "delivered_pairs", "excess_delivery_pairs", "delivery_ratio",
+    "delivered_pairs", "excess_delivery_pairs", "delivery_ratio", "deliveries_per_reserved_slot",
     "average_fidelity", "minimum_fidelity",
+    "estimated_fidelity", "observed_fidelity", "absolute_fidelity_error", "relative_fidelity_error",
     "throughput_active_window", "throughput_delivery_interval",
     "first_pair_latency_s", "completion_time_s",
     "planning_time_s", "simulation_wall_time_s",

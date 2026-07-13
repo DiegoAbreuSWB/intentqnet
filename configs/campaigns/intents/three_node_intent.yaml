@@ -8,9 +8,12 @@ intent:
     min_fidelity: 0.65
     min_throughput: 1
     max_latency: 1.0
-    requested_pairs: 10
-    start_time: 0.02
-    duration: 0.05
+    min_delivered_pairs: 10
+  resources:
+    reserved_memory_slots: 10
+  time:
+    start_time_s: 0.02
+    duration_s: 0.05
   policy:
     priority: normal
     allow_rerouting: true

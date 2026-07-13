@@ -17,6 +17,7 @@ from typing import Any
 
 from ..intent.models import EntanglementIntent
 from ..network.topology import NetworkTopologySpec
+from ..planning.fidelity_estimation import FIDELITY_ESTIMATORS, resolve_fidelity_estimator
 from ..planning.purification import NeverPurify, PurificationStrategy, PurifyUntilTarget
 from ..planning.routing import HighestFidelityRouting, LeastLossRouting, RoutingStrategy, ShortestHopCountRouting
 
@@ -33,6 +34,7 @@ class TrialParameters:
     routing_strategy_name: str = "shortest_hop_count"
     purification_policy_name: str = "automatic"
     reconciliation_enabled: bool = False
+    fidelity_estimator_name: str = "conservative_min"
 
 
 class UnknownSweepParameterError(ValueError):
@@ -102,18 +104,27 @@ def _apply_reconciliation_enabled(params: TrialParameters, value: Any) -> TrialP
     return replace(params, reconciliation_enabled=bool(value))
 
 
+def _apply_fidelity_estimator(params: TrialParameters, value: Any) -> TrialParameters:
+    resolve_fidelity_estimator(value)  # raises UnknownFidelityEstimatorError early if invalid
+    return replace(params, fidelity_estimator_name=value)
+
+
 SWEEP_PARAMETERS: dict[str, SweepParameter] = {
     "min_fidelity": SweepParameter(
         "min_fidelity", "intent.requirements.min_fidelity", float, "dimensionless",
         _intent_requirement_field("min_fidelity"),
     ),
-    "requested_pairs": SweepParameter(
-        "requested_pairs", "intent.requirements.requested_pairs", int, "pairs",
-        _intent_requirement_field("requested_pairs"),
+    "reserved_memory_slots": SweepParameter(
+        "reserved_memory_slots", "intent.requirements.reserved_memory_slots", int, "memory slots",
+        _intent_requirement_field("reserved_memory_slots"),
+    ),
+    "min_delivered_pairs": SweepParameter(
+        "min_delivered_pairs", "intent.requirements.min_delivered_pairs", int, "pairs",
+        _intent_requirement_field("min_delivered_pairs"),
     ),
     "duration_s": SweepParameter(
-        "duration_s", "intent.requirements.duration", float, "s",
-        _intent_requirement_field("duration"),
+        "duration_s", "intent.requirements.duration_s", float, "s",
+        _intent_requirement_field("duration_s"),
     ),
     "memory_size": SweepParameter(
         "memory_size", "topology.nodes[*].memories", int, "memories",
@@ -143,6 +154,9 @@ SWEEP_PARAMETERS: dict[str, SweepParameter] = {
     ),
     "reconciliation_enabled": SweepParameter(
         "reconciliation_enabled", "strategy.reconciliation_enabled", bool, "n/a", _apply_reconciliation_enabled,
+    ),
+    "fidelity_estimator": SweepParameter(
+        "fidelity_estimator", "strategy.fidelity_estimator", str, "n/a", _apply_fidelity_estimator,
     ),
 }
 
@@ -250,18 +264,21 @@ def apply_parameters(
     routing_strategy_name: str = "shortest_hop_count",
     purification_policy_name: str = "automatic",
     reconciliation_enabled: bool = False,
+    fidelity_estimator_name: str = "conservative_min",
 ) -> TrialParameters:
     """Applies one expanded parameter `combination` (as returned by
     `expand_parameter_grid`) to `topology_spec`/`intent`, returning a fresh
     `TrialParameters`. Base strategy selections are passed explicitly so a
     combination that doesn't sweep `routing_strategy`/`purification_policy`/
-    `reconciliation_enabled` still gets a well-defined value."""
+    `reconciliation_enabled`/`fidelity_estimator` still gets a well-defined
+    value."""
     ensure_known_parameters(combination.keys())
     params = TrialParameters(
         topology_spec=topology_spec, intent=intent,
         routing_strategy_name=routing_strategy_name,
         purification_policy_name=purification_policy_name,
         reconciliation_enabled=reconciliation_enabled,
+        fidelity_estimator_name=fidelity_estimator_name,
     )
     for name, value in combination.items():
         params = SWEEP_PARAMETERS[name].apply(params, value)

@@ -98,7 +98,7 @@ def test_achievable_intent_reaches_active_and_delivers_pairs():
     ]
 
     app = executor.get_app("intent-001")
-    assert app.memory_counter >= intent.requirements.requested_pairs
+    assert app.memory_counter >= intent.requirements.reserved_memory_slots
 
 
 @pytest.mark.unit
@@ -114,7 +114,7 @@ def test_delivery_metrics_are_recorded_with_correct_fidelity():
     delivery_records = [
         r for r in metrics.storage.get_by_owner("r1") if r["event_type"] is EventTypes.DELIVERY
     ]
-    assert len(delivery_records) >= intent.requirements.requested_pairs
+    assert len(delivery_records) >= intent.requirements.reserved_memory_slots
     for record in delivery_records:
         assert record["intent_id"] == "intent-001"
         assert record["fidelity"] == pytest.approx(SINGLE_SWAP_FIDELITY)
@@ -198,7 +198,7 @@ def test_deploy_with_planner_reaches_active_and_delivers_pairs():
         IntentStatus.PLANNED, IntentStatus.DEPLOYING, IntentStatus.ACTIVE,
     ]
     app = executor.get_app("intent-001")
-    assert app.memory_counter >= intent.requirements.requested_pairs
+    assert app.memory_counter >= intent.requirements.reserved_memory_slots
 
 
 @pytest.mark.unit

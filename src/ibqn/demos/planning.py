@@ -106,7 +106,7 @@ def compare_routing_strategies_across_seeds(
                     elif condition.metric == "average_fidelity":
                         avg_fidelity = condition.observed
 
-            throughput = delivered / intent.requirements.duration if delivered is not None else None
+            throughput = delivered / intent.requirements.duration_s if delivered is not None else None
 
             rows.append(
                 {

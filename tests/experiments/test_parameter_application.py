@@ -37,10 +37,10 @@ def test_apply_parameters_updates_topology_fields_on_every_link_and_node(base):
 @pytest.mark.unit
 def test_apply_parameters_updates_intent_requirements(base):
     spec, intent = base
-    params = apply_parameters(spec, intent, {"min_fidelity": 0.9, "requested_pairs": 20, "duration_s": 0.5})
+    params = apply_parameters(spec, intent, {"min_fidelity": 0.9, "reserved_memory_slots": 20, "duration_s": 0.5})
     assert params.intent.requirements.min_fidelity == 0.9
-    assert params.intent.requirements.requested_pairs == 20
-    assert params.intent.requirements.duration == 0.5
+    assert params.intent.requirements.reserved_memory_slots == 20
+    assert params.intent.requirements.duration_s == 0.5
 
 
 @pytest.mark.unit

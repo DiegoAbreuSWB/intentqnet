@@ -47,9 +47,30 @@ class TrialRecord:
     # --- plan / requested parameters (always known before simulating) ---
     route: str
     hop_count: int | None
-    requested_pairs: int
+    reserved_memory_slots: int
+    """Memory pool size reserved from SeQUeNCe (a RESOURCE) - formerly
+    named `requested_pairs`; see docs/intent_resource_semantics.md. NOT a
+    delivery cap - see `delivery_ratio`/`excess_delivery_pairs` below,
+    which are computed against `min_delivered_pairs` instead."""
+    min_delivered_pairs: int | None
+    """OPTIONAL service-level delivery goal declared by the intent (Fase
+    J2) - `None` when the intent doesn't declare one."""
     requested_fidelity: float
+    fidelity_estimator: str
+    """Name of the `planning.fidelity_estimation.LinkFidelityEstimator`
+    used to plan this trial (Fase J1)."""
     estimated_fidelity: float | None
+    observed_fidelity: float | None
+    """Same value as `average_fidelity` - kept as an explicit, separately
+    named column for direct comparison against `estimated_fidelity`
+    without notebooks needing to know the two are the same measurement."""
+    absolute_fidelity_error: float | None
+    """`observed_fidelity - estimated_fidelity` - `None` whenever either
+    side is unavailable (e.g. REJECTED trials, or no delivery evidence)."""
+    relative_fidelity_error: float | None
+    """`absolute_fidelity_error / estimated_fidelity` - `None` under the
+    same conditions as `absolute_fidelity_error`, and also when
+    `estimated_fidelity` is exactly 0."""
     duration_s: float
     attenuation_db_per_m: float | None
     distance_m: float | None
@@ -62,7 +83,15 @@ class TrialRecord:
     final_status: str
     delivered_pairs: int | None
     excess_delivery_pairs: int | None
+    """`max(0, delivered_pairs - min_delivered_pairs)` - `None` when
+    `min_delivered_pairs` is `None` (see docs/intent_resource_semantics.md)."""
     delivery_ratio: float | None
+    """`delivered_pairs / min_delivered_pairs` - `None` when
+    `min_delivered_pairs` is `None`."""
+    deliveries_per_reserved_slot: float | None
+    """`delivered_pairs / reserved_memory_slots` - a RESOURCE-efficiency
+    view (memory reuse), always computable whenever delivery evidence
+    exists, independent of any declared delivery goal."""
     average_fidelity: float | None
     minimum_fidelity: float | None
     throughput_active_window: float | None

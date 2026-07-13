@@ -25,12 +25,12 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-_FIDELITY_FIELDS = ("requested_fidelity", "average_fidelity", "minimum_fidelity")
+_FIDELITY_FIELDS = ("requested_fidelity", "estimated_fidelity", "observed_fidelity", "average_fidelity", "minimum_fidelity")
 _NONNEGATIVE_INT_FIELDS = (
-    "delivered_pairs", "excess_delivery_pairs", "hop_count", "requested_pairs",
+    "delivered_pairs", "excess_delivery_pairs", "hop_count", "reserved_memory_slots", "min_delivered_pairs",
     "eg_attempts", "eg_success", "ep_attempts", "ep_success", "es_attempts", "es_success",
 )
-_NONNEGATIVE_FLOAT_FIELDS = ("throughput_active_window", "throughput_delivery_interval")
+_NONNEGATIVE_FLOAT_FIELDS = ("throughput_active_window", "throughput_delivery_interval", "deliveries_per_reserved_slot")
 
 
 @dataclass(frozen=True)
@@ -74,8 +74,11 @@ def _validate_row(row: pd.Series) -> list[ValidationIssue]:
     accepted = row.get("accepted")
     violations = row.get("violations")
     delivered_pairs = row.get("delivered_pairs")
-    requested_pairs = row.get("requested_pairs")
+    reserved_memory_slots = row.get("reserved_memory_slots")
+    min_delivered_pairs = row.get("min_delivered_pairs")
     excess = row.get("excess_delivery_pairs")
+    ratio = row.get("delivery_ratio")
+    per_slot = row.get("deliveries_per_reserved_slot")
     completion_time = row.get("completion_time_s")
     recovered = row.get("recovered")
 
@@ -94,14 +97,38 @@ def _validate_row(row: pd.Series) -> list[ValidationIssue]:
     if _is_present(recovered) and bool(recovered) and final_status != "SATISFIED":
         flag("recovered_implies_satisfied", f"recovered is True but final_status is {final_status!r}, not SATISFIED")
 
-    if _is_present(delivered_pairs) and _is_present(requested_pairs) and _is_present(excess):
-        expected_excess = max(0.0, float(delivered_pairs) - float(requested_pairs))
-        if float(excess) != expected_excess:
-            flag("excess_delivery_consistency", f"excess_delivery_pairs={excess}, expected {expected_excess}")
+    # excess_delivery_pairs/delivery_ratio are defined against min_delivered_pairs (the
+    # service-level GOAL), never against reserved_memory_slots (a resource size) - see
+    # docs/intent_resource_semantics.md. Both must be absent when min_delivered_pairs is.
+    if _is_present(min_delivered_pairs):
+        if _is_present(delivered_pairs) and _is_present(excess):
+            expected_excess = max(0.0, float(delivered_pairs) - float(min_delivered_pairs))
+            if float(excess) != expected_excess:
+                flag("excess_delivery_consistency", f"excess_delivery_pairs={excess}, expected {expected_excess}")
+        if _is_present(delivered_pairs) and _is_present(ratio):
+            expected_ratio = float(delivered_pairs) / float(min_delivered_pairs)
+            if abs(float(ratio) - expected_ratio) > 1e-9:
+                flag("delivery_ratio_consistency", f"delivery_ratio={ratio}, expected {expected_ratio}")
+    elif _is_present(excess) or _is_present(ratio):
+        flag(
+            "delivery_goal_metrics_require_min_delivered_pairs",
+            "excess_delivery_pairs/delivery_ratio are set but min_delivered_pairs is absent",
+        )
 
-    if _is_present(completion_time) and _is_present(delivered_pairs) and _is_present(requested_pairs):
-        if float(delivered_pairs) < float(requested_pairs):
-            flag("completion_time_requires_full_delivery", "completion_time_s is set but delivered_pairs < requested_pairs")
+    if _is_present(delivered_pairs) and _is_present(reserved_memory_slots) and _is_present(per_slot):
+        expected_per_slot = float(delivered_pairs) / float(reserved_memory_slots)
+        if abs(float(per_slot) - expected_per_slot) > 1e-9:
+            flag(
+                "deliveries_per_reserved_slot_consistency",
+                f"deliveries_per_reserved_slot={per_slot}, expected {expected_per_slot}",
+            )
+
+    if _is_present(completion_time) and _is_present(delivered_pairs) and _is_present(min_delivered_pairs):
+        if float(delivered_pairs) < float(min_delivered_pairs):
+            flag(
+                "completion_time_requires_full_delivery",
+                "completion_time_s is set but delivered_pairs < min_delivered_pairs",
+            )
 
     return issues
 

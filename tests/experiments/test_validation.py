@@ -6,8 +6,10 @@ from ibqn.experiments.validation import validate_trials
 
 _BASE_ROW = {
     "trial_id": "t1", "final_status": "SATISFIED", "satisfied": True, "accepted": True,
-    "violations": "", "delivered_pairs": 10, "requested_pairs": 10, "excess_delivery_pairs": 0,
-    "average_fidelity": 0.7, "minimum_fidelity": 0.65, "requested_fidelity": 0.6, "hop_count": 2,
+    "violations": "", "delivered_pairs": 10, "reserved_memory_slots": 10, "min_delivered_pairs": 10,
+    "excess_delivery_pairs": 0, "delivery_ratio": 1.0, "deliveries_per_reserved_slot": 1.0,
+    "average_fidelity": 0.7, "minimum_fidelity": 0.65, "requested_fidelity": 0.6,
+    "estimated_fidelity": 0.7, "observed_fidelity": 0.7, "hop_count": 2,
     "eg_attempts": 10, "eg_success": 8, "ep_attempts": None, "ep_success": None,
     "es_attempts": None, "es_success": None, "throughput_active_window": 100.0,
     "throughput_delivery_interval": 100.0, "completion_time_s": 0.01, "recovered": None,
@@ -81,19 +83,45 @@ def test_recovered_true_requires_satisfied_final_status():
 
 @pytest.mark.unit
 def test_excess_delivery_pairs_must_match_formula():
-    issues = validate_trials(_row(delivered_pairs=10, requested_pairs=10, excess_delivery_pairs=5))
+    issues = validate_trials(_row(delivered_pairs=10, min_delivered_pairs=10, excess_delivery_pairs=5))
     assert any(i.check == "excess_delivery_consistency" for i in issues)
 
 
 @pytest.mark.unit
 def test_excess_delivery_pairs_correct_when_matching_formula():
-    issues = validate_trials(_row(delivered_pairs=15, requested_pairs=10, excess_delivery_pairs=5))
+    issues = validate_trials(_row(delivered_pairs=15, min_delivered_pairs=10, excess_delivery_pairs=5, delivery_ratio=1.5))
     assert not any(i.check == "excess_delivery_consistency" for i in issues)
 
 
 @pytest.mark.unit
+def test_delivery_ratio_must_match_formula():
+    issues = validate_trials(_row(delivered_pairs=10, min_delivered_pairs=10, delivery_ratio=5.0))
+    assert any(i.check == "delivery_ratio_consistency" for i in issues)
+
+
+@pytest.mark.unit
+def test_deliveries_per_reserved_slot_must_match_formula():
+    issues = validate_trials(_row(delivered_pairs=10, reserved_memory_slots=10, deliveries_per_reserved_slot=5.0))
+    assert any(i.check == "deliveries_per_reserved_slot_consistency" for i in issues)
+
+
+@pytest.mark.unit
+def test_excess_and_ratio_require_min_delivered_pairs_to_be_present():
+    """excess_delivery_pairs/delivery_ratio must never be populated when
+    min_delivered_pairs is absent - see docs/intent_resource_semantics.md."""
+    issues = validate_trials(_row(min_delivered_pairs=None, excess_delivery_pairs=0, delivery_ratio=1.0))
+    assert any(i.check == "delivery_goal_metrics_require_min_delivered_pairs" for i in issues)
+
+
+@pytest.mark.unit
+def test_absent_min_delivered_pairs_with_absent_goal_metrics_is_valid():
+    issues = validate_trials(_row(min_delivered_pairs=None, excess_delivery_pairs=None, delivery_ratio=None))
+    assert issues == []
+
+
+@pytest.mark.unit
 def test_completion_time_requires_full_delivery():
-    issues = validate_trials(_row(delivered_pairs=3, requested_pairs=10, completion_time_s=0.01))
+    issues = validate_trials(_row(delivered_pairs=3, min_delivered_pairs=10, completion_time_s=0.01))
     assert any(i.check == "completion_time_requires_full_delivery" for i in issues)
 
 
