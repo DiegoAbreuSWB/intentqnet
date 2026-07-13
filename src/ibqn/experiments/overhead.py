@@ -18,6 +18,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from sequence.utils import metrics
+
 from ..assurance.evaluator import IntentEvaluation, evaluate_intent
 from ..assurance.reconciliation_policy import ReconciliationDecision, decide_reconciliation_action
 from ..assurance.telemetry import collect_intent_evidence
@@ -106,6 +108,10 @@ def run_instrumented_trial(
     `TrialRecord` to disk (that's `runner.execute_trial`'s job) - see the
     module docstring for why overhead instrumentation is a separate path.
     """
+    metrics.configure()  # process-wide singleton (docs/sequence_code_analysis.md, section 4.1) -
+    # must reset before every independent run, exactly like execute_trial/run_scenario do; found
+    # missing here empirically (Fase J10, F06) when repeated calls with different seeds but the
+    # same intent_id accumulated stale DELIVERY records across calls.
     if isinstance(intent_source, (str, Path)):
         intent, parsing_s, validation_s = load_intent_file_with_timing(intent_source)
     else:

@@ -6,9 +6,11 @@ from __future__ import annotations
 import pytest
 
 from ibqn.demos.intents import diamond_intent, simple_intent
+from ibqn.demos.scenarios import ad_hoc_scenario
 from ibqn.demos.topologies import diamond_spec, three_node_spec
 from ibqn.experiments.baselines import run_native_sequence_baseline
 from ibqn.experiments.overhead import run_instrumented_trial
+from ibqn.experiments.runner import run_scenario
 from ibqn.intent.parser import load_intent_file_with_timing
 from ibqn.planning.routing import ShortestHopCountRouting
 
@@ -124,3 +126,34 @@ def test_ibqn_orchestration_overhead_is_measurable_against_the_native_baseline()
 
     assert ibqn_timing.total_orchestration_wall_time_s >= 0.0
     assert native.planning_wall_time_s == 0.0  # confirmed in Fase J3: no planning step exists in the native baseline
+
+
+@pytest.mark.unit
+def test_run_instrumented_trial_resets_metrics_between_independent_calls():
+    """Regression test (Fase J10): found empirically while running the F06
+    overhead campaign - repeated run_instrumented_trial calls sharing the
+    same intent_id (a diamond-topology intent run across many seeds, as a
+    real campaign does) accumulated stale DELIVERY records across calls
+    when sequence.utils.metrics was never reset first, inflating
+    delivered_pairs for later seeds and turning genuinely VIOLATED trials
+    into apparently SATISFIED ones. Confirmed fixed by cross-checking
+    against run_scenario (the trusted, already-correct reference
+    implementation) for the same (topology, intent, seed) triple, with a
+    "polluting" call for a DIFFERENT seed run first."""
+    spec = diamond_spec()
+    intent = diamond_intent(requested_pairs=10, min_fidelity=0.6)
+
+    # first call pollutes the metrics store with seed=0's evidence, if the reset is missing
+    run_instrumented_trial(intent, spec, seed=0, routing_strategy=ShortestHopCountRouting())
+
+    _, evaluation = run_instrumented_trial(intent, spec, seed=1, routing_strategy=ShortestHopCountRouting())
+    observed_delivered = next(c.observed for c in evaluation.condition_results if c.metric == "delivered_pairs")
+
+    reference_scenario = ad_hoc_scenario(spec, [intent], seed=1, name="reference")
+    reference_result = run_scenario(reference_scenario, seed=1, routing_strategy=ShortestHopCountRouting())
+    reference_trial = reference_result.get(intent.id)
+    reference_delivered = next(
+        c.observed for c in reference_trial.evaluation.condition_results if c.metric == "delivered_pairs"
+    )
+
+    assert observed_delivered == pytest.approx(reference_delivered)
