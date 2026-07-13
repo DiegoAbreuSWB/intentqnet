@@ -27,6 +27,8 @@ from .baselines import (
 from .topology_catalog import linear_chain_spec, near_equivalent_paths_spec, small_mesh_spec
 from .reconciliation_metrics import compute_reconciliation_metrics
 from .overhead import TrialTiming, run_instrumented_trial
+from .programmatic_campaign import run_programmatic_campaign
+from .statistical_analysis import PairedComparisonResult, compare_groups_pairwise, holm_correction, paired_comparison
 from .variability_study import (
     PilotScenario,
     build_pilot_scenarios,
@@ -103,4 +105,9 @@ __all__ = [
     "compute_variability_metrics",
     "compute_satisfaction_rate",
     "compute_ranking_stability",
+    "run_programmatic_campaign",
+    "PairedComparisonResult",
+    "paired_comparison",
+    "holm_correction",
+    "compare_groups_pairwise",
 ]
