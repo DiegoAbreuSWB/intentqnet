@@ -1,0 +1,79 @@
+{
+  "campaign": "F02_routing",
+  "description": "Fase J10 final campaign: F02_routing",
+  "created_at": "2026-07-13T16:15:56.779305+00:00",
+  "updated_at": "2026-07-13T16:29:09.066768+00:00",
+  "project_git_commit": "f4343c314e5de5e01ee6970aaa14b5974c1b49ea",
+  "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
+  "python_version": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "dependencies": {
+    "pydantic": "2.13.4",
+    "yaml": "6.0.3",
+    "networkx": "3.6.1",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "matplotlib": "3.11.0",
+    "pandas": "3.0.3",
+    "qutip": "5.3.0",
+    "stim": "1.16.0",
+    "gmpy2": "2.3.1",
+    "nbformat": "5.10.4",
+    "nbclient": "0.11.0"
+  },
+  "campaign_file": null,
+  "scenario_files": [
+    "diamond_heterogeneous"
+  ],
+  "intent_files": [
+    "intent-diamond-demo"
+  ],
+  "parameter_grid": {
+    "routing_strategy": [
+      "shortest_hop_count",
+      "least_loss",
+      "highest_fidelity"
+    ]
+  },
+  "strategies": {
+    "routing": [
+      "shortest_hop_count"
+    ],
+    "purification": [
+      "automatic"
+    ],
+    "fidelity_estimator": [
+      "conservative_min"
+    ]
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "expected_trials": 60,
+  "completed_trials": 60,
+  "skipped_trials": 0,
+  "failed_trials": 0,
+  "output_files": [
+    "C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\results\\raw\\F02_routing\\trials.csv",
+    "C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\results\\raw\\F02_routing\\errors.jsonl"
+  ]
+}

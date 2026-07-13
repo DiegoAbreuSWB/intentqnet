@@ -20,6 +20,15 @@ results/raw/*
 !results/raw/C03_assurance_outcomes/
 !results/raw/C04_reconciliation_effectiveness/
 !results/raw/P00_variability_study/
+# Fase J10 final campaigns (F01-F08): same rationale, un-ignored so
+# docs/final_experimental_design.md's numbers stay reproducible/checkable.
+!results/raw/F01_architecture_baselines/
+!results/raw/F02_routing/
+!results/raw/F03_purification/
+!results/raw/F05_reconciliation/
+!results/raw/F06_overhead/
+!results/raw/F07_estimators/
+!results/raw/F08_resource_semantics/
 
 results/processed/*
 !results/processed/C01_routing_strategy/
@@ -27,5 +36,11 @@ results/processed/*
 !results/processed/C03_assurance_outcomes/
 !results/processed/C04_reconciliation_effectiveness/
 !results/processed/P00_variability_study/
+!results/processed/F01_architecture_baselines/
+!results/processed/F02_routing/
+!results/processed/F03_purification/
+!results/processed/F04_planner_vs_operation/
+!results/processed/F07_estimators/
+!results/processed/F08_resource_semantics/
 
 .DS_Store

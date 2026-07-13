@@ -1,0 +1,16 @@
+scenario,routing_strategy,value_col,group_a,group_b,n,mean_a,mean_b,median_a,median_b,mean_difference_b_minus_a,ci95_low,ci95_high,test_used,p_value,effect_size,effect_size_name,p_value_holm_adjusted
+diamond_heterogeneous,highest_fidelity,delivered_pairs,conservative_min,sequence_consistent,20,7.85,7.85,8.0,8.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,highest_fidelity,average_fidelity,conservative_min,sequence_consistent,20,0.7695000000000001,0.7695000000000001,0.7695,0.7695,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,highest_fidelity,satisfied_num,conservative_min,sequence_consistent,20,0.25,0.25,0.0,0.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,highest_fidelity,accepted_num,conservative_min,sequence_consistent,20,1.0,1.0,1.0,1.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,highest_fidelity,absolute_fidelity_error,conservative_min,sequence_consistent,20,0.0831250000000001,0.0,0.0831250000000001,0.0,-0.0831250000000001,-0.0831250000000001,-0.0831250000000001,wilcoxon,7.74421643104407e-06,-1.0,matched_pairs_rank_biserial,7.74421643104407e-06
+diamond_heterogeneous,least_loss,delivered_pairs,conservative_min,sequence_consistent,20,446.1,446.1,446.0,446.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,least_loss,average_fidelity,conservative_min,sequence_consistent,20,0.6579225,0.6579225,0.6579225,0.6579225,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,least_loss,satisfied_num,conservative_min,sequence_consistent,20,1.0,1.0,1.0,1.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,least_loss,accepted_num,conservative_min,sequence_consistent,20,1.0,1.0,1.0,1.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,least_loss,absolute_fidelity_error,conservative_min,sequence_consistent,20,0.05319090610017209,-1.6653345369377344e-17,0.0531909061001721,0.0,-0.053190906100172096,-0.0531909061001721,-0.0531909061001721,wilcoxon,2.2956210584350303e-05,-1.0,matched_pairs_rank_biserial,2.2956210584350303e-05
+diamond_heterogeneous,shortest_hop_count,delivered_pairs,conservative_min,sequence_consistent,20,7.85,7.85,8.0,8.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,shortest_hop_count,average_fidelity,conservative_min,sequence_consistent,20,0.7695000000000001,0.7695000000000001,0.7695,0.7695,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,shortest_hop_count,satisfied_num,conservative_min,sequence_consistent,20,0.25,0.25,0.0,0.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,shortest_hop_count,accepted_num,conservative_min,sequence_consistent,20,1.0,1.0,1.0,1.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+diamond_heterogeneous,shortest_hop_count,absolute_fidelity_error,conservative_min,sequence_consistent,20,0.0831250000000001,0.0,0.0831250000000001,0.0,-0.0831250000000001,-0.0831250000000001,-0.0831250000000001,wilcoxon,7.74421643104407e-06,-1.0,matched_pairs_rank_biserial,7.74421643104407e-06

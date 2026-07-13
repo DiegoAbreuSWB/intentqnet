@@ -1,0 +1,11 @@
+scenario,requested_fidelity,value_col,group_a,group_b,n,mean_a,mean_b,median_a,median_b,mean_difference_b_minus_a,ci95_low,ci95_high,test_used,p_value,effect_size,effect_size_name,p_value_holm_adjusted
+linear_chain_2_repeaters,0.65,satisfied_num,automatic,disabled,20,0.0,0.0,0.0,0.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+linear_chain_2_repeaters,0.7,satisfied_num,automatic,disabled,20,0.0,0.0,0.0,0.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+linear_chain_2_repeaters,0.72,satisfied_num,automatic,disabled,20,0.0,0.0,0.0,0.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+linear_chain_2_repeaters,0.75,satisfied_num,automatic,disabled,20,0.0,0.0,0.0,0.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+three_node_1_repeater,0.65,delivered_pairs,automatic,disabled,20,496.5,496.5,499.0,499.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+three_node_1_repeater,0.65,average_fidelity,automatic,disabled,20,0.6863749999999998,0.6863749999999998,0.6863749999999998,0.6863749999999998,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+three_node_1_repeater,0.65,satisfied_num,automatic,disabled,20,1.0,1.0,1.0,1.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
+three_node_1_repeater,0.7,satisfied_num,automatic,disabled,20,1.0,0.0,1.0,0.0,-1.0,-1.0,-1.0,wilcoxon,7.74421643104407e-06,-1.0,matched_pairs_rank_biserial,7.74421643104407e-06
+three_node_1_repeater,0.72,satisfied_num,automatic,disabled,20,1.0,0.0,1.0,0.0,-1.0,-1.0,-1.0,wilcoxon,7.74421643104407e-06,-1.0,matched_pairs_rank_biserial,7.74421643104407e-06
+three_node_1_repeater,0.75,satisfied_num,automatic,disabled,20,0.0,0.0,0.0,0.0,0.0,0.0,0.0,identical,1.0,0.0,none,1.0
