@@ -25,6 +25,17 @@ from .baselines import (
     run_static_provisioning_baseline,
 )
 from .topology_catalog import linear_chain_spec, near_equivalent_paths_spec, small_mesh_spec
+from .planner_operation_matrix import (
+    EXECUTION_FAILED,
+    FEASIBLE_AND_SATISFIED,
+    FEASIBLE_BUT_VIOLATED,
+    INFEASIBLE_AND_REJECTED,
+    INFEASIBLE_BUT_POTENTIALLY_SATISFIABLE,
+    build_matrix,
+    classify_trials,
+    compute_gap_metrics,
+    upgrade_rejected_with_oracle,
+)
 
 __all__ = [
     "Scenario",
@@ -64,4 +75,13 @@ __all__ = [
     "linear_chain_spec",
     "small_mesh_spec",
     "near_equivalent_paths_spec",
+    "FEASIBLE_AND_SATISFIED",
+    "FEASIBLE_BUT_VIOLATED",
+    "INFEASIBLE_AND_REJECTED",
+    "INFEASIBLE_BUT_POTENTIALLY_SATISFIABLE",
+    "EXECUTION_FAILED",
+    "classify_trials",
+    "upgrade_rejected_with_oracle",
+    "build_matrix",
+    "compute_gap_metrics",
 ]
