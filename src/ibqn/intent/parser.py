@@ -5,6 +5,7 @@ Python objects, JSON, or YAML" (no natural-language interpretation in v1).
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -86,3 +87,34 @@ def load_intent_file(path: str | Path) -> EntanglementIntent:
     if suffix in (".yaml", ".yml"):
         return parse_intent_yaml(text)
     raise ValueError(f"Unsupported intent file extension '{suffix}' for {file_path}")
+
+
+def load_intent_file_with_timing(path: str | Path) -> tuple[EntanglementIntent, float, float]:
+    """Same as `load_intent_file`, but also returns
+    `(parsing_wall_time_s, validation_wall_time_s)` split at the exact
+    seam between "read the file and normalize its shape" and "pydantic's
+    own field validation" (Fase J7, see docs/overhead_methodology.md) -
+    reuses the same private helpers `parse_intent_dict` does, so this is
+    not a second, divergent parsing path."""
+    file_path = Path(path)
+    t0 = time.perf_counter()
+    text = file_path.read_text(encoding="utf-8")
+    suffix = file_path.suffix.lower()
+    if suffix == ".json":
+        data = json.loads(text)
+    elif suffix in (".yaml", ".yml"):
+        data = yaml.safe_load(text)
+    else:
+        raise ValueError(f"Unsupported intent file extension '{suffix}' for {file_path}")
+
+    payload = data["intent"] if "intent" in data and len(data) == 1 else data
+    payload = dict(payload)
+    payload = _merge_resources_and_time_blocks(payload)
+    if "validation" in payload:
+        payload["validation"] = _normalize_validation(payload["validation"])
+    t1 = time.perf_counter()
+
+    intent = EntanglementIntent.model_validate(payload)
+    t2 = time.perf_counter()
+
+    return intent, (t1 - t0), (t2 - t1)

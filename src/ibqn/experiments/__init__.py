@@ -26,6 +26,7 @@ from .baselines import (
 )
 from .topology_catalog import linear_chain_spec, near_equivalent_paths_spec, small_mesh_spec
 from .reconciliation_metrics import compute_reconciliation_metrics
+from .overhead import TrialTiming, run_instrumented_trial
 from .planner_operation_matrix import (
     EXECUTION_FAILED,
     FEASIBLE_AND_SATISFIED,
@@ -86,4 +87,6 @@ __all__ = [
     "build_matrix",
     "compute_gap_metrics",
     "compute_reconciliation_metrics",
+    "TrialTiming",
+    "run_instrumented_trial",
 ]
