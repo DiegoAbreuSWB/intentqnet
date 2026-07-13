@@ -1,0 +1,4 @@
+scenario,seed,intent_id,delivered_pairs_False,simulation_wall_time_s_False,delivered_pairs_True,simulation_wall_time_s_True,paired,delivered_pairs_diff,simulation_wall_time_s_diff
+diamond,0,intent-diamond,4,2.299276,453,8.029533,True,449,5.730257000000001
+diamond,1000,intent-diamond,5,2.343178,457,8.134642,True,452,5.7914639999999995
+diamond,2000,intent-diamond,4,1.930476,440,8.522694,True,436,6.592217999999999

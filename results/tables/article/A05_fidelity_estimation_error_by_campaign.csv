@@ -1,0 +1,4 @@
+campaign_name,n,mean_error,std_error,max_abs_error
+C01_routing_strategy,9,0.07314696870005748,0.014967046949913965,0.08312500000000012
+C02_fidelity_throughput,8,0.0,0.0,0.0
+C03_assurance_outcomes,4,0.0,0.0,0.0

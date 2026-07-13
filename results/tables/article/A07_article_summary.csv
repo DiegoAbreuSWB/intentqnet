@@ -1,0 +1,5 @@
+campaign,finding,key_value
+C01_routing_strategy,LeastLossRouting delivers far more pairs than ShortestHopCount/HighestFidelity on the diamond topology,446 vs 4 pairs (mean)
+C02_fidelity_throughput,Purification extends the feasible fidelity range up to its own real ceiling,"automatic feasible <= 0.72, disabled feasible <= 0.65"
+C03_assurance_outcomes,"SATISFIED/VIOLATED/REJECTED all occur naturally, never forced","{'REJECTED': 4, 'SATISFIED': 2, 'VIOLATED': 2}"
+C04_reconciliation_effectiveness,"Reconciliation recovers every VIOLATED trial at a real, measured cost","recovery_rate=1.00, +6.04s"

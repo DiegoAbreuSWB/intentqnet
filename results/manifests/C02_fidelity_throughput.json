@@ -1,0 +1,62 @@
+{
+  "campaign": "C02_fidelity_throughput",
+  "description": "Fidelity/throughput trade-off on the three-node chain (a-r-b), comparing NeverPurify (\"disabled\") vs. PurifyUntilTarget (\"automatic\") across five min_fidelity thresholds that straddle the real, observed ceilings of this topology: swap-only ~0.6864, one-round-purified ~0.7203 (see notebook 17 of Fase H2). Expects: 0.65 feasible under both policies; 0.70/0.72 feasible only with purification; 0.75/0.85 REJECTED under both (above even the purified ceiling) - this sweep is designed to capture that ceiling, not to avoid it.\n",
+  "created_at": "2026-07-13T10:15:41.027797+00:00",
+  "updated_at": "2026-07-13T10:15:56.953602+00:00",
+  "project_git_commit": "c9c0761e72fdc7a31d0f079fa812e93b0a1b2bfd",
+  "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
+  "python_version": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "dependencies": {
+    "pydantic": "2.13.4",
+    "yaml": "6.0.3",
+    "networkx": "3.6.1",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "matplotlib": "3.11.0",
+    "pandas": "3.0.3",
+    "qutip": "5.3.0",
+    "stim": "1.16.0",
+    "gmpy2": "2.3.1",
+    "nbformat": "5.10.4",
+    "nbclient": "0.11.0"
+  },
+  "campaign_file": "configs\\campaigns\\C02_fidelity_throughput.yaml",
+  "scenario_files": [
+    "scenarios/three_node.yaml"
+  ],
+  "intent_files": [
+    "intents/three_node_intent.yaml"
+  ],
+  "parameter_grid": {
+    "min_fidelity": [
+      0.65,
+      0.7,
+      0.72,
+      0.75,
+      0.85
+    ],
+    "purification_policy": [
+      "disabled",
+      "automatic"
+    ]
+  },
+  "strategies": {
+    "purification": [
+      "disabled",
+      "automatic"
+    ]
+  },
+  "seeds": [
+    0,
+    1000
+  ],
+  "expected_trials": 20,
+  "completed_trials": 20,
+  "skipped_trials": 0,
+  "failed_trials": 0,
+  "output_files": [
+    "results\\raw\\C02_fidelity_throughput\\trials.csv",
+    "results\\raw\\C02_fidelity_throughput\\errors.jsonl"
+  ]
+}

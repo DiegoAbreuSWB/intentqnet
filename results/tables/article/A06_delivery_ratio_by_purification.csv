@@ -1,0 +1,4 @@
+purification_policy,delivery_ratio,delivery_ratio,delivery_ratio,deliveries_per_reserved_slot,deliveries_per_reserved_slot,deliveries_per_reserved_slot
+,count,mean,median,count,mean,median
+automatic,25,15.724,5.4,25,15.724,5.4
+disabled,2,24.2,24.2,2,24.2,24.2
