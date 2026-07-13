@@ -18,6 +18,12 @@ from .validation import ValidationIssue, validate_trials
 from .aggregation import aggregate_records, align_paired_trials
 from .status import CampaignStatus, compute_campaign_status
 from .export import save_figure, save_table
+from .baselines import (
+    BaselineResult,
+    run_native_sequence_baseline,
+    run_offline_oracle_baseline,
+    run_static_provisioning_baseline,
+)
 
 __all__ = [
     "Scenario",
@@ -50,4 +56,8 @@ __all__ = [
     "compute_campaign_status",
     "save_figure",
     "save_table",
+    "BaselineResult",
+    "run_native_sequence_baseline",
+    "run_static_provisioning_baseline",
+    "run_offline_oracle_baseline",
 ]

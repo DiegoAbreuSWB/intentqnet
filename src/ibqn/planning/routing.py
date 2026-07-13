@@ -23,10 +23,22 @@ class RoutingStrategy(ABC):
 
 
 class ShortestHopCountRouting(RoutingStrategy):
-    """Fewest quantum links, ignoring loss/fidelity - the same notion of
-    "shortest path" `RouterNetTopo._generate_forwarding_table` uses by
-    default (unweighted Dijkstra), so this strategy's top choice always
-    matches SeQUeNCe's own auto-generated static routing table."""
+    """Fewest quantum links, ignoring loss/fidelity/distance.
+
+    Fase J3 correction: `RouterNetTopo._generate_forwarding_table` does
+    NOT use unweighted Dijkstra - it weights each edge by the summed
+    physical `distance_m` of its two BSM half-links
+    (`router_net_topo.py:192-208`, `graph.add_weighted_edges_from(costs)`)
+    and runs plain (distance-weighted) `dijkstra_path`. So SeQUeNCe's own
+    auto-generated static routing table minimizes total DISTANCE, not hop
+    count - this strategy's top choice only coincides with it when the
+    fewest-hop route also happens to be the shortest-distance one.
+    Confirmed empirically on the diamond topology
+    (`experiments.baselines.run_native_sequence_baseline`,
+    `tests/experiments/test_baselines.py`): the native forwarding table
+    picks the 3-hop `good1`/`good2` detour (1500 m total) over the
+    2-hop `bad` link (2000 m total), which this strategy would never
+    choose since it ignores distance entirely. See docs/baselines.md."""
 
     def find_candidate_paths(self, capabilities, source, destination, *, max_candidates=3):
         return _k_shortest_paths(capabilities.graph(), source, destination, weight=None, k=max_candidates)
