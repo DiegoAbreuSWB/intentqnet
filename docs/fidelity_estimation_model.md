@@ -122,3 +122,16 @@ produz um `pre_swap_fidelity` estritamente maior que
 `ConservativeMinEstimator` (nunca subestima), e em toda topologia uniforme
 os dois coincidem exatamente - sem quebrar nenhum teste/campanha que já
 usava o estimador conservador como padrão implícito.
+
+**Resultado em escala** (`F07_estimators`, Fase J10, diamante heterogênea,
+3 estratégias × 20 seeds, `results/figures/final/Figure_FidelityEstimationError.png`):
+erro absoluto de fidelidade (`|estimated - observed|`) numericamente
+zero para `sequence_consistent` em toda combinação testada, contra
+~0.053-0.083 para `conservative_min`. **Formulação correta** (nunca
+"predicts perfectly in real networks", uma alegação sobre redes reais
+que este projeto não testa): `SequenceConsistentEstimator`
+**reproduz o modelo de fidelidade implementado pelo SeQUeNCe nas
+configurações avaliadas** - uma alegação sobre fidelidade a um modelo de
+simulação específico, não sobre precisão física do próprio SeQUeNCe
+nem sobre generalização a redes quânticas reais ou a topologias/
+parâmetros fora do catálogo testado (`docs/topology_catalog.md`).

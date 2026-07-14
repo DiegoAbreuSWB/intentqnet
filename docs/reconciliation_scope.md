@@ -103,16 +103,56 @@ reconciliation (`initial_status`, `reconciliation_attempted`, `action`,
 deliberadamente independente de `TrialRecord` (nenhuma campanha em escala
 popula essas colunas ainda; isso é para a campanha `F05`, Fase J10).
 
+## Resultados em escala (`F05_reconciliation`, Fase J10/K2)
+
+5 classes de cenário × 20 seeds (`scripts/run_f05_reconciliation.py`,
+dados em `results/raw/F05_reconciliation/trials.csv`, classificação de
+tipo de recuperação em `results/processed/F05_reconciliation/
+trials_with_recovery_type.csv` - ver "Tipos de recuperação" abaixo):
+
+| Classe | Ação | Recuperação |
+|---|---|---:|
+| Recuperável por troca de rota | `route_change` | 15/15 (100%) |
+| Recuperável por aumento de duração | `duration_increase` | 20/20 (100%) |
+| Recuperável por aumento de slots | `slot_increase` | 19/20 (95%) |
+| Irrecuperável por teto de fidelidade | `no_action` (nunca tentado) | não aplicável |
+| Irrecuperável por perda severa (tentativa) | `duration_increase` | 0/20 (0%) |
+
+**Formulação correta para o artigo** (nunca "recovers 100% of
+intents"): a política **recuperou todos os casos de troca de rota e a
+maioria dos casos de ajuste de recurso nos cenários avaliados; falhou
+sob perda severa e corretamente evitou agir num teto de fidelidade**.
+Figuras: `results/figures/final/Figure_Reconciliation_{BeforeAfter,
+RecoveryRate,AdditionalCost}.png`.
+
+## Tipos de recuperação (Fase K3, seção 8)
+
+`scripts/classify_f05_recovery_types.py` classifica cada ação por
+impacto contratual - nunca "recovered" sem qualificação:
+
+- **`strict_recovery`** (`route_change`): mesmo SLA, mesmos recursos
+  declarados - só o plano de execução interno (rota) muda.
+- **`resource_adjusted_recovery`** (`slot_increase`): aumenta
+  `reserved_memory_slots`, preserva o SLA (`min_delivered_pairs`,
+  `duration_s`).
+- **`sla_relaxed_recovery`** (`duration_increase`): altera `duration_s`,
+  um elemento temporal/contratual do intent - aplica-se igualmente ao
+  caso que recupera (`duration_increase_recoverable`) e ao que tenta e
+  falha (`severe_loss_attempt`), já que a classificação descreve o TIPO
+  de ação tomada, não se ela funcionou.
+- **`not_applicable`**: nenhuma ação foi tomada (já `SATISFIED`/
+  `REJECTED_OR_FAILED`, ou a política decidiu `no_action`).
+
 ## Limitações desta etapa
 
-- Nenhuma campanha em escala usa `decide_reconciliation_action`/
-  `apply_reconciliation_decision` ainda - `runner.execute_trial` continua
-  usando a heurística mais simples de H3 (`_reconciliation_routing_strategy_name`,
-  sempre troca de estratégia de roteamento) para não invalidar a
-  reprodutibilidade das campanhas C01-C04 já existentes. A campanha `F05`
-  (Fase J10) usará a nova política.
-- `TrialRecord` não ganhou campos novos para rastrear qual ação de
-  reconciliation foi tomada - `compute_reconciliation_metrics` opera
-  sobre um formato de dados separado, populado pela futura campanha F05.
+- `TrialRecord` (a campanha "de rotina", `execute_trial`) não ganhou
+  campos novos para rastrear qual ação de reconciliation foi tomada -
+  `compute_reconciliation_metrics`/F05 operam sobre um formato de dados
+  separado (`case`, `initial_status`, `action`, `recovered`,
+  `recovery_type`, ...), não `TrialRecord`.
 - O limiar de "poucos slots" (4) é heurístico, não derivado de um modelo
   fechado de taxa de geração - documentado explicitamente como tal.
+- A política tenta uma única vez, sem busca automática do multiplicador
+  mínimo suficiente (sempre 2x fixo) - um multiplicador maior poderia
+  recuperar `severe_loss_attempt`, mas isso não foi testado (ver
+  `docs/future_work.md`).

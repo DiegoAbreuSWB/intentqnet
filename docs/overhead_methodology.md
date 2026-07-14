@@ -20,6 +20,14 @@ só que envolta em `time.perf_counter()` a cada etapa.
 
 ## As doze medidas (`TrialTiming`)
 
+**Formulação exata a usar em qualquer texto sobre esta instrumentação**:
+"a instrumentação define doze campos de tempo; dez são observáveis no
+caminho instrumentado atual" ("the instrumentation defines twelve
+timing fields; ten are observable in the current instrumented path")
+- nunca "12 medidas completas", já que `route_application_wall_time_s`
+e `persistence_wall_time_s` são sempre `None` nesta versão (ver a
+tabela abaixo e "Limitações desta etapa").
+
 | Campo | O que mede | Como |
 |---|---|---|
 | `intent_parsing_wall_time_s` | leitura do arquivo + parsing YAML/JSON + normalização de forma | `intent.parser.load_intent_file_with_timing` - `0.0` quando o intent já é passado como objeto Python (não houve parsing nesta chamada, uma medição real, não uma omissão) |
@@ -88,10 +96,21 @@ comparação direta com a baseline nativa.
 
 - `route_application_wall_time_s`/`persistence_wall_time_s` são sempre
   `None` nesta versão - ver a tabela acima para o motivo específico de
-  cada um.
-- Nenhuma campanha em escala usa `run_instrumented_trial` ainda - isso é
-  para a campanha `F06` (Fase J10, "medir decomposição completa").
+  cada um. Nunca descrever a instrumentação como "12 medidas completas".
+- `F06_overhead` (Fase J10, 20 seeds x 3 condições,
+  `scripts/run_f06_overhead.py`) usa `run_instrumented_trial` em escala -
+  resultados e figuras em `docs/final_experimental_design.md` e
+  `results/figures/final/Figure_Overhead_*`. O overhead médio de
+  orquestração ficou abaixo de 0.31% do tempo total de trial nas
+  condições avaliadas (nunca descrito como "desprezível" sem esse
+  escopo) - achado adicional não previsto: `native_sequence` levou ~2.5x
+  mais tempo de SIMULAÇÃO (não de orquestração) que as outras condições,
+  porque a rota que escolhe processa muito mais eventos de
+  entrelaçamento por unidade de tempo simulado.
 - Medições de wall-clock são inerentemente ruidosas (contenção de CPU,
   garbage collection, etc.) - os testes desta fase verificam
   propriedades estruturais (não-negatividade, consistência de somas,
-  zero vs. positivo), nunca magnitudes absolutas específicas.
+  zero vs. positivo), nunca magnitudes absolutas específicas. Ao
+  reportar overhead como resultado (não apenas como teste), sempre
+  mostrar a distribuição completa (`Figure_Overhead_Ratio.png`), nunca
+  só a média.

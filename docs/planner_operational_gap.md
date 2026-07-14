@@ -87,13 +87,30 @@ déficits de entrega/throughput corretos quando a meta é atingida
 persistidos da campanha `C03_assurance_outcomes` (que produz
 naturalmente SATISFIED/VIOLATED/REJECTED).
 
+## Resultado em escala (`F04_planner_vs_operation`, Fase J10/K2)
+
+`scripts/build_f04_planner_operation_matrix.py` roda oracle
+sistematicamente sobre todo `REJECTED` reconstruível de F03
+(`three_node_1_repeater`, 240 trials após a densificação de F03 na Fase
+K2 - ver `docs/false_rejection_root_cause.md`). Resultado:
+`false_rejection_rate=1.0` sobre os 240 testados - **nenhum** foi
+confirmado genuinamente inviável pelo oracle. A figura final
+(`Figure_PlannerOperation_Matrix.png`) usa 6 categorias, não 5: separa
+`INFEASIBLE_AND_REJECTED` (nunca testado) de duas subcategorias
+"testado" - `INFEASIBLE_AND_ORACLE_SATISFIED` (o caso observado, 240
+trials) e `INFEASIBLE_AND_ORACLE_REJECTED` (nunca observado nesta
+campanha - mostrado com contagem 0, não omitido).
+
 ## Limitações desta etapa
 
-- Nenhuma campanha em escala roda oracle sistematicamente sobre seus
-  `REJECTED` ainda - isso é parte da campanha `F04` (Fase J10, "Planner
-  versus operação: gerar matriz de viabilidade e resultado").
 - `EXECUTION_FAILED` nunca foi observado em nenhuma campanha até agora
-  (C01-C04) - o mecanismo de admissão do RSVP e a checagem de
+  (C01-C04, F01-F08) - o mecanismo de admissão do RSVP e a checagem de
   viabilidade do planner parecem estar bem alinhados nas condições
   testadas; isso é uma observação empírica desta fase, não uma garantia
   estrutural.
+- O oracle só foi rodado sobre `three_node_1_repeater`
+  (`linear_chain_2_repeaters`'s 160 rejeições permanecem não testadas,
+  por falta de uma rota alternativa reconstruível de forma inequívoca a
+  partir do trial persistido) - `false_rejection_rate=1.0` não deve ser
+  lido como "toda rejeição deste projeto é falsa", apenas como
+  "toda rejeição TESTADA neste subconjunto era falsa".
