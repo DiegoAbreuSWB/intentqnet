@@ -1,0 +1,144 @@
+{
+  "Figure_Routing_DeliveredPairs_diamond_heterogeneous": {
+    "campaign": "F02_routing",
+    "n": 20,
+    "source_files": [
+      "results/raw/F02_routing/trials.csv"
+    ],
+    "description": "delivered_pairs distribution by routing strategy, diamond_heterogeneous, n=20 seeds/strategy (log y-axis: least_loss operates ~50x higher than the other two strategies here)"
+  },
+  "Figure_Routing_DeliveredPairs_small_mesh": {
+    "campaign": "F02_routing",
+    "n": 20,
+    "source_files": [
+      "results/raw/F02_routing/trials.csv"
+    ],
+    "description": "delivered_pairs distribution by routing strategy, small_mesh, n=20 seeds/strategy"
+  },
+  "Figure_Routing_Satisfaction": {
+    "campaign": "F02_routing",
+    "n": 20,
+    "source_files": [
+      "results/raw/F02_routing/trials.csv"
+    ],
+    "description": "satisfaction rate (SATISFIED / n) with Wilson 95% CI, by routing strategy, both F02 topologies"
+  },
+  "Figure_Routing_Fidelity_diamond_heterogeneous": {
+    "campaign": "F02_routing",
+    "n": 20,
+    "source_files": [
+      "results/raw/F02_routing/trials.csv"
+    ],
+    "description": "average_fidelity distribution by routing strategy, diamond_heterogeneous, n=20 seeds/strategy"
+  },
+  "Figure_Routing_Fidelity_small_mesh": {
+    "campaign": "F02_routing",
+    "n": 20,
+    "source_files": [
+      "results/raw/F02_routing/trials.csv"
+    ],
+    "description": "average_fidelity distribution by routing strategy, small_mesh, n=20 seeds/strategy"
+  },
+  "Figure_Overhead_StageBreakdown": {
+    "campaign": "F06_overhead",
+    "n": 20,
+    "source_files": [
+      "results/raw/F06_overhead/trials.csv"
+    ],
+    "description": "(A) total wall time distribution per condition; (B) IBQN's own orchestration sub-stages (planning/deployment/assurance/reconciliation_decision), n annotated per stage since reconciliation_decision is only recorded when a violation triggers it"
+  },
+  "Figure_Overhead_Ratio": {
+    "campaign": "F06_overhead",
+    "n": 20,
+    "source_files": [
+      "results/raw/F06_overhead/trials.csv"
+    ],
+    "description": "orchestration_overhead_ratio distribution (not just mean) per condition, n=20 seeds/condition; below 0.31% of trial wall time in every condition observed here (see docs/overhead_methodology.md for the exact wording - never stated as an absolute/universal 'negligible')"
+  },
+  "Figure_ResourceSemantics": {
+    "campaign": "F08_resource_semantics",
+    "n": 20,
+    "source_files": [
+      "results/raw/F08_resource_semantics/trials.csv"
+    ],
+    "description": "delivered_pairs/delivery_ratio/deliveries_per_reserved_slot vs. reserved_memory_slots, faceted by duration_s, mean +/- 95% CI, n=20 seeds/cell"
+  },
+  "Figure_FidelityEstimationError": {
+    "campaign": "F02+F03+F07",
+    "n": 320,
+    "source_files": [
+      "results/raw/F02_routing/trials.csv",
+      "results/raw/F03_purification/trials.csv",
+      "results/raw/F07_estimators/trials.csv"
+    ],
+    "description": "absolute_fidelity_error distribution, n=320 trials with a defined estimate (only trials where the plan was feasible/accepted have both an estimated and observed fidelity), grouped by (A) fidelity_estimator and (B) campaign/topology"
+  },
+  "Figure_Reconciliation_BeforeAfter": {
+    "campaign": "F05_reconciliation",
+    "n": 20,
+    "source_files": [
+      "results/processed/F05_reconciliation/trials_with_recovery_type.csv"
+    ],
+    "description": "delivered_pairs per seed, episode 1 -> episode 2, for the 3 recoverable cases plus the severe_loss_attempt case (attempted, never recovers) - fidelity_ceiling_unrecoverable is excluded here since it never reaches a second episode (no_action, see recovery-rate figure)"
+  },
+  "Figure_Reconciliation_RecoveryRate": {
+    "campaign": "F05_reconciliation",
+    "n": 20,
+    "source_files": [
+      "results/processed/F05_reconciliation/trials_with_recovery_type.csv"
+    ],
+    "description": "recovered / reconciliation_attempted with Wilson 95% CI, per scenario class; fidelity_ceiling_unrecoverable shown as an x (0 attempts - no_action is the correct decision, not a missing data point)"
+  },
+  "Figure_Reconciliation_AdditionalCost": {
+    "campaign": "F05_reconciliation",
+    "n": 20,
+    "source_files": [
+      "results/processed/F05_reconciliation/trials_with_recovery_type.csv"
+    ],
+    "description": "(A) additional_wall_time_s distribution for episode 2, by scenario class; (B) how many seeds needed 1 vs. 2 episodes, by scenario class - route/duration/slot adjustments themselves are a fixed 2x multiplier (apply_reconciliation_decision), not a distribution, so their 'magnitude' is not separately plotted"
+  },
+  "Figure_AssuranceOutcomes": {
+    "campaign": "F02_routing+F03_purification",
+    "n": 600,
+    "source_files": [
+      "results/processed/F04_planner_vs_operation/combined_trials_with_categories.csv"
+    ],
+    "description": "counts of SATISFIED/VIOLATED/REJECTED per cell, (A) F02 by scenario x routing_strategy, (B) F03 by scenario x requested_fidelity - all three states occur across both campaigns without being separately forced (n=600 total trials, real final campaigns, not the 2-seed pilot C03_assurance_outcomes)"
+  },
+  "Figure_Purification_three_node_1_repeater": {
+    "campaign": "F03_purification",
+    "n": 20,
+    "source_files": [
+      "results/raw/F03_purification/trials.csv",
+      "results/processed/F04_planner_vs_operation/combined_trials_with_categories.csv"
+    ],
+    "description": "(A) observed fidelity, (B) delivered pairs, vs. requested min_fidelity, three_node_1_repeater; shaded bands distinguish 'rejected but oracle-confirmed satisfiable' from 'rejected, never oracle-tested' - never labeled simply 'infeasible region'"
+  },
+  "Figure_Purification_linear_chain_2_repeaters": {
+    "campaign": "F03_purification",
+    "n": 20,
+    "source_files": [
+      "results/raw/F03_purification/trials.csv",
+      "results/processed/F04_planner_vs_operation/combined_trials_with_categories.csv"
+    ],
+    "description": "(A) observed fidelity, (B) delivered pairs, vs. requested min_fidelity, linear_chain_2_repeaters (100% REJECTED, never simulated - see panel A); shaded bands distinguish 'rejected but oracle-confirmed satisfiable' from 'rejected, never oracle-tested' - never labeled simply 'infeasible region'"
+  },
+  "Figure_PlannerOperation_FidelityScatter": {
+    "campaign": "F02+F03+F07",
+    "n": 320,
+    "source_files": [
+      "results/raw/F02_routing/trials.csv",
+      "results/raw/F03_purification/trials.csv",
+      "results/raw/F07_estimators/trials.csv"
+    ],
+    "description": "estimated vs. observed fidelity, n=320 trials with both defined (feasible/accepted trials only), color=estimator, marker=topology, y=x reference line"
+  },
+  "Figure_PlannerOperation_Matrix": {
+    "campaign": "F02+F03",
+    "n": 600,
+    "source_files": [
+      "results/processed/F04_planner_vs_operation/combined_trials_with_categories.csv"
+    ],
+    "description": "6 planner-decision x operational-outcome categories, explicitly separating 'rejected, never oracle-tested' from 'rejected, oracle confirms satisfiable' from 'rejected, oracle confirms genuinely infeasible' (0 occurrences in this data - shown, not hidden)"
+  }
+}
