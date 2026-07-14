@@ -1,0 +1,458 @@
+{
+  "campaigns": {
+    "F01_architecture_baselines": {
+      "overall": "WARN",
+      "expected_trials": 120,
+      "raw_rows": 120,
+      "manifest_status": "present",
+      "checks": [
+        {
+          "name": "trials_csv_exists",
+          "status": "PASS",
+          "detail": "120 rows"
+        },
+        {
+          "name": "manifest_exists",
+          "status": "PASS",
+          "detail": "F01_architecture_baselines.json"
+        },
+        {
+          "name": "manifest_arithmetic",
+          "status": "PASS",
+          "detail": "120 == 120+0+0"
+        },
+        {
+          "name": "row_count_matches_manifest",
+          "status": "PASS",
+          "detail": "120 rows == completed_trials"
+        },
+        {
+          "name": "key_uniqueness",
+          "status": "PASS",
+          "detail": "0 duplicates on ['condition', 'seed']"
+        },
+        {
+          "name": "seeds_complete[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "120 rows"
+        },
+        {
+          "name": "commit_consistency",
+          "status": "WARN",
+          "detail": "no per-row project_git_commit column (ad-hoc script - see docs/results_provenance.md known gap)"
+        }
+      ]
+    },
+    "F02_routing": {
+      "overall": "PASS",
+      "expected_trials": 120,
+      "raw_rows": 120,
+      "manifest_status": "present",
+      "checks": [
+        {
+          "name": "trials_csv_exists",
+          "status": "PASS",
+          "detail": "120 rows"
+        },
+        {
+          "name": "manifest_exists",
+          "status": "PASS",
+          "detail": "F02_routing.json"
+        },
+        {
+          "name": "manifest_arithmetic",
+          "status": "PASS",
+          "detail": "120 == 120+0+0"
+        },
+        {
+          "name": "row_count_matches_manifest",
+          "status": "PASS",
+          "detail": "120 rows == completed_trials"
+        },
+        {
+          "name": "key_uniqueness",
+          "status": "PASS",
+          "detail": "0 duplicates on ['trial_id']"
+        },
+        {
+          "name": "seeds_complete[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "60 rows"
+        },
+        {
+          "name": "grid_combinations_complete[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "3 combinations x 20 seeds"
+        },
+        {
+          "name": "seeds_complete[small_mesh]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[small_mesh]",
+          "status": "PASS",
+          "detail": "60 rows"
+        },
+        {
+          "name": "grid_combinations_complete[small_mesh]",
+          "status": "PASS",
+          "detail": "3 combinations x 20 seeds"
+        },
+        {
+          "name": "commit_consistency",
+          "status": "PASS",
+          "detail": "single commit: ['f4343c314e5de5e01ee6970aaa14b5974c1b49ea']"
+        }
+      ]
+    },
+    "F03_purification": {
+      "overall": "WARN",
+      "expected_trials": 480,
+      "raw_rows": 480,
+      "manifest_status": "present",
+      "checks": [
+        {
+          "name": "trials_csv_exists",
+          "status": "PASS",
+          "detail": "480 rows"
+        },
+        {
+          "name": "manifest_exists",
+          "status": "PASS",
+          "detail": "F03_purification.json"
+        },
+        {
+          "name": "manifest_arithmetic",
+          "status": "PASS",
+          "detail": "480 == 480+0+0"
+        },
+        {
+          "name": "row_count_matches_manifest",
+          "status": "PASS",
+          "detail": "480 rows == completed_trials"
+        },
+        {
+          "name": "key_uniqueness",
+          "status": "PASS",
+          "detail": "0 duplicates on ['trial_id']"
+        },
+        {
+          "name": "seeds_complete[linear_chain_2_repeaters]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[linear_chain_2_repeaters]",
+          "status": "PASS",
+          "detail": "160 rows"
+        },
+        {
+          "name": "grid_combinations_complete[linear_chain_2_repeaters]",
+          "status": "PASS",
+          "detail": "8 combinations x 20 seeds"
+        },
+        {
+          "name": "seeds_complete[three_node_1_repeater]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[three_node_1_repeater]",
+          "status": "PASS",
+          "detail": "320 rows"
+        },
+        {
+          "name": "grid_combinations_complete[three_node_1_repeater]",
+          "status": "PASS",
+          "detail": "16 combinations x 20 seeds"
+        },
+        {
+          "name": "commit_consistency",
+          "status": "WARN",
+          "detail": "multiple commits (check manifest blocks - may be a legitimately extended campaign): {'f4343c314e5de5e01ee6970aaa14b5974c1b49ea': 320, '346d13d73b314be70c16e143c68a04cb832af4fc': 160}"
+        }
+      ]
+    },
+    "F05_reconciliation": {
+      "overall": "WARN",
+      "expected_trials": 100,
+      "raw_rows": 100,
+      "manifest_status": "present",
+      "checks": [
+        {
+          "name": "trials_csv_exists",
+          "status": "PASS",
+          "detail": "100 rows"
+        },
+        {
+          "name": "manifest_exists",
+          "status": "PASS",
+          "detail": "F05_reconciliation.json"
+        },
+        {
+          "name": "manifest_arithmetic",
+          "status": "PASS",
+          "detail": "100 == 100+0+0"
+        },
+        {
+          "name": "row_count_matches_manifest",
+          "status": "PASS",
+          "detail": "100 rows == completed_trials"
+        },
+        {
+          "name": "key_uniqueness",
+          "status": "PASS",
+          "detail": "0 duplicates on ['case', 'seed']"
+        },
+        {
+          "name": "seeds_complete[route_change_recoverable]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[route_change_recoverable]",
+          "status": "PASS",
+          "detail": "20 rows"
+        },
+        {
+          "name": "seeds_complete[duration_increase_recoverable]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[duration_increase_recoverable]",
+          "status": "PASS",
+          "detail": "20 rows"
+        },
+        {
+          "name": "seeds_complete[slot_increase_recoverable]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[slot_increase_recoverable]",
+          "status": "PASS",
+          "detail": "20 rows"
+        },
+        {
+          "name": "seeds_complete[fidelity_ceiling_unrecoverable]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[fidelity_ceiling_unrecoverable]",
+          "status": "PASS",
+          "detail": "20 rows"
+        },
+        {
+          "name": "seeds_complete[severe_loss_attempt]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[severe_loss_attempt]",
+          "status": "PASS",
+          "detail": "20 rows"
+        },
+        {
+          "name": "commit_consistency",
+          "status": "WARN",
+          "detail": "no per-row project_git_commit column (ad-hoc script - see docs/results_provenance.md known gap)"
+        }
+      ]
+    },
+    "F06_overhead": {
+      "overall": "WARN",
+      "expected_trials": 60,
+      "raw_rows": 60,
+      "manifest_status": "present",
+      "checks": [
+        {
+          "name": "trials_csv_exists",
+          "status": "PASS",
+          "detail": "60 rows"
+        },
+        {
+          "name": "manifest_exists",
+          "status": "PASS",
+          "detail": "F06_overhead.json"
+        },
+        {
+          "name": "manifest_arithmetic",
+          "status": "PASS",
+          "detail": "60 == 60+0+0"
+        },
+        {
+          "name": "row_count_matches_manifest",
+          "status": "PASS",
+          "detail": "60 rows == completed_trials"
+        },
+        {
+          "name": "key_uniqueness",
+          "status": "PASS",
+          "detail": "0 duplicates on ['condition', 'seed']"
+        },
+        {
+          "name": "seeds_complete[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "60 rows"
+        },
+        {
+          "name": "commit_consistency",
+          "status": "WARN",
+          "detail": "no per-row project_git_commit column (ad-hoc script - see docs/results_provenance.md known gap)"
+        }
+      ]
+    },
+    "F07_estimators": {
+      "overall": "PASS",
+      "expected_trials": 120,
+      "raw_rows": 120,
+      "manifest_status": "present",
+      "checks": [
+        {
+          "name": "trials_csv_exists",
+          "status": "PASS",
+          "detail": "120 rows"
+        },
+        {
+          "name": "manifest_exists",
+          "status": "PASS",
+          "detail": "F07_estimators.json"
+        },
+        {
+          "name": "manifest_arithmetic",
+          "status": "PASS",
+          "detail": "120 == 120+0+0"
+        },
+        {
+          "name": "row_count_matches_manifest",
+          "status": "PASS",
+          "detail": "120 rows == completed_trials"
+        },
+        {
+          "name": "key_uniqueness",
+          "status": "PASS",
+          "detail": "0 duplicates on ['trial_id']"
+        },
+        {
+          "name": "seeds_complete[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "120 rows"
+        },
+        {
+          "name": "grid_combinations_complete[diamond_heterogeneous]",
+          "status": "PASS",
+          "detail": "6 combinations x 20 seeds"
+        },
+        {
+          "name": "commit_consistency",
+          "status": "PASS",
+          "detail": "single commit: ['f4343c314e5de5e01ee6970aaa14b5974c1b49ea']"
+        }
+      ]
+    },
+    "F08_resource_semantics": {
+      "overall": "PASS",
+      "expected_trials": 80,
+      "raw_rows": 80,
+      "manifest_status": "present",
+      "checks": [
+        {
+          "name": "trials_csv_exists",
+          "status": "PASS",
+          "detail": "80 rows"
+        },
+        {
+          "name": "manifest_exists",
+          "status": "PASS",
+          "detail": "F08_resource_semantics.json"
+        },
+        {
+          "name": "manifest_arithmetic",
+          "status": "PASS",
+          "detail": "80 == 80+0+0"
+        },
+        {
+          "name": "row_count_matches_manifest",
+          "status": "PASS",
+          "detail": "80 rows == completed_trials"
+        },
+        {
+          "name": "key_uniqueness",
+          "status": "PASS",
+          "detail": "0 duplicates on ['trial_id']"
+        },
+        {
+          "name": "seeds_complete[three_node]",
+          "status": "PASS",
+          "detail": "20 seeds present"
+        },
+        {
+          "name": "block_row_count[three_node]",
+          "status": "PASS",
+          "detail": "80 rows"
+        },
+        {
+          "name": "grid_combinations_complete[three_node]",
+          "status": "PASS",
+          "detail": "4 combinations x 20 seeds"
+        },
+        {
+          "name": "commit_consistency",
+          "status": "PASS",
+          "detail": "single commit: ['f4343c314e5de5e01ee6970aaa14b5974c1b49ea']"
+        }
+      ]
+    }
+  },
+  "cross_campaign_checks": [
+    {
+      "name": "f04_derives_from_f02_f03",
+      "status": "PASS",
+      "detail": "600 rows == 120 (F02) + 480 (F03), trial_id sets match"
+    },
+    {
+      "name": "final_figures_have_sources_json",
+      "status": "PASS",
+      "detail": "17 entries"
+    },
+    {
+      "name": "every_figure_has_pdf_and_png",
+      "status": "PASS",
+      "detail": "17 figures"
+    },
+    {
+      "name": "every_figure_has_identifiable_source",
+      "status": "PASS",
+      "detail": "all figures listed in sources.json"
+    }
+  ],
+  "pilot_campaigns_excluded_from_final_audit": [
+    "C01_routing_strategy",
+    "C02_fidelity_throughput",
+    "C03_assurance_outcomes",
+    "C04_reconciliation_effectiveness"
+  ]
+}

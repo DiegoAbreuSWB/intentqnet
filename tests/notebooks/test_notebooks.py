@@ -71,8 +71,22 @@ REQUIRED_ARTICLE_NOTEBOOKS = [
     "article/A07_summary_tables_and_figures.ipynb",
 ]
 
+# Fase K4: final campaigns (F01-F08), not the C01-C04 pilot the A0*
+# notebooks above use - see docs/results_provenance.md.
+REQUIRED_FINAL_NOTEBOOKS = [
+    "article/final/R01_architecture_and_baselines.ipynb",
+    "article/final/R02_routing.ipynb",
+    "article/final/R03_purification.ipynb",
+    "article/final/R04_planner_operation_gap.ipynb",
+    "article/final/R05_reconciliation.ipynb",
+    "article/final/R06_overhead.ipynb",
+    "article/final/R07_estimators.ipynb",
+    "article/final/R08_resource_semantics.ipynb",
+    "article/final/R09_final_summary.ipynb",
+]
+
 REQUIRED_NOTEBOOKS = REQUIRED_H1_NOTEBOOKS + REQUIRED_H2_NOTEBOOKS
-ALL_REQUIRED_NOTEBOOKS = REQUIRED_NOTEBOOKS + REQUIRED_ARTICLE_NOTEBOOKS
+ALL_REQUIRED_NOTEBOOKS = REQUIRED_NOTEBOOKS + REQUIRED_ARTICLE_NOTEBOOKS + REQUIRED_FINAL_NOTEBOOKS
 
 _EXTERNAL_TEMP_PATTERNS = [
     re.compile(r"AppData[\\/]Local[\\/]Temp", re.IGNORECASE),
@@ -86,7 +100,8 @@ _SIMULATION_TRIGGERS = ("SequenceAdapter(", "run_scenario(")
 def _discovered_notebooks() -> list[Path]:
     top_level = NOTEBOOKS_DIR.glob("*.ipynb")
     article = (NOTEBOOKS_DIR / "article").glob("*.ipynb")
-    return sorted(top_level) + sorted(article)
+    final = (NOTEBOOKS_DIR / "article" / "final").glob("*.ipynb")
+    return sorted(top_level) + sorted(article) + sorted(final)
 
 
 def _notebook_id(path: Path) -> str:
@@ -235,16 +250,29 @@ def test_notebook_19_completes_the_full_cycle(executed_notebooks):
 # notebooks must never run campaigns/simulations themselves, only load/
 # validate/plot data already persisted under results/) ---
 
-@pytest.mark.parametrize("notebook_name", REQUIRED_ARTICLE_NOTEBOOKS)
+@pytest.mark.parametrize("notebook_name", REQUIRED_ARTICLE_NOTEBOOKS + REQUIRED_FINAL_NOTEBOOKS)
 def test_article_notebook_never_runs_a_campaign_or_simulation(notebook_name):
     notebook = nbformat.read(NOTEBOOKS_DIR / notebook_name, as_version=4)
     code = _code_text(notebook)
     assert "CampaignRunner(" not in code, (
         f"{notebook_name} must never run a campaign - it should only read already-persisted results"
     )
+    assert "run_programmatic_campaign(" not in code, (
+        f"{notebook_name} must never run a campaign - it should only read already-persisted results"
+    )
     assert not any(trigger in code for trigger in _SIMULATION_TRIGGERS), (
         f"{notebook_name} must never run a simulation directly - it should only read already-persisted results"
     )
+
+
+@pytest.mark.parametrize("notebook_name", REQUIRED_FINAL_NOTEBOOKS)
+def test_final_notebook_never_loads_pilot_campaigns(notebook_name):
+    """Fase K1/K5: final notebooks must load only F01-F08, never the
+    C01-C04 pilot campaigns - see docs/results_provenance.md."""
+    notebook = nbformat.read(NOTEBOOKS_DIR / notebook_name, as_version=4)
+    code = _code_text(notebook)
+    for pilot_campaign in ("C01_routing_strategy", "C02_fidelity_throughput", "C03_assurance_outcomes", "C04_reconciliation_effectiveness"):
+        assert pilot_campaign not in code, f"{notebook_name} must not load the pilot campaign {pilot_campaign}"
 
 
 def test_notebook_A00_confirms_all_campaigns_pass_validation(executed_notebooks):
