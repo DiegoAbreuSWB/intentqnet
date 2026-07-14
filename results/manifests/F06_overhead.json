@@ -1,0 +1,112 @@
+{
+  "campaign": "F06_overhead",
+  "description": "Fase J10 final campaign: F06_overhead - per-stage wall-clock overhead decomposition (run_instrumented_trial) versus native/static baselines.",
+  "created_at": null,
+  "updated_at": "2026-07-13T23:23:38.398196+00:00",
+  "project_git_commit": "f4343c314e5de5e01ee6970aaa14b5974c1b49ea",
+  "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
+  "python_version": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "dependencies": {
+    "pydantic": "2.13.4",
+    "yaml": "6.0.3",
+    "networkx": "3.6.1",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "matplotlib": "3.11.0",
+    "pandas": "3.0.3",
+    "qutip": "5.3.0",
+    "stim": "1.16.0",
+    "gmpy2": "2.3.1",
+    "nbformat": "5.10.4",
+    "nbclient": "0.11.0"
+  },
+  "campaign_file": null,
+  "execution_path": "ad_hoc_script (not run_programmatic_campaign/CampaignRunner)",
+  "provenance_note": "No manifest was written at execution time (this campaign ran via a standalone script, not run_programmatic_campaign/CampaignRunner - see docs/results_provenance.md). created_at is unknown for the same reason. project_git_commit/sequence_git_commit/python_version/platform/dependencies are INFERRED, not recorded: this campaign ran in the same uninterrupted working session as F02/F03/F07/F08 (which did record their environment), strictly before any Fase J10 commit was made - so the environment must be identical to theirs (project_git_commit f4343c3, the last commit before any Fase J10 commit landed). Per-row project_git_commit/sequence_git_commit columns are absent from this campaign's trials.csv for the same reason (F01's execute_trial-based rows even pass project_commit=None/sequence_commit=None explicitly) - a known, disclosed traceability gap, not a fabricated value; see docs/results_provenance.md and results/audit/final_results_audit.md.",
+  "blocks": [
+    {
+      "scenario": "diamond_heterogeneous",
+      "intent_files": [
+        "intent-diamond-demo"
+      ],
+      "base_configuration": {
+        "reserved_memory_slots": 10,
+        "min_fidelity": 0.6,
+        "stop_time_s": 0.2,
+        "routing_strategy": "shortest_hop_count",
+        "purification_policy": "automatic",
+        "fidelity_estimator": "conservative_min",
+        "reconciliation_enabled": true
+      },
+      "swept_factors": {
+        "condition": [
+          "ibqn_instrumented",
+          "native_sequence",
+          "static_provisioning"
+        ]
+      },
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_trials": 60,
+      "completed_trials": 60,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    }
+  ],
+  "scenario_files": [
+    "diamond_heterogeneous"
+  ],
+  "intent_files": [
+    "intent-diamond-demo"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "expected_trials": 60,
+  "completed_trials": 60,
+  "skipped_trials": 0,
+  "failed_trials": 0,
+  "output_files": [
+    "C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\results\\raw\\F06_overhead\\trials.csv"
+  ]
+}

@@ -40,6 +40,7 @@ results/processed/*
 !results/processed/F02_routing/
 !results/processed/F03_purification/
 !results/processed/F04_planner_vs_operation/
+!results/processed/F05_reconciliation/
 !results/processed/F07_estimators/
 !results/processed/F08_resource_semantics/
 

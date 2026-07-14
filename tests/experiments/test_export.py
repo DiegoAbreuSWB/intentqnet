@@ -36,3 +36,30 @@ def test_save_figure_creates_missing_directory(tmp_path):
     save_figure(fig, "fig", directory=nested)
     assert (nested / "fig.pdf").exists()
     plt.close(fig)
+
+
+@pytest.mark.unit
+def test_save_table_writes_final_name_only_no_leftover_tmp(tmp_path):
+    """Regression test (Fase K4): found empirically that a whole set of
+    processed files across the repo ended up on disk under a corrupted,
+    campaign-suffixed name (e.g. aggregated_C01_routing_strategy.csv
+    instead of aggregated.csv) while the correctly-named file
+    vanished - see docs/results_provenance.md. save_table/save_figure
+    now write via a temp file + atomic os.replace so a reader never sees
+    a partially-written or wrongly-named file; confirm no .tmp leftover
+    remains and the final name is exactly what was requested."""
+    df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    path = save_table(df, "exact_name", directory=tmp_path)
+    assert path.name == "exact_name.csv"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["exact_name.csv"]
+
+
+@pytest.mark.unit
+def test_save_figure_writes_final_names_only_no_leftover_tmp(tmp_path):
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1])
+    pdf_path, png_path = save_figure(fig, "exact_name", directory=tmp_path)
+    plt.close(fig)
+    assert pdf_path.name == "exact_name.pdf"
+    assert png_path.name == "exact_name.png"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["exact_name.pdf", "exact_name.png"]
