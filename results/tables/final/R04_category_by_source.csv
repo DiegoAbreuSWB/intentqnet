@@ -1,0 +1,5 @@
+source_campaign,scenario,FEASIBLE_AND_SATISFIED,FEASIBLE_BUT_VIOLATED,INFEASIBLE_AND_REJECTED,INFEASIBLE_BUT_POTENTIALLY_SATISFIABLE
+F02_routing,diamond_heterogeneous,30,30,0,0
+F02_routing,small_mesh,60,0,0,0
+F03_purification,linear_chain_2_repeaters,0,0,160,0
+F03_purification,three_node_1_repeater,80,0,0,240

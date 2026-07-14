@@ -1,0 +1,6 @@
+case,n_attempted,recovery_rate,ci95_low,ci95_high
+duration_increase_recoverable,20,1.0,0.8388748419471806,1.0
+fidelity_ceiling_unrecoverable,0,,,
+route_change_recoverable,15,1.0,0.7961166989641515,1.0
+severe_loss_attempt,20,0.0,0.0,0.16112515805281938
+slot_increase_recoverable,20,0.95,0.763868806553258,0.9911185511992047

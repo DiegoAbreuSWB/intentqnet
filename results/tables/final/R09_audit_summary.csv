@@ -1,0 +1,8 @@
+campaign,overall,expected_trials,raw_rows
+F01_architecture_baselines,WARN,120,120
+F02_routing,PASS,120,120
+F03_purification,WARN,480,480
+F05_reconciliation,WARN,100,100
+F06_overhead,WARN,60,60
+F07_estimators,PASS,120,120
+F08_resource_semantics,PASS,80,80

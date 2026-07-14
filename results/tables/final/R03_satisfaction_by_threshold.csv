@@ -1,0 +1,13 @@
+scenario,requested_fidelity,automatic,disabled
+linear_chain_2_repeaters,0.65,0.0,0.0
+linear_chain_2_repeaters,0.7,0.0,0.0
+linear_chain_2_repeaters,0.72,0.0,0.0
+linear_chain_2_repeaters,0.75,0.0,0.0
+three_node_1_repeater,0.65,1.0,1.0
+three_node_1_repeater,0.7,1.0,0.0
+three_node_1_repeater,0.72,1.0,0.0
+three_node_1_repeater,0.73,0.0,0.0
+three_node_1_repeater,0.735,0.0,0.0
+three_node_1_repeater,0.74,0.0,0.0
+three_node_1_repeater,0.745,0.0,0.0
+three_node_1_repeater,0.75,0.0,0.0
