@@ -2,5 +2,5 @@ category,count,interpretation
 FEASIBLE_AND_SATISFIED,170,previsão correta
 FEASIBLE_BUT_VIOLATED,30,falsa viabilidade operacional
 INFEASIBLE_AND_REJECTED,160,rejeição prevista (nunca testada contra oracle)
-INFEASIBLE_BUT_POTENTIALLY_SATISFIABLE,80,falso negativo do planner (oracle confirma satisfazível)
+INFEASIBLE_BUT_POTENTIALLY_SATISFIABLE,240,falso negativo do planner (oracle confirma satisfazível)
 EXECUTION_FAILED,0,"reserva rejeitada pelo próprio SeQUeNCe, apesar do planner achar viável"

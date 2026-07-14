@@ -1,0 +1,257 @@
+{
+  "campaign": "F05_reconciliation",
+  "description": "Fase J10 final campaign: F05_reconciliation - reconciliation coverage across 5 recoverable/unrecoverable scenario classes, 20 seeds each.",
+  "created_at": null,
+  "updated_at": "2026-07-13T23:23:38.395959+00:00",
+  "project_git_commit": "f4343c314e5de5e01ee6970aaa14b5974c1b49ea",
+  "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
+  "python_version": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "dependencies": {
+    "pydantic": "2.13.4",
+    "yaml": "6.0.3",
+    "networkx": "3.6.1",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "matplotlib": "3.11.0",
+    "pandas": "3.0.3",
+    "qutip": "5.3.0",
+    "stim": "1.16.0",
+    "gmpy2": "2.3.1",
+    "nbformat": "5.10.4",
+    "nbclient": "0.11.0"
+  },
+  "campaign_file": null,
+  "execution_path": "ad_hoc_script (not run_programmatic_campaign/CampaignRunner)",
+  "provenance_note": "No manifest was written at execution time (this campaign ran via a standalone script, not run_programmatic_campaign/CampaignRunner - see docs/results_provenance.md). created_at is unknown for the same reason. project_git_commit/sequence_git_commit/python_version/platform/dependencies are INFERRED, not recorded: this campaign ran in the same uninterrupted working session as F02/F03/F07/F08 (which did record their environment), strictly before any Fase J10 commit was made - so the environment must be identical to theirs (project_git_commit f4343c3, the last commit before any Fase J10 commit landed). Per-row project_git_commit/sequence_git_commit columns are absent from this campaign's trials.csv for the same reason (F01's execute_trial-based rows even pass project_commit=None/sequence_commit=None explicitly) - a known, disclosed traceability gap, not a fabricated value; see docs/results_provenance.md and results/audit/final_results_audit.md.",
+  "blocks": [
+    {
+      "scenario": "route_change_recoverable",
+      "intent_files": [
+        "f05-route_change_recoverable"
+      ],
+      "base_configuration": {
+        "topology": "diamond_spec()",
+        "intent": "diamond_intent(requested_pairs=10, min_fidelity=0.6)"
+      },
+      "swept_factors": {},
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_trials": 20,
+      "completed_trials": 20,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    },
+    {
+      "scenario": "duration_increase_recoverable",
+      "intent_files": [
+        "f05-duration_increase_recoverable"
+      ],
+      "base_configuration": {
+        "topology": "three_node_spec(attenuation_db_per_m=0.01, stop_time_s=0.3)",
+        "intent": "min_fidelity=0.6, min_delivered_pairs=30, duration=0.03"
+      },
+      "swept_factors": {},
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_trials": 20,
+      "completed_trials": 20,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    },
+    {
+      "scenario": "slot_increase_recoverable",
+      "intent_files": [
+        "f05-slot_increase_recoverable"
+      ],
+      "base_configuration": {
+        "topology": "three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.3, repeater_memories=40, end_memories=20)",
+        "intent": "min_fidelity=0.6, min_delivered_pairs=30, duration=0.02, reserved_memory_slots=2"
+      },
+      "swept_factors": {},
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_trials": 20,
+      "completed_trials": 20,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    },
+    {
+      "scenario": "fidelity_ceiling_unrecoverable",
+      "intent_files": [
+        "f05-fidelity_ceiling_unrecoverable"
+      ],
+      "base_configuration": {
+        "topology": "three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2)",
+        "intent": "min_fidelity=0.9, min_delivered_pairs=10, duration=0.1"
+      },
+      "swept_factors": {},
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_trials": 20,
+      "completed_trials": 20,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    },
+    {
+      "scenario": "severe_loss_attempt",
+      "intent_files": [
+        "f05-severe_loss_attempt"
+      ],
+      "base_configuration": {
+        "topology": "three_node_spec(attenuation_db_per_m=0.03, stop_time_s=0.3)",
+        "intent": "min_fidelity=0.6, min_delivered_pairs=60, duration=0.03"
+      },
+      "swept_factors": {},
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "expected_trials": 20,
+      "completed_trials": 20,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    }
+  ],
+  "scenario_files": [
+    "route_change_recoverable",
+    "duration_increase_recoverable",
+    "slot_increase_recoverable",
+    "fidelity_ceiling_unrecoverable",
+    "severe_loss_attempt"
+  ],
+  "intent_files": [
+    "f05-duration_increase_recoverable",
+    "f05-fidelity_ceiling_unrecoverable",
+    "f05-route_change_recoverable",
+    "f05-severe_loss_attempt",
+    "f05-slot_increase_recoverable"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "expected_trials": 100,
+  "completed_trials": 100,
+  "skipped_trials": 0,
+  "failed_trials": 0,
+  "output_files": [
+    "C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\results\\raw\\F05_reconciliation\\trials.csv"
+  ]
+}

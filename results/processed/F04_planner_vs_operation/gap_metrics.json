@@ -1,6 +1,6 @@
 {
-  "n_total": 440,
-  "operational_success_rate": 0.38636363636363635,
+  "n_total": 600,
+  "operational_success_rate": 0.2833333333333333,
   "false_feasibility_rate": 0.15,
   "false_rejection_rate": 1.0,
   "fidelity_prediction_error": 0.02194409061001724,
