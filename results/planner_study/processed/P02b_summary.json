@@ -1,0 +1,44 @@
+{
+  "n_trials_total": 1200,
+  "n_trials_by_planner_level": {
+    "L1": 240,
+    "L2": 240,
+    "L2-R": 240,
+    "L3": 240,
+    "L3-R": 240
+  },
+  "probability_calibration_summary": [
+    {
+      "planner_level": "L3",
+      "n": 240,
+      "brier_score": 0.05754343202618859,
+      "log_loss": 0.6373065808716817,
+      "ece": 0.0540688363971881,
+      "selected_threshold_on_validation": 0.5,
+      "test_metrics_at_selected_threshold": {
+        "threshold": 0.5,
+        "n": 120,
+        "admission_rate": 0.25,
+        "false_feasibility": 0.03333333333333333,
+        "false_rejection": 0.05555555555555555,
+        "operational_satisfaction": 0.24166666666666667
+      }
+    },
+    {
+      "planner_level": "L3-R",
+      "n": 240,
+      "brier_score": 0.06838450760130345,
+      "log_loss": 0.8132859208792335,
+      "ece": 0.07513581400480683,
+      "selected_threshold_on_validation": 0.5,
+      "test_metrics_at_selected_threshold": {
+        "threshold": 0.5,
+        "n": 120,
+        "admission_rate": 0.20833333333333334,
+        "false_feasibility": 0.0,
+        "false_rejection": 0.09473684210526316,
+        "operational_satisfaction": 0.20833333333333334
+      }
+    }
+  ]
+}

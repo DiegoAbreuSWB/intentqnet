@@ -98,7 +98,27 @@ def execute_trial_with_policy(
     executor.deploy(intent, decision.selected_plan)
 
     t0 = time.perf_counter()
-    executor.run()
+    try:
+        executor.run()
+    except Exception as exc:  # noqa: BLE001
+        # A planner level admitting at admission_threshold=0.0 (L3/L3-R's
+        # P02/P02B collection protocol - see scripts/run_p02b_resource_
+        # aware_planners.py) can deploy a route SeQUeNCe's real protocol
+        # code correctly refuses mid-simulation (e.g. BBPSSW's own
+        # `kept_memo.fidelity > 0.5` assertion, sequence/entanglement_
+        # management/purification/bbpssw_protocol.py, when the pre-
+        # purification fidelity is already below what purification can
+        # ever help) - a real, informative outcome, not a bug in this
+        # trial runner. Recording it as SIMULATION_ERROR (with the real
+        # exception preserved in rejection_reason) keeps a long campaign
+        # from losing all prior trials to one physically-refused plan,
+        # while never inventing a SATISFIED/VIOLATED verdict SeQUeNCe
+        # itself never reached.
+        simulation_wall_time_s = time.perf_counter() - t0
+        return _record(
+            final_status="SIMULATION_ERROR", rejection_reason=f"{type(exc).__name__}: {exc}",
+            simulation_wall_time_s=round(simulation_wall_time_s, 6),
+        )
     simulation_wall_time_s = time.perf_counter() - t0
 
     record_status = repository.get(intent.id).lifecycle.status

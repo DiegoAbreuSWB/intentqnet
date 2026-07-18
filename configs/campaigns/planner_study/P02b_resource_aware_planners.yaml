@@ -1,0 +1,107 @@
+campaign:
+  name: P02b_resource_aware_planners
+  description: >
+    Planner-family study (M6e/checkpoint 2B): L1 vs. L2 vs. L2-R vs.
+    L3-original vs. L3-R, paired across four topologies (three_node,
+    four_node, diamond_heterogeneous, small_mesh) - see docs/planner_
+    comparison_methodology.md and docs/l2_resource_aware_model.md /
+    docs/l3_resource_aware_model.md for what each level changes.
+
+    Per-topology combinations are graded across a min_fidelity axis
+    (spanning 0/1/2/3 purification rounds) rather than only favorable/
+    severe extremes (P02's stated design mistake - Discovery B's
+    near-bimodal predictions were partly an artifact of an all-extreme
+    parameter grid) and cross two resource regimes ("generous":
+    duration_s=0.05, reserved_memory_slots=10; "marginal": duration_s=0.01,
+    reserved_memory_slots=4), each with min_delivered_pairs=10, plus one
+    explicit allow_purification=false variant per topology to directly
+    test the purification-enabled/disabled axis (section 10 of the
+    planner-study brief).
+
+    This is an EXPLICIT, DISCLOSED reduction from a full topology x
+    fidelity x duration x slots x min_delivered_pairs x purification
+    factorial (which would run into the tens of thousands of trials) -
+    the same disclosed-reduction precedent P03 already established for K
+    in {3, 5, 10} vs. the originally requested {5, 10, 20, 30}. A first
+    attempt at this campaign used 20 seeds and duration_s=0.1 for the
+    generous regime; a live wall-time check after ~23 trials (results/
+    planner_study/raw/P02b_resource_aware_planners/ did not yet exist at
+    that unfinished attempt - it was stopped and its partial trials.csv
+    discarded before any analysis read it) projected several hours to
+    finish, which was not practical for this session. Seeds were reduced
+    to 10 and the generous regime's duration_s from 0.1 to 0.05 - both
+    reductions are disclosed here, not hidden; discarding the partial
+    incomplete run (rather than mixing it with the revised parameters)
+    keeps every parameter_hash in the final trials.csv consistent with
+    the scope actually reported. 6 combinations x 4 topologies x 5
+    planner levels x 10 seeds = 1200 trials.
+
+    L4 is NOT re-run here - section 10 of the brief makes its inclusion
+    conditional on cost, and P03's existing results
+    (results/planner_study/raw/P03_l4_cost/) already establish its
+    quality/cost profile on two of these combinations (favorable,
+    resource_marginal) on the three-node chain; checkpoint 2B's
+    Recommendation section reuses those numbers rather than re-simulating.
+
+    L3/L3-R are collected with admission_threshold=0.0 (deploy the best
+    candidate whenever ANY route has non-zero predicted probability),
+    exactly as P02 did - candidate thresholds (0.50/0.75/0.90/0.95) are
+    applied post-hoc during analysis (scripts/analyze_p02b.py), never
+    re-simulated per threshold.
+
+    Writes only to results/planner_study/raw/P02b_resource_aware_planners/ -
+    never touches results/raw/F0*, results/planner_study/raw/P01_*,
+    results/planner_study/raw/P02_l1_l2_l3/, or
+    results/planner_study/raw/P03_l4_cost/.
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  validation_seeds: [0, 1, 2, 3, 4]
+  test_seeds: [5, 6, 7, 8, 9]
+  planners: [L1, L2, L2-R, L3, L3-R]
+  l3_family_admission_threshold_at_collection: 0.0
+  candidate_thresholds_applied_post_hoc: [0.50, 0.75, 0.90, 0.95]
+  output_directory: results/planner_study
+  topologies:
+    - name: three_node
+      builder: three_node_spec
+      intent_endpoints: {source: a, destination: b}
+      combinations:
+        - {min_fidelity: 0.60, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: true, regime: generous}
+        - {min_fidelity: 0.65, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: true, regime: generous}
+        - {min_fidelity: 0.65, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: false, regime: generous_no_purification}
+        - {min_fidelity: 0.70, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+        - {min_fidelity: 0.73, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+        - {min_fidelity: 0.76, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+    - name: four_node
+      builder: linear_chain_2_spec
+      intent_endpoints: {source: a, destination: b}
+      combinations:
+        - {min_fidelity: 0.60, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: true, regime: generous}
+        - {min_fidelity: 0.65, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: true, regime: generous}
+        - {min_fidelity: 0.65, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: false, regime: generous_no_purification}
+        - {min_fidelity: 0.70, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+        - {min_fidelity: 0.73, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+        - {min_fidelity: 0.76, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+    - name: diamond_heterogeneous
+      builder: diamond_spec
+      intent_endpoints: {source: r1, destination: r3}
+      combinations:
+        - {min_fidelity: 0.55, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: true, regime: generous}
+        - {min_fidelity: 0.60, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: true, regime: generous}
+        - {min_fidelity: 0.60, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: false, regime: generous_no_purification}
+        - {min_fidelity: 0.65, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+        - {min_fidelity: 0.70, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+        - {min_fidelity: 0.75, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+    - name: small_mesh
+      builder: small_mesh_spec
+      intent_endpoints: {source: a0, destination: b3}
+      combinations:
+        - {min_fidelity: 0.60, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: true, regime: generous}
+        - {min_fidelity: 0.65, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: true, regime: generous}
+        - {min_fidelity: 0.65, reserved_memory_slots: 10, duration_s: 0.05, min_delivered_pairs: 10, allow_purification: false, regime: generous_no_purification}
+        - {min_fidelity: 0.70, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+        - {min_fidelity: 0.73, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+        - {min_fidelity: 0.76, reserved_memory_slots: 4, duration_s: 0.01, min_delivered_pairs: 10, allow_purification: true, regime: marginal}
+  metadata:
+    study: planner_family_L1_L5
+    milestone: M6e
+    checkpoint: checkpoint_2b

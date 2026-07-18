@@ -100,5 +100,22 @@ def append_trial_record(path: str | Path, record: PlannerStudyTrialRecord) -> No
         writer = csv.DictWriter(f, fieldnames=PlannerStudyTrialRecord.fieldnames())
         writer.writerow(row)
     import os
+    import time
 
-    os.replace(tmp_path, path)
+    # `os.replace` can transiently fail on Windows with PermissionError
+    # (WinError 5) when another process (antivirus, OneDrive/cloud sync on
+    # a synced Desktop folder, a search indexer) briefly holds a read
+    # handle on a just-written file - observed during the P02B campaign
+    # (a 1200-trial run failing outright at trial 187 on an otherwise
+    # correct write). This is a transient OS-level lock, not a data
+    # correctness issue - retry with a short backoff rather than losing
+    # an entire long-running campaign to one flaky rename.
+    last_error: OSError | None = None
+    for attempt in range(10):
+        try:
+            os.replace(tmp_path, path)
+            return
+        except PermissionError as exc:
+            last_error = exc
+            time.sleep(0.1 * (attempt + 1))
+    raise last_error
