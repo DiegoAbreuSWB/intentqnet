@@ -77,6 +77,28 @@ out of scope for L2 - see `docs/l3_probabilistic_model.md`, once written).
   `planning.purification`'s module docstring on why that would require
   bypassing the reservation API).
 
+## Audit: is `2^rounds` computed correctly? (requested after checkpoint 1)
+
+Verified directly: `cumulative_pairs` starts at 1 and is multiplied by
+`PAIR_CONSUMPTION_PER_ROUND=2` once per round, giving exactly `2^rounds`
+at every step (checked round-by-round up to round 8: 2, 4, 8, 16, 32, 64,
+128, 256 - all match `2**round_index` exactly). No double exponentiation,
+no formula bug. Python's arbitrary-precision integers mean no silent
+overflow either: forcing `max_rounds=100` with a near-unity target
+(0.999999999) converges after 69 rounds at `cumulative_pair_cost =
+2**69 ≈ 5.9e20` without crashing or wrapping.
+
+**That number itself is the real problem, not a bug in computing it**:
+`2**69` raw pairs is physically meaningless (no real reservation window
+could produce anywhere near that many elementary pairs), yet
+`IterativeAnalyticalPurification` reports `target_reached=True,
+resource_feasible=True` for it whenever `max_pair_cost=None` (the
+parameter's default, and what every P01/P02 campaign actually used).
+`max_pair_cost` exists on the class specifically to cap this, but was
+never wired to anything physically meaningful (like the intent's
+`reserved_memory_slots` or a generation-rate-derived budget) - this is
+exactly the gap `docs/l2_resource_aware_model.md` (L2-R) closes.
+
 ## Empirical result at checkpoint 1 (P01)
 
 See `docs/planner_study_findings_checkpoint1.md` for the full P01

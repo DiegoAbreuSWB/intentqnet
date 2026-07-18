@@ -6,6 +6,7 @@ from .l2_iterative import (
     IterativePurificationEstimate,
     PurificationRoundEstimate,
 )
+from .l2_resource_aware import RejectionReason, ResourceAwareEstimate, ResourceAwareIterativePlanner, estimate_resource_aware_plan
 from .l3_probabilistic import ProbabilisticPlanner, estimate_probabilistic_plan
 from .l4_simulation import PlannerSimulationSummary, SimulationInTheLoopPlanner, SimulationPlannerConfig
 from .models import (
@@ -34,6 +35,10 @@ __all__ = [
     "IterativeAnalyticalPurification",
     "IterativePurificationEstimate",
     "PurificationRoundEstimate",
+    "ResourceAwareIterativePlanner",
+    "ResourceAwareEstimate",
+    "RejectionReason",
+    "estimate_resource_aware_plan",
     "ProbabilisticPlanner",
     "estimate_probabilistic_plan",
     "SimulationInTheLoopPlanner",
