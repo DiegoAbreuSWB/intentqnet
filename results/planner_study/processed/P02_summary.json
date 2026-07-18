@@ -1,0 +1,14 @@
+{
+  "selected_admission_threshold": 0.5,
+  "test_metrics_at_selected_threshold": {
+    "threshold": 0.5,
+    "n": 60,
+    "false_feasibility": 0.0,
+    "false_rejection": 0.3333333333333333,
+    "operational_satisfaction": 0.5
+  },
+  "brier_score_all_l3": 0.1666667990836005,
+  "expected_calibration_error_all_l3": 0.16656335474006806,
+  "n_trials_total": 360,
+  "n_l3_trials": 120
+}
