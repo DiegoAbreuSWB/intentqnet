@@ -1,0 +1,4 @@
+scenario,n,mean_observed_rate,ratio_m2_original
+diamond_heterogeneous,60.0,17379.0,2.8770355026181025
+small_mesh,60.0,12321.888888888887,4.057819418018522
+three_node_1_repeater,80.0,13219.5,3.782291312076856

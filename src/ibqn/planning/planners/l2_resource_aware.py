@@ -52,17 +52,19 @@ the SeQUeNCe source (`sequence.components.bsm`'s `success_rate` default)."""
 
 # Conservative correction factor on the naive attempt-rate model
 # (attempt_rate = reserved_memory_slots / (2 * classical_delay_s)), applied
-# in the SAFE (capacity-reducing) direction. Derived from comparing that
-# naive formula against real F02 campaign data
-# (results/raw/F02_routing/trials.csv, eg_attempts/duration_s), which
-# showed the naive formula over-predicts attempt rate by roughly 2.4-4.3x
-# (docs/l3_probabilistic_model.md). Using the high end of that observed
-# range (rounded up) keeps L2-R's capacity estimate conservative rather
-# than optimistic - a wrong capacity estimate should fail closed (reject
-# a plan that might have worked) rather than open (accept one that won't).
-# This is a STOPGAP pending the full audit (docs/l3_attempt_rate_audit.md);
-# revisit both L2-R and L3-R's rate models together once that audit lands.
-ATTEMPT_RATE_CONSERVATIVE_FACTOR = 4.5
+# in the SAFE (capacity-reducing) direction. UPDATED after the full
+# attempt-rate audit (docs/l3_attempt_rate_audit.md, M6c): fitting the
+# naive formula's round-trip-multiplier assumption against all 200
+# audited F02+F03 trials (not just a handful of spot checks) found the
+# best-fitting correction is ~7.32x, not the earlier 4.5x stopgap this
+# constant used before the audit ran. Kept as a plain multiplicative
+# factor (not the audit's exact 7.32, to leave a small extra safety
+# margin, and because the audit itself found ~13-63% residual variance
+# unexplained by a single constant - see that doc's "does the original
+# probability model remain valid" section) - a wrong capacity estimate
+# should fail closed (reject a plan that might have worked) rather than
+# open (accept one that won't).
+ATTEMPT_RATE_CONSERVATIVE_FACTOR = 7.5
 
 
 class RejectionReason:
