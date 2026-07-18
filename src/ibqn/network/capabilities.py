@@ -45,6 +45,7 @@ class NetworkCapabilities:
     exists."""
 
     def __init__(self, spec: NetworkTopologySpec):
+        self._classical_delay_s = spec.classical_delay_s
         self._nodes: dict[str, NodeCapability] = {
             node.id: NodeCapability(
                 id=node.id, memories=node.memories,
@@ -84,6 +85,16 @@ class NetworkCapabilities:
         attributes `distance_m`/`loss_db`) for routing strategies to run
         their own path-finding algorithms over."""
         return self._graph
+
+    @property
+    def classical_delay_s(self) -> float:
+        """Single classical-channel delay (seconds) applying to every node
+        pair in this topology (`NetworkTopologySpec.classical_delay_s`) -
+        exposed read-only for `planning.planners.l3_probabilistic`'s
+        attempt-rate model (planner-family study, M5); not used by
+        L1/L2, which never need timing beyond the closed-form fidelity
+        formulas."""
+        return self._classical_delay_s
 
     def hop_fidelity(self, a: str, b: str) -> float:
         """Estimated fidelity of a freshly generated elementary pair on link

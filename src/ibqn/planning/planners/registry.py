@@ -10,10 +10,14 @@ from __future__ import annotations
 from .base import IntentPlannerPolicy
 from .l1_conservative import ConservativeOneRoundPlanner
 from .l2_iterative import IterativeAnalyticalPlanner
+from .l3_probabilistic import ProbabilisticPlanner
+from .l4_simulation import SimulationInTheLoopPlanner
 
 PLANNER_POLICIES: dict[str, type] = {
     "L1": ConservativeOneRoundPlanner,
     "L2": IterativeAnalyticalPlanner,
+    "L3": ProbabilisticPlanner,
+    "L4": SimulationInTheLoopPlanner,
 }
 
 

@@ -107,3 +107,33 @@ class PlanningContext:
     fidelity_estimator: Any = None
     operational_seed: int | None = None
     max_candidates: int = 3
+    topology_spec: Any = None
+    """The raw `network.topology.NetworkTopologySpec` (not just the
+    `NetworkCapabilities` view already passed to `plan()` as
+    `network_state`) - `None` for L1-L3, which never need to construct a
+    `SequenceAdapter` themselves. Required by L4
+    (`planning.planners.l4_simulation`), which runs real internal
+    simulations at planning time and therefore needs the full spec to
+    build fresh `SequenceAdapter` instances."""
+
+
+@dataclass(frozen=True)
+class ProbabilisticPlanEstimate:
+    """L3's output (planner-family study, M5) - see
+    docs/l3_probabilistic_model.md for the exact formulas and their
+    physical grounding (SeQUeNCe's real BSM success rate, the real
+    Dur-Briegel purification success-probability formula, real memory/
+    classical-delay parameters). Every field here is an APPROXIMATION
+    with documented assumptions, never a claim of matching SeQUeNCe's
+    exact event-driven dynamics - `approximation_method` names exactly
+    which simplifications were made, so a low Brier score / large
+    calibration error found during P02 has a clear, referenceable cause
+    to check first."""
+
+    expected_delivered_pairs: float
+    delivered_pairs_variance: float
+    satisfaction_probability: float
+    fidelity_success_probability: float
+    delivery_success_probability: float
+    confidence_interval: tuple[float, float]
+    approximation_method: str

@@ -51,3 +51,31 @@ This isolates the planner-level effect from any other source of variation.
 These are scope limits appropriate to a two-level, single-milestone
 checkpoint, not omissions - see `docs/planner_study_findings_checkpoint1.md`
 for what IS concluded from this data.
+
+## P02: threshold selection protocol (L3 admission threshold)
+
+Seeds 0-9 = validation (choose the admission threshold here, by lowest
+combined false-feasibility + false-rejection rate), seeds 10-19 = test
+(report final metrics here, untouched until the threshold is fixed) -
+`scripts/analyze_p02.py`. L3 is collected once with
+`admission_threshold=0.0` (always deploys the best candidate whenever any
+route is feasible with non-zero probability), so every trial's REAL
+outcome is known regardless of what a stricter threshold would have
+decided; a candidate threshold's counterfactual admission decision is
+then computed post-hoc (admit using the real recorded outcome if
+`predicted_satisfaction_probability >= threshold`, else REJECTED) - this
+avoids needing four separate simulation campaigns for what is really a
+decision rule applied to one recorded probability estimate.
+
+## P03: disclosed scope reduction
+
+The planner-study brief asks for L4's K in {5, 10, 20, 30} across
+multiple parameter combinations. Each L4 planning call costs K+1 real
+SeQUeNCe simulations (~5-9s each on this hardware) - K=30 alone costs
+several minutes PER TRIAL. `scripts/run_p03_l4_cost.py` runs K in
+{3, 5, 10} across 2 combinations (favorable, resource-marginal) x 10
+seeds - a real, disclosed reduction given this session's wall-clock
+budget, not a silent substitution. Extending to the full requested grid
+is mechanical (edit `K_VALUES`/`COMBINATIONS` in that script) given more
+wall-clock budget - see docs/planner_study_findings_checkpoint2.md for
+the exact numbers this reduced run produced.
