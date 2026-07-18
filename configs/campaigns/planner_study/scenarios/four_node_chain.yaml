@@ -1,0 +1,36 @@
+scenario:
+  name: four_node_chain
+  simulation:
+    duration_s: 0.3
+    seed: 0              # overridden per trial by the campaign runner
+  nodes:
+    - id: a
+      memories: 10
+      raw_fidelity: 0.85
+    - id: r1
+      memories: 20
+      raw_fidelity: 0.85
+      swapping_degradation: 0.95
+    - id: r2
+      memories: 20
+      raw_fidelity: 0.85
+      swapping_degradation: 0.95
+    - id: b
+      memories: 10
+      raw_fidelity: 0.85
+  quantum_links:
+    - source: a
+      destination: r1
+      distance_m: 1000
+      attenuation_db_per_m: 0.00001
+    - source: r1
+      destination: r2
+      distance_m: 1000
+      attenuation_db_per_m: 0.00001
+    - source: r2
+      destination: b
+      distance_m: 1000
+      attenuation_db_per_m: 0.00001
+  classical_delay_s: 0.0001
+  intents:
+    - file: ../intents/four_node_intent.yaml

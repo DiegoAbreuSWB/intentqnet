@@ -1,0 +1,14 @@
+requested_fidelity,l2_resolution_rate,topology,n_rejected_by_l1
+0.73,1.0,three_node,20
+0.735,1.0,three_node,20
+0.74,1.0,three_node,20
+0.745,1.0,three_node,20
+0.75,1.0,three_node,20
+0.65,0.0,four_node,20
+0.7,0.0,four_node,20
+0.72,0.0,four_node,20
+0.73,0.0,four_node,20
+0.735,0.0,four_node,20
+0.74,0.0,four_node,20
+0.745,0.0,four_node,20
+0.75,0.0,four_node,20

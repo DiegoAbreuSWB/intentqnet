@@ -1,0 +1,83 @@
+{
+  "campaign": "P01_l1_l2_purification_four_node",
+  "description": "Planner-family study (M4/P01): L1 vs. L2 on the four-node chain (two repeaters) - the exact topology physics of F03_purification's linear_chain_2_repeaters scenario (raw_fidelity=0.85 all nodes, swapping_degradation=0.95, attenuation_db_per_m=1e-5, distance_m=1000 per link - see docs/planner_study_baseline.md and experiments.topology_catalog.linear_chain_spec), swept across the same densified min_fidelity range. In F03, every trial in this range was REJECTED and never simulated; P01 checks whether L2 changes that. Writes to results/planner_study/ - never touches results/raw/F03_purification.\n",
+  "created_at": "2026-07-17T23:43:10.034008+00:00",
+  "updated_at": "2026-07-17T23:51:42.861064+00:00",
+  "project_git_commit": "cd46233073dd699a2079f554f754feb3dd5c4e4b",
+  "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
+  "python_version": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "dependencies": {
+    "pydantic": "2.13.4",
+    "yaml": "6.0.3",
+    "networkx": "3.6.1",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "matplotlib": "3.11.0",
+    "pandas": "3.0.3",
+    "qutip": "5.3.0",
+    "stim": "1.16.0",
+    "gmpy2": "2.3.1",
+    "nbformat": "5.10.4",
+    "nbclient": "0.11.0"
+  },
+  "campaign_file": "configs\\campaigns\\planner_study\\P01_l1_l2_purification_four_node.yaml",
+  "scenario_files": [
+    "scenarios/four_node_chain.yaml"
+  ],
+  "intent_files": [
+    "intents/four_node_intent.yaml"
+  ],
+  "parameter_grid": {
+    "min_fidelity": [
+      0.65,
+      0.7,
+      0.72,
+      0.73,
+      0.735,
+      0.74,
+      0.745,
+      0.75
+    ],
+    "purification_policy": [
+      "automatic",
+      "iterative_analytical"
+    ]
+  },
+  "strategies": {
+    "purification": [
+      "automatic",
+      "iterative_analytical"
+    ]
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "expected_trials": 320,
+  "completed_trials": 320,
+  "skipped_trials": 0,
+  "failed_trials": 0,
+  "output_files": [
+    "results\\planner_study\\raw\\P01_l1_l2_purification_four_node\\trials.csv",
+    "results\\planner_study\\raw\\P01_l1_l2_purification_four_node\\errors.jsonl"
+  ]
+}

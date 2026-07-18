@@ -18,6 +18,7 @@ from typing import Any
 from ..intent.models import EntanglementIntent
 from ..network.topology import NetworkTopologySpec
 from ..planning.fidelity_estimation import FIDELITY_ESTIMATORS, resolve_fidelity_estimator
+from ..planning.planners.l2_iterative import IterativeAnalyticalPurification
 from ..planning.purification import NeverPurify, PurificationStrategy, PurifyUntilTarget
 from ..planning.routing import HighestFidelityRouting, LeastLossRouting, RoutingStrategy, ShortestHopCountRouting
 
@@ -170,6 +171,14 @@ ROUTING_STRATEGIES: dict[str, type[RoutingStrategy]] = {
 PURIFICATION_POLICIES: dict[str, type[PurificationStrategy]] = {
     "disabled": NeverPurify,
     "automatic": PurifyUntilTarget,
+    # Planner-family study (M3): L2's iterative analytical purification
+    # estimate, registered here (additively - "disabled"/"automatic" keep
+    # their exact prior meaning) so P01 can sweep it through the existing
+    # CampaignRunner/YAML campaign format unchanged, with zero duplication
+    # of candidate-path generation, resource validation, or the base
+    # fidelity model. See docs/l2_iterative_model.md and
+    # configs/campaigns/planner_study/.
+    "iterative_analytical": IterativeAnalyticalPurification,
 }
 
 

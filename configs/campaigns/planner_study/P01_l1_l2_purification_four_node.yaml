@@ -1,0 +1,33 @@
+campaign:
+  name: P01_l1_l2_purification_four_node
+  description: >
+    Planner-family study (M4/P01): L1 vs. L2 on the four-node chain (two
+    repeaters) - the exact topology physics of F03_purification's
+    linear_chain_2_repeaters scenario (raw_fidelity=0.85 all nodes,
+    swapping_degradation=0.95, attenuation_db_per_m=1e-5, distance_m=1000
+    per link - see docs/planner_study_baseline.md and
+    experiments.topology_catalog.linear_chain_spec), swept across the same
+    densified min_fidelity range. In F03, every trial in this range was
+    REJECTED and never simulated; P01 checks whether L2 changes that.
+    Writes to results/planner_study/ - never touches results/raw/F03_purification.
+  scenario_file: scenarios/four_node_chain.yaml
+  intents:
+    - intents/four_node_intent.yaml
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+  strategies:
+    purification: [automatic, iterative_analytical]
+  parameter_grid:
+    min_fidelity: [0.65, 0.70, 0.72, 0.73, 0.735, 0.74, 0.745, 0.75]
+  output_directory: results/planner_study
+  execution:
+    continue_on_error: true
+    resume: true
+  metadata:
+    study: planner_family_L1_L5
+    milestone: M4
+    planner_level_by_purification_policy:
+      automatic: L1
+      iterative_analytical: L2
+    planner_implementation_by_purification_policy:
+      automatic: conservative_one_round
+      iterative_analytical: iterative_analytical
