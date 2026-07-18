@@ -12,6 +12,7 @@ from .l1_conservative import ConservativeOneRoundPlanner
 from .l2_iterative import IterativeAnalyticalPlanner
 from .l2_resource_aware import ResourceAwareIterativePlanner
 from .l3_probabilistic import ProbabilisticPlanner
+from .l3_resource_aware import ProbabilisticResourceAwarePlanner
 from .l4_simulation import SimulationInTheLoopPlanner
 
 PLANNER_POLICIES: dict[str, type] = {
@@ -19,6 +20,7 @@ PLANNER_POLICIES: dict[str, type] = {
     "L2": IterativeAnalyticalPlanner,
     "L2-R": ResourceAwareIterativePlanner,
     "L3": ProbabilisticPlanner,
+    "L3-R": ProbabilisticResourceAwarePlanner,
     "L4": SimulationInTheLoopPlanner,
 }
 

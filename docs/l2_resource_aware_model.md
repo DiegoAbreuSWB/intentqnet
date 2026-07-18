@@ -61,20 +61,23 @@ string:
 | Fidelity and memory both fine, but `estimated_max_delivered_pairs < requested` | `DELIVERY_TARGET_EXCEEDS_WINDOW` |
 | Structural pair cost saturates (`> MODEL_MAX_STRUCTURAL_PAIR_COST=10000`) | `MODEL_LIMIT_REACHED` |
 
-## Generation-rate model (a documented stopgap, not a validated correction)
+## Generation-rate model (updated after the M6c audit)
 
 `estimate_resource_aware_plan` reuses the same naive attempt-rate formula
-L3 uses (`reserved_memory_slots / (2 * classical_delay_s)`), but divides
-it by `ATTEMPT_RATE_CONSERVATIVE_FACTOR = 4.5` - the high end of the
-2.4-4.3x overestimate already found by comparing that naive formula
-against real F02 campaign data (`docs/l3_probabilistic_model.md`),
-rounded up for a safety margin. This is a deliberate, conservative
+L3 uses (`reserved_memory_slots / (2 * classical_delay_s)`), then divides
+it by `ATTEMPT_RATE_CONSERVATIVE_FACTOR`. **This constant was originally
+a pre-audit stopgap of `4.5`** (the high end of an informal 2.4-4.3x
+estimate); after the formal attempt-rate audit
+(`docs/l3_attempt_rate_audit.md`, M6c - fitting the naive formula's
+round-trip-multiplier assumption against all 200 F02+F03 trials, not
+just spot checks) found the best-fitting correction is **~7.32x**, the
+constant was updated to **`7.5`** (7.32 plus a small extra safety
+margin) so L2-R's correction reflects the precise, full-data audit result
+rather than the earlier informal estimate. This remains a conservative
 correction in the SAFE direction (under-estimating capacity, so L2-R
-fails closed - rejects a plan that might actually have worked - rather
-than failing open): **it is explicitly a stopgap**, not the outcome of
-the formal audit (`docs/l3_attempt_rate_audit.md`). Both L2-R's and
-L3-R's generation-rate models should be revisited together once that
-audit's root cause is confirmed.
+fails closed rather than open); L3-R (`docs/l3_resource_aware_model.md`)
+reuses this same, now-validated constant rather than tuning a second,
+independent one.
 
 ## Validation against checkpoint 1's exact regression
 
@@ -93,10 +96,11 @@ audit's root cause is confirmed.
 
 L2-R is still a deterministic, point-estimate planner - it does not
 quantify uncertainty in its generation-capacity estimate (that is L3-R's
-job, built on this same resource model - see `docs/l3_resource_aware_model.md`
-once written) and its conservative correction factor is a stopgap, not a
-validated physical model. A rejected-by-L2-R intent might still be
-genuinely satisfiable with a less conservative (but unvalidated) capacity
-estimate - P02B's comparison against L4 (which uses real internal
-simulation, not an analytical formula) is where this gets checked
-empirically.
+job, built on this same resource model - see
+`docs/l3_resource_aware_model.md`). Even with the audited correction
+factor, the attempt-rate model remains a single-constant approximation
+with ~13-63% residual variance unexplained across topologies (see the
+audit doc) - not an exact physical model. A rejected-by-L2-R intent
+might still be genuinely satisfiable; P02B's comparison against L4
+(which uses real internal simulation, not an analytical formula) is
+where this gets checked empirically.

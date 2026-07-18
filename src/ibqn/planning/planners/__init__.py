@@ -8,6 +8,7 @@ from .l2_iterative import (
 )
 from .l2_resource_aware import RejectionReason, ResourceAwareEstimate, ResourceAwareIterativePlanner, estimate_resource_aware_plan
 from .l3_probabilistic import ProbabilisticPlanner, estimate_probabilistic_plan
+from .l3_resource_aware import ProbabilisticResourceAwarePlanner, estimate_probabilistic_resource_aware_plan
 from .l4_simulation import PlannerSimulationSummary, SimulationInTheLoopPlanner, SimulationPlannerConfig
 from .models import (
     CandidateEvaluation,
@@ -41,6 +42,8 @@ __all__ = [
     "estimate_resource_aware_plan",
     "ProbabilisticPlanner",
     "estimate_probabilistic_plan",
+    "ProbabilisticResourceAwarePlanner",
+    "estimate_probabilistic_resource_aware_plan",
     "SimulationInTheLoopPlanner",
     "SimulationPlannerConfig",
     "PlannerSimulationSummary",

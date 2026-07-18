@@ -137,3 +137,6 @@ class ProbabilisticPlanEstimate:
     delivery_success_probability: float
     confidence_interval: tuple[float, float]
     approximation_method: str
+    estimated_completion_time_s: float | None = None
+    """`None` for L3-original (never computed there); populated by L3-R
+    (`l3_resource_aware`, M6d) from L2-R's `estimated_final_pair_rate`."""
