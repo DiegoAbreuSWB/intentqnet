@@ -113,7 +113,7 @@ normally.
 | Config | Section | Status |
 |---|---|---|
 | `P04_retry_storm.yaml` | 5 - retry storm | **Complete** (40/40 trials, 0 timeouts, 0 storms reproduced - see `docs/retry_storm_analysis.md`) |
-| `P02_variance.yaml` | 1 - intrinsic variability | Running (100 seeds x 2 intents = 200 trials, disclosed reduction from 100/250/500) |
+| `P02_variance.yaml` | 1 - intrinsic variability | **Complete** (200/200 trials, 0 duplicates, 0 timeouts; disclosed reduction from 100/250/500 to 100 seeds x 2 intents) |
 | `P01_predictability.yaml` | 6 - critical regions | Config written; not executed this pass - P04's own fidelity sweep already characterizes the sharp satisfaction/violation transition on four_node (`docs/retry_storm_analysis.md`), judged sufficient signal for this phase's verdict without the additional distance-axis trials |
 | `analyze_predictability_limits.py` (sections 3/4/7) | information levels, variance decomposition | **Complete** - reuses existing frozen P02B/P03 data, no new simulation (`results/predictability/processed/information_level_comparison.csv`, `variance_decomposition.csv`) |
 

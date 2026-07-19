@@ -6,12 +6,9 @@ retry-storm controlled sweep (`docs/retry_storm_analysis.md`, P04, 40/40
 trials complete), the information-level comparison (sections 3-4, reusing
 frozen P02B/P03 data), the variance decomposition (section 7, reusing
 frozen P02B data), and the intrinsic-variability campaign (section 1,
-P02_variance - **152/200 trials complete** at time of writing: the
-"favorable" intent fully done (100/100), "moderate_purification" 52/100
-and still running in the background; reported transparently as partial
-on the second intent, not withheld pending completion, since it is a
-supporting data point, not the pivot of this report's verdict, and both
-intents already show a consistent, stable pattern - see section 3).
+P02_variance - **200/200 trials complete, 0 duplicates, 0 timeouts**: both
+the "favorable" and "moderate_purification" intents at 100/100 seeds
+each).
 
 The entire planner family (L1, L2, L2-R, L3, L3-R, L4) remains frozen
 throughout, per this phase's standing constraint. L4 is treated
@@ -76,29 +73,32 @@ systematically different (and differently biased) delivery predictions
 and admission decisions. This is the error component a better planner
 (analytical or learned) COULD in principle reduce.
 
-The intrinsic-variability campaign (P02_variance, 152/200 trials
-complete) corroborates this from a second angle: **both tested intents
-show P(satisfied) = 1.0 across every seed sampled so far** - the
-"favorable" intent (min_fidelity=0.60, 0 purification rounds) at 100/100
-seeds, and "moderate_purification" (min_fidelity=0.72, 1 purification
-round - checkpoint 1's own well-characterized case) at 52/100 seeds so
-far. Seed variation changed the exact `delivered_pairs` COUNT (std ≈
-5.4 for the moderate-purification intent, ≈ 10.1 for the favorable one)
-but never the qualitative SATISFIED/VIOLATED/REJECTED outcome, in either
-regime, in this sample.
+The intrinsic-variability campaign (P02_variance, **200/200 trials
+complete**) corroborates this from a second angle: **both tested intents
+show P(satisfied) = 1.0 across all 100 seeds each** - the "favorable"
+intent (min_fidelity=0.60, 0 purification rounds) and
+"moderate_purification" (min_fidelity=0.72, 1 purification round -
+checkpoint 1's own well-characterized case). Seed variation changed the
+exact `delivered_pairs` COUNT (mean 68.32, std 5.34 for
+moderate_purification; mean 238.67, std 10.13 for favorable) but never
+the qualitative SATISFIED/VIOLATED/REJECTED outcome. Even more strikingly,
+**`average_fidelity` had essentially ZERO variance across all 100 seeds
+in both intents** (std ≈ 2.7e-17 and ≈ 2.2e-16 - floating-point zero) -
+fidelity is a fully deterministic, structural quantity given a fixed
+route/purification-round count in this uniform-topology setup; the ONLY
+stochastic axis is the raw elementary-pair generation COUNT.
 
 ## 3. How much of the observed error comes from the simulated network's inherent variability?
 
 **Very little, at least for `delivered_pairs` in this campaign's design.**
 `seed` explains **0.02%** of the variance - three orders of magnitude
 below every design-parameter factor. The intrinsic-variability campaign
-(152/200 trials complete across two intents, see section 2 above)
-corroborates this directly: **P(satisfied) = 1.0 across every seed
-sampled so far, in BOTH tested regimes** (a 0-round-purification
-"favorable" case, complete at 100/100 seeds, and a 1-round
-"moderate_purification" case, 52/100 seeds so far) - the qualitative
-outcome never flipped due to seed alone, only the exact delivered-pair
-count varied. **The dominant source of "error" in this study is
+(200/200 trials complete across two intents, see section 2 above)
+corroborates this directly: **P(satisfied) = 1.0 across all 100 seeds in
+BOTH tested regimes**, and `average_fidelity` had essentially zero
+variance in both - the qualitative outcome and the fidelity value never
+varied due to seed alone; only the delivered-pair count did. **The
+dominant source of "error" in this study is
 structural/parametric (which topology, which fidelity target, which
 resource regime, which planner), not aleatoric seed-to-seed noise** - an
 important, if perhaps counterintuitive, finding: this system is
