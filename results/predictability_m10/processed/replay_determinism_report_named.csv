@@ -1,0 +1,17 @@
+scenario,parameter_hash,planner_level,determinism_enabled,classification,reason,n_replays,distinct_final_statuses,distinct_trajectory_hashes,config_name
+diamond_heterogeneous,f910536f1b13fe1a,L2,False,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['VIOLATED'],1,diamond_baseline
+diamond_heterogeneous,d500cec2a984bc91,L2,True,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['VIOLATED'],1,diamond_baseline
+four_node,9beb20fac344fc88,L2,False,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['VIOLATED'],1,four_node_baseline
+four_node,4119b067c18c6650,L2,True,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['VIOLATED'],1,four_node_baseline
+four_node,8b9b6589cb75e14a,L2,False,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['VIOLATED'],1,multi_round_purification
+four_node,5129ccbbbde85c7c,L2,True,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['VIOLATED'],1,multi_round_purification
+four_node,bddc877f92745ca4,L3,False,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['VIOLATED'],1,previously_slow_case
+four_node,9e2f42b2f4187541,L3,True,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['VIOLATED'],1,previously_slow_case
+three_node,dfb30620560e10f8,L2,False,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['SATISFIED'],1,purification_automatic_one_round
+three_node,581d381a949adf95,L2,True,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['SATISFIED'],1,purification_automatic_one_round
+three_node,feb7f568d34a5a91,L2,False,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['SATISFIED'],1,purification_disabled
+three_node,6b89a493730834d5,L2,True,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['SATISFIED'],1,purification_disabled
+small_mesh,64eed1205fd6fd5d,L2,False,LOGICALLY_IDENTICAL,all 10 replays reached 'REJECTED' with no trajectory to hash (consistent categorical outcome),10,['REJECTED'],0,small_mesh_baseline
+small_mesh,50ec370bdce2e915,L2,True,LOGICALLY_IDENTICAL,all 10 replays reached 'REJECTED' with no trajectory to hash (consistent categorical outcome),10,['REJECTED'],0,small_mesh_baseline
+three_node,2440637261479250,L2,False,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['SATISFIED'],1,three_node_baseline
+three_node,60d92fbd6eaf6677,L2,True,BITWISE_IDENTICAL,all replays share one trajectory_hash and identical raw field values,10,['SATISFIED'],1,three_node_baseline

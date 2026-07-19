@@ -1,0 +1,7 @@
+{
+  "overall_verdict": "REPRODUCIBLE",
+  "n_groups": 16,
+  "n_nondeterministic": 0,
+  "n_bitwise_identical": 14,
+  "n_logically_identical": 2
+}

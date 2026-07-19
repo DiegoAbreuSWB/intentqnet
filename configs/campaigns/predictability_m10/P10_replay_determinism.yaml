@@ -1,0 +1,108 @@
+campaign:
+  name: P10_replay_determinism
+  description: >
+    M10.3: replay-determinism validation. For each of 8 configurations
+    (three-node, four-node, diamond, small-mesh, purification disabled,
+    purification automatic/1-round, a multi-purification-round case, and
+    the exact previously-slow P02B outlier configuration), the SAME
+    nominal trial (same seed=7, same everything) is executed 10 times
+    and compared via `trajectory_hash` (a wall-clock-free, event/counter-
+    based fingerprint - see docs/predictability_m10/randomness_audit.md
+    section 5 for why wall time is never used as replay evidence).
+
+    determinism.enabled=true for every replay here (master_seed=20260719,
+    verify_replay=true) - this is the FIRST real exercise of M10.2's
+    DeterministicExecutionContext, itself under test: if replays are
+    LOGICALLY_IDENTICAL even with determinism disabled (relying only on
+    the per-node numpy generators the M10.1 audit found already properly
+    seeded), that is evidence the simulation was already deterministic
+    without needing this new mechanism - both are tested (10 replays
+    each way per configuration = 160 trials total) to distinguish "already
+    deterministic" from "needs DeterministicExecutionContext to be
+    deterministic".
+
+    Writes only to results/predictability_m10/raw/P10_replay_determinism/ -
+    never touches P01/P02/P02B/P03/M9 data.
+  master_seed: 20260719
+  seed: 7
+  timeout_s: 120
+  n_replays: 10
+  configurations:
+    - name: three_node_baseline
+      topology_builder: three_node_spec
+      scenario: three_node
+      planner_level: L2
+      min_fidelity: 0.65
+      reserved_memory_slots: 10
+      min_delivered_pairs: 10
+      duration_s: 0.05
+      allow_purification: true
+    - name: four_node_baseline
+      topology_builder: linear_chain_2_spec
+      scenario: four_node
+      planner_level: L2
+      min_fidelity: 0.65
+      reserved_memory_slots: 10
+      min_delivered_pairs: 10
+      duration_s: 0.05
+      allow_purification: true
+    - name: diamond_baseline
+      topology_builder: diamond_spec
+      scenario: diamond_heterogeneous
+      planner_level: L2
+      min_fidelity: 0.60
+      reserved_memory_slots: 10
+      min_delivered_pairs: 10
+      duration_s: 0.05
+      allow_purification: true
+    - name: small_mesh_baseline
+      topology_builder: small_mesh_spec
+      scenario: small_mesh
+      planner_level: L2
+      min_fidelity: 0.65
+      reserved_memory_slots: 10
+      min_delivered_pairs: 10
+      duration_s: 0.05
+      allow_purification: true
+    - name: purification_disabled
+      topology_builder: three_node_spec
+      scenario: three_node
+      planner_level: L2
+      min_fidelity: 0.65
+      reserved_memory_slots: 10
+      min_delivered_pairs: 10
+      duration_s: 0.05
+      allow_purification: false
+    - name: purification_automatic_one_round
+      topology_builder: three_node_spec
+      scenario: three_node
+      planner_level: L2
+      min_fidelity: 0.72
+      reserved_memory_slots: 10
+      min_delivered_pairs: 10
+      duration_s: 0.05
+      allow_purification: true
+    - name: multi_round_purification
+      topology_builder: linear_chain_2_spec
+      scenario: four_node
+      planner_level: L2
+      min_fidelity: 0.66
+      reserved_memory_slots: 10
+      min_delivered_pairs: 10
+      duration_s: 0.05
+      allow_purification: true
+    - name: previously_slow_case
+      topology_builder: linear_chain_2_spec
+      scenario: four_node
+      planner_level: L3
+      admission_threshold: 0.0
+      min_fidelity: 0.60
+      reserved_memory_slots: 10
+      min_delivered_pairs: 10
+      duration_s: 0.05
+      allow_purification: true
+  output_directory: results/predictability_m10
+  metadata:
+    study: predictability_m10
+    milestone: M10.3
+    section: "4/5 - replay determinism, trajectory hash"
