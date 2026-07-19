@@ -1,0 +1,233 @@
+[
+  {
+    "codebase": "ibqn",
+    "file": "src/ibqn/experiments/predictability_runner.py",
+    "line": 21,
+    "category": "bare_random_module",
+    "snippet": "modified - `random.random()`/`random.uniform()` at its module level,"
+  },
+  {
+    "codebase": "ibqn",
+    "file": "src/ibqn/experiments/predictability_runner.py",
+    "line": 133,
+    "category": "bare_random_module",
+    "snippet": "random.seed(identity.seed + RNG_RESEED_OFFSET)"
+  },
+  {
+    "codebase": "ibqn",
+    "file": "src/ibqn/experiments/predictability_runner.py",
+    "line": 133,
+    "category": "timeline_seed_call",
+    "snippet": "random.seed(identity.seed + RNG_RESEED_OFFSET)"
+  },
+  {
+    "codebase": "ibqn",
+    "file": "src/ibqn/experiments/statistical_analysis.py",
+    "line": 109,
+    "category": "default_rng_call",
+    "snippet": "rng = np.random.default_rng(0)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/app/random_request.py",
+    "line": 74,
+    "category": "default_rng_call",
+    "snippet": "self.rg: random.Generator = random.default_rng(seed)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/components/beam_splitter.py",
+    "line": 163,
+    "category": "bare_random_module",
+    "snippet": "selected_receiver = random.choice(self._receivers)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/components/transducer.py",
+    "line": 119,
+    "category": "bare_random_module",
+    "snippet": "if random.random() < self.transducer.efficiency:"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/components/transducer.py",
+    "line": 161,
+    "category": "bare_random_module",
+    "snippet": "if random.random() < self.transducer.efficiency:"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/components/transmon.py",
+    "line": 103,
+    "category": "bare_random_module",
+    "snippet": "if random.random() < self.transmon.efficiency:"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/gui/app.py",
+    "line": 6,
+    "category": "threading_or_multiprocessing",
+    "snippet": "import threading"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/gui/simulator_bindings.py",
+    "line": 23,
+    "category": "timeline_seed_call",
+    "snippet": "self.timeline.seed(0)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/kernel/entity.py",
+    "line": 100,
+    "category": "default_rng_call",
+    "snippet": "return default_rng()"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/kernel/entity.py",
+    "line": 161,
+    "category": "default_rng_call",
+    "snippet": "return default_rng()"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/kernel/quantum_utils.py",
+    "line": 429,
+    "category": "bare_random_module",
+    "snippet": "u = random.random()"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/kernel/quantum_utils.py",
+    "line": 431,
+    "category": "bare_random_module",
+    "snippet": "\u03c6 = 2 * math.pi * random.random()"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/kernel/timeline.py",
+    "line": 166,
+    "category": "bare_random_module",
+    "snippet": "random.seed(seed)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/kernel/timeline.py",
+    "line": 166,
+    "category": "timeline_seed_call",
+    "snippet": "random.seed(seed)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/qkd/BB84.py",
+    "line": 249,
+    "category": "bare_random_module",
+    "snippet": "basis_list = numpy.random.choice([0, 1], num_pulses)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/qkd/BB84.py",
+    "line": 250,
+    "category": "bare_random_module",
+    "snippet": "bit_list = numpy.random.choice([0, 1], num_pulses)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/qkd/BB84.py",
+    "line": 292,
+    "category": "bare_random_module",
+    "snippet": "basis_list = numpy.random.choice([0, 1], num_pulses)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/qkd/cascade.py",
+    "line": 461,
+    "category": "bare_random_module",
+    "snippet": "random.seed(pass_id)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/qkd/cascade.py",
+    "line": 461,
+    "category": "timeline_seed_call",
+    "snippet": "random.seed(pass_id)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/qkd/cascade.py",
+    "line": 463,
+    "category": "bare_random_module",
+    "snippet": "random.shuffle(bit_order)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/qkd/cascade.py",
+    "line": 483,
+    "category": "bare_random_module",
+    "snippet": "random.seed(pass_id)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/qkd/cascade.py",
+    "line": 483,
+    "category": "timeline_seed_call",
+    "snippet": "random.seed(pass_id)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/qkd/cascade.py",
+    "line": 485,
+    "category": "bare_random_module",
+    "snippet": "random.shuffle(bit_order)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/topology/node.py",
+    "line": 72,
+    "category": "default_rng_call",
+    "snippet": "self.generator = np.random.default_rng(seed)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/topology/node.py",
+    "line": 86,
+    "category": "default_rng_call",
+    "snippet": "self.generator = np.random.default_rng(seed)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/topology/node.py",
+    "line": 773,
+    "category": "default_rng_call",
+    "snippet": "self.generator = np.random.default_rng(seed)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/topology/node.py",
+    "line": 780,
+    "category": "default_rng_call",
+    "snippet": "self.generator = np.random.default_rng(seed)"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/utils/noise.py",
+    "line": 52,
+    "category": "bare_random_module",
+    "snippet": "if np.random.random() < meas_error_rate:"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/kernel/quantum_manager/base.py",
+    "line": 19,
+    "category": "threading_or_multiprocessing",
+    "snippet": "from threading import Lock"
+  },
+  {
+    "codebase": "sequence",
+    "file": "SeQUeNCe/sequence/kernel/quantum_manager/stabilizer.py",
+    "line": 75,
+    "category": "default_rng_call",
+    "snippet": "self.noise_rng: np.random.Generator = np.random.default_rng(seed)"
+  }
+]

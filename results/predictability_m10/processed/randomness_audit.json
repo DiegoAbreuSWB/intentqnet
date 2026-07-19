@@ -1,0 +1,105 @@
+{
+  "static_findings_count": 33,
+  "static_findings_by_category": {
+    "bare_random_module": 17,
+    "timeline_seed_call": 5,
+    "default_rng_call": 9,
+    "threading_or_multiprocessing": 2
+  },
+  "dynamic_result": {
+    "trial_final_status": "VIOLATED",
+    "trial_delivered_pairs": 4,
+    "call_counts": {
+      "np.random.default_rng": 61
+    },
+    "n_unseeded_default_rng_constructions": 12,
+    "unseeded_construction_sample_stacks": [
+      "  File \"<frozen importlib._bootstrap>\", line 488, in _call_with_frames_removed\n  File \"C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\.venv\\Lib\\site-packages\\qutip\\random_objects.py\", line 28, in <module>\n    _RAND = default_rng()\n",
+      "  File \"C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\.venv\\Lib\\site-packages\\scipy\\stats\\_distribution_infrastructure.py\", line 1414, in _generate_example\n    {repr(X.sample(shape=(4,)))}  # may vary\n  File \"C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\.venv\\Lib\\site-packages\\scipy\\stats\\_distribution_infrastructure.py\", line 2912, in sample\n    rng = np.random.default_rng(rng) if not isinstance(rng, qmc.QMCEngine) else rng\n",
+      "  File \"C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\.venv\\Lib\\site-packages\\scipy\\stats\\_distribution_infrastructure.py\", line 1414, in _generate_example\n    {repr(X.sample(shape=(4,)))}  # may vary\n  File \"C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\.venv\\Lib\\site-packages\\scipy\\stats\\_distribution_infrastructure.py\", line 2912, in sample\n    rng = np.random.default_rng(rng) if not isinstance(rng, qmc.QMCEngine) else rng\n"
+    ],
+    "qutip_global_rand_singleton_sampled_during_trial": false
+  },
+  "source_table": [
+    {
+      "source": "Python `random` module (bare, global)",
+      "file_function": "sequence/components/beam_splitter.py, transducer.py, transmon.py; sequence/kernel/quantum_utils.py:random_state (never called); sequence/qkd/cascade.py",
+      "rng_type": "global stdlib random",
+      "seeded": "No (never reseeded by our adapter)",
+      "controlled_by_operational_seed": "N/A - dynamically confirmed 0 calls during a real IBQN trial (these components are not part of the ket-vector/BSM/BBPSSW/swapping path IBQN topologies use)",
+      "action": "No action needed for current IBQN usage - documented as dormant/unused, not fixed, since modifying SeQUeNCe is out of scope and it is not exercised"
+    },
+    {
+      "source": "`Timeline.seed()` (calls global `random.seed`)",
+      "file_function": "sequence/kernel/timeline.py:166",
+      "rng_type": "global stdlib random (via SeQUeNCe's own public API)",
+      "seeded": "Only if called - never invoked by IBQN's SequenceAdapter",
+      "controlled_by_operational_seed": "No - `SequenceAdapter` never calls `Timeline.seed()`",
+      "action": "Not required (see above - the bare random module is never drawn from in our path), but `DeterministicExecutionContext` (M10.2) calls it anyway for defense-in-depth / documentation clarity"
+    },
+    {
+      "source": "Per-node/per-link `numpy.random.default_rng(seed)`",
+      "file_function": "sequence/topology/node.py:72,86,773,780 - seeded via `NetworkTopologySpec.to_router_net_topo_config`'s `seed + index`",
+      "rng_type": "numpy.random.Generator",
+      "seeded": "Yes, deterministically from `operational_seed`",
+      "controlled_by_operational_seed": "Yes - confirmed this is the ACTUAL source of all physical sampling exercised in a real trial (BSM success/loss, BBPSSW/swapping measurement outcomes, optical channel loss) via `Entity.get_generator()`",
+      "action": "None needed - already correctly controlled. This is the primary reproducibility mechanism."
+    },
+    {
+      "source": "`Entity.get_generator()`'s fallback (`default_rng()`, unseeded)",
+      "file_function": "sequence/kernel/entity.py:100,161",
+      "rng_type": "numpy.random.Generator",
+      "seeded": "No (OS entropy) when `self.owner` lacks `get_generator`",
+      "controlled_by_operational_seed": "Not directly tested exhaustively (see limitations) - no entity in IBQN's topologies was observed hitting this fallback during the audited trial",
+      "action": "Flagged as a residual risk, not fully ruled out for every entity type - DeterministicExecutionContext documents this as a known limitation"
+    },
+    {
+      "source": "qutip's module-level `_RAND` singleton",
+      "file_function": "qutip/random_objects.py:28 (third-party dependency of a dependency, via qutip_qip)",
+      "rng_type": "numpy.random.Generator",
+      "seeded": "No (constructed unseeded at import time)",
+      "controlled_by_operational_seed": "No, but dynamically confirmed DORMANT - bit-generator state unchanged during the audited trial (sampled=False)",
+      "action": "No action - confirmed inert for IBQN's usage pattern, documented rather than silently ignored"
+    },
+    {
+      "source": "scipy.stats distribution sampling (`.rvs()`)",
+      "file_function": "N/A - IBQN's L3/L3-R only call `.sf`/`.ppf` (deterministic distribution functions), never `.rvs()`",
+      "rng_type": "N/A",
+      "seeded": "N/A",
+      "controlled_by_operational_seed": "N/A - no sampling occurs",
+      "action": "None needed"
+    },
+    {
+      "source": "Legacy `numpy.random.*` global functions (`np.random.seed`, `.rand`, etc.)",
+      "file_function": "grep found 0 occurrences in sequence/ or src/ibqn/",
+      "rng_type": "numpy legacy global",
+      "seeded": "N/A",
+      "controlled_by_operational_seed": "N/A - dynamically confirmed 0 legacy-seed and 0 legacy-rand calls during the audited trial",
+      "action": "None needed"
+    },
+    {
+      "source": "Python hash randomization (`PYTHONHASHSEED`) / set-dict iteration order",
+      "file_function": "N/A - process-wide interpreter setting",
+      "rng_type": "hash seed (affects `hash()` of str/bytes, and therefore set/dict iteration order for those keys)",
+      "seeded": "Not fixed by default (`PYTHONHASHSEED` unset -> randomized per process)",
+      "controlled_by_operational_seed": "No - independent of `operational_seed` entirely",
+      "action": "Tested directly (PYTHONHASHSEED in {0,1,42}) on the audited trial: final_status and delivered_pairs identical in all three - no observed sensitivity for this configuration, but not proven absent for all configurations (linear-chain topologies have only one route, so route-candidate-set ordering can't matter there); DeterministicExecutionContext documents and pins PYTHONHASHSEED where possible"
+    },
+    {
+      "source": "Threading / multiprocessing",
+      "file_function": "sequence/kernel/quantum_manager/base.py:19,47 (`threading.Lock` for a global formalism setting only - not used for concurrent execution)",
+      "rng_type": "N/A",
+      "seeded": "N/A",
+      "controlled_by_operational_seed": "N/A - no concurrent execution occurs within a single trial",
+      "action": "None needed"
+    },
+    {
+      "source": "Time-derived seeds / `secrets` / `os.urandom`",
+      "file_function": "N/A - grep found 0 occurrences in sequence/ or src/ibqn/",
+      "rng_type": "N/A",
+      "seeded": "N/A",
+      "controlled_by_operational_seed": "N/A",
+      "action": "None needed"
+    }
+  ]
+}
