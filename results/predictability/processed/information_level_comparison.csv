@@ -1,0 +1,8 @@
+planner_level,information_level,n,brier_score,prediction_type
+L1,0,240.0,0.1,hard_decision (no probability output)
+L2,0,240.0,0.39166666666666666,hard_decision (no probability output)
+L2-R,0,240.0,0.06666666666666667,hard_decision (no probability output)
+L3,1,240.0,0.05754343202618859,predicted_satisfaction_probability
+L3-R,1,240.0,0.06838450760130345,predicted_satisfaction_probability
+L4,2,60.0,0.0,predicted_satisfaction_probability (own-outcome oracle proxy - see module docstring)
+Oracle (theoretical),3,,0.0,not implementable - anchor only

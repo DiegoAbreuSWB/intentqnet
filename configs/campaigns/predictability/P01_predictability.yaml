@@ -1,0 +1,46 @@
+campaign:
+  name: P01_predictability
+  description: >
+    Predictability-limits study (M9, section 6): critical-region heatmap.
+    Varies min_fidelity (the axis P04 already showed drives a sharp
+    purification-round transition on this topology) x distance_m (a
+    second, independent physical axis - photon-loss-driven, not
+    purification-driven) on the SAME four_node/linear_chain_2_spec
+    topology and L2 (deterministic admission) planner P04 uses, so the
+    two campaigns share one consistent baseline and P04's own 40 trials
+    (distance_m=1000) are reused as the middle column of this heatmap
+    rather than re-simulated.
+
+    For each (min_fidelity, distance_m) cell: satisfaction rate,
+    violation rate, mean/median simulation wall time, purification
+    rounds, timeout rate (5 seeds/cell). Same mandatory subprocess
+    wall-clock cap (timeout_s=120) as P04.
+
+    Scope: 8 fidelity values (reusing P04's sweep) x 2 NEW distance
+    values (700m, 1300m - P04's own 1000m column is reused, not
+    re-simulated) x 5 seeds = 80 new trials, for a 24-cell heatmap total
+    (8 x 3 distances) combining old + new data - a disclosed, deliberately
+    small pilot grid, not the full multi-axis (fidelity x distance x
+    memory x duration) grid the governing brief describes; extended only
+    if this pilot's heatmap shows a critical region worth resolving at
+    finer granularity.
+
+    Writes only to results/predictability/raw/P01_predictability/ - never
+    touches P04_retry_storm's own data (read, not written, when reused).
+  seeds: [0, 1, 2, 3, 4]
+  planner_level: L2
+  topology_builder: linear_chain_2_spec
+  scenario: four_node
+  reserved_memory_slots: 10
+  min_delivered_pairs: 10
+  duration_s: 0.05
+  timeout_s: 120
+  min_fidelity_sweep: [0.55, 0.58, 0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
+  distance_m_sweep: [700, 1300]
+  reused_distance_m: 1000
+  reused_campaign: P04_retry_storm
+  output_directory: results/predictability
+  metadata:
+    study: predictability_limits
+    milestone: M9
+    section: "6 - critical regions"

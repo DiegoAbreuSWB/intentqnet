@@ -1,0 +1,87 @@
+{
+  "information_levels": [
+    {
+      "planner_level": "L1",
+      "information_level": 0,
+      "n": 240.0,
+      "brier_score": 0.1,
+      "prediction_type": "hard_decision (no probability output)"
+    },
+    {
+      "planner_level": "L2",
+      "information_level": 0,
+      "n": 240.0,
+      "brier_score": 0.39166666666666666,
+      "prediction_type": "hard_decision (no probability output)"
+    },
+    {
+      "planner_level": "L2-R",
+      "information_level": 0,
+      "n": 240.0,
+      "brier_score": 0.06666666666666667,
+      "prediction_type": "hard_decision (no probability output)"
+    },
+    {
+      "planner_level": "L3",
+      "information_level": 1,
+      "n": 240.0,
+      "brier_score": 0.05754343202618859,
+      "prediction_type": "predicted_satisfaction_probability"
+    },
+    {
+      "planner_level": "L3-R",
+      "information_level": 1,
+      "n": 240.0,
+      "brier_score": 0.06838450760130345,
+      "prediction_type": "predicted_satisfaction_probability"
+    },
+    {
+      "planner_level": "L4",
+      "information_level": 2,
+      "n": 60.0,
+      "brier_score": 0.0,
+      "prediction_type": "predicted_satisfaction_probability (own-outcome oracle proxy - see module docstring)"
+    },
+    {
+      "planner_level": "Oracle (theoretical)",
+      "information_level": 3,
+      "n": NaN,
+      "brier_score": 0.0,
+      "prediction_type": "not implementable - anchor only"
+    }
+  ],
+  "retry_storm_available": true,
+  "intrinsic_variability_available": true,
+  "variance_decomposition": [
+    {
+      "factor": "reserved_memory_slots",
+      "eta_squared": 0.38383699559024037,
+      "n": 700
+    },
+    {
+      "factor": "duration_s",
+      "eta_squared": 0.38383699559024037,
+      "n": 700
+    },
+    {
+      "factor": "requested_fidelity",
+      "eta_squared": 0.31557100916980346,
+      "n": 700
+    },
+    {
+      "factor": "scenario",
+      "eta_squared": 0.3046521643065509,
+      "n": 700
+    },
+    {
+      "factor": "planner_level",
+      "eta_squared": 0.18211606197037514,
+      "n": 700
+    },
+    {
+      "factor": "seed",
+      "eta_squared": 0.00021905899299115686,
+      "n": 700
+    }
+  ]
+}

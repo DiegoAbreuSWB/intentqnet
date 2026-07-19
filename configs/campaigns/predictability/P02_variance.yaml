@@ -1,0 +1,61 @@
+campaign:
+  name: P02_variance
+  description: >
+    Predictability-limits study (M9, section 1): intrinsic variability of
+    real SeQUeNCe execution. Everything is fixed (topology, route,
+    planner, parameters, resources) EXCEPT the operational seed, which is
+    swept to measure the distribution of P(satisfied)/P(violated)/
+    P(rejected) and of delivered_pairs/fidelity under pure seed variation.
+
+    Scope: reduced from the requested 100/250/500 growing seed counts to
+    100 seeds only (one report point, not three) - a disclosed reduction
+    driven by real wall-clock cost (each trial pays a several-second
+    subprocess startup cost on top of simulation time, per the mandatory
+    safety infrastructure below), the same disclosed-reduction precedent
+    P03 (K values) and P02B (seed count) already established. 100 seeds x
+    2 intents = 200 trials.
+
+    Two representative intents were chosen deliberately AWAY from the
+    critical/marginal purification-round-transition region P04 is
+    separately characterizing (docs/retry_storm_analysis.md) - the point
+    here is to measure ordinary intrinsic variability, not to repeatedly
+    probe the tail-risk region:
+
+    - "favorable": three_node chain, min_fidelity=0.60 (0 purification
+      rounds needed - swap-only fidelity already exceeds target).
+    - "moderate_purification": three_node chain, min_fidelity=0.72 (1
+      purification round needed - checkpoint 1's own well-characterized
+      case, comfortably below the four-node chain's much higher-round
+      marginal region).
+
+    L1 is used (conservative_one_round) - the simplest, fastest planner,
+    chosen because this section's question is about the NETWORK's
+    intrinsic variability given a FIXED plan, not about which planner
+    decided it; L1's plan is deterministic given the intent (no
+    probability threshold to vary results).
+
+    Every trial still runs through the mandatory subprocess wall-clock
+    cap (timeout_s=60) per docs/predictability_study.md's safety
+    infrastructure section, even though these two intents were chosen to
+    be far from the known-risky region.
+
+    Writes only to results/predictability/raw/P02_variance/ - never
+    touches P01/P02/P02B/P03 planner-study data.
+  seed_counts: [100]
+  planner_level: L1
+  topology_builder: three_node_spec
+  scenario: three_node
+  reserved_memory_slots: 10
+  min_delivered_pairs: 10
+  duration_s: 0.05
+  timeout_s: 60
+  intents:
+    - name: favorable
+      min_fidelity: 0.60
+    - name: moderate_purification
+      min_fidelity: 0.72
+  output_directory: results/predictability
+  metadata:
+    study: predictability_limits
+    milestone: M9
+    section: "1 - intrinsic variability"

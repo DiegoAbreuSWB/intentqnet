@@ -1,0 +1,60 @@
+campaign:
+  name: P04_retry_storm
+  description: >
+    Predictability-limits study (M9, section 5): investigates the exact
+    ~48723s (~13.5h) outlier found in P02B
+    (trial P02b_resource_aware_planners:four_node:e961642e2e5e233b:L3:7:
+    p02b-intent - requested_fidelity=0.60, four_node/linear_chain_2_spec,
+    reserved_memory_slots=10, duration_s=0.05, purification_rounds_
+    estimate=4). Never re-runs or alters P02B - this is a NEW campaign,
+    NEW directory (results/predictability/raw/P04_retry_storm/), NEW
+    manifest.
+
+    IMPORTANT PRE-FINDING (see docs/retry_storm_analysis.md): the exact
+    outlier is NOT reproducibly triggerable from (topology, route, seed,
+    fidelity) alone. Repeated fresh-process runs of the IDENTICAL nominal
+    configuration (four_node, L3, seed=7, fidelity=0.6) gave wall times of
+    3.1s, 10.7s, 11.1s, 10.6s, 11.2s, 11.2s, 7.8s across 7 attempts - never
+    anywhere near 48723s. Root cause: SeQUeNCe's `sequence.kernel.
+    quantum_utils` module draws from Python's global `random` module
+    (not a per-node seeded generator our adapter controls) for some
+    physical sampling - our `operational_seed` therefore does NOT fully
+    pin down determinism (a real, disclosed limitation of the SeQUeNCe
+    dependency, never modified here). This means the 48723s event is a
+    genuinely rare, heavy-tailed realization - this campaign characterizes
+    its STATISTICAL likelihood and severity (across many seeds and a
+    graded fidelity sweep) rather than attempting to reproduce the exact
+    value on demand.
+
+    Uses L2 (iterative_analytical) - not L3 - deliberately: L2 admits
+    whenever its deterministic reachability estimate says the fidelity
+    target is reachable within max_rounds, with no probability-threshold
+    gate to tune, isolating the physical/execution cost question from any
+    admission-policy choice.
+
+    Every trial runs through a hard subprocess wall-clock cap
+    (`scripts/predictability_common.run_trial_with_timeout`,
+    timeout_s=120) - never uninterrupted - given the demonstrated tail
+    risk. A `TIMEOUT` trial's `simulation_wall_time_s` is a CENSORED lower
+    bound (120s), never a real completion time.
+
+    Scope: this is a first, disclosed PILOT (5 seeds, one duration_s
+    value matching the original outlier) to measure how often timeouts
+    occur before committing to a larger sweep - not the full "vary
+    fidelity target, distance, purification, duration" grid the governing
+    brief describes; scaled up in a follow-up campaign if the pilot's
+    timeout rate justifies it.
+  seeds: [0, 1, 2, 3, 4]
+  planner_level: L2
+  topology_builder: linear_chain_2_spec
+  scenario: four_node
+  reserved_memory_slots: 10
+  min_delivered_pairs: 10
+  duration_s: 0.05
+  timeout_s: 120
+  min_fidelity_sweep: [0.55, 0.58, 0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
+  output_directory: results/predictability
+  metadata:
+    study: predictability_limits
+    milestone: M9
+    section: "5 - retry storm analysis"
