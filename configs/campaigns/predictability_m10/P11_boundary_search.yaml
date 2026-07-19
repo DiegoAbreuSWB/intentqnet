@@ -1,0 +1,61 @@
+campaign:
+  name: P11_boundary_search
+  description: >
+    M10.4-M10.5: two-stage transition-region search. Stage A (coarse)
+    sweeps requested_fidelity around each topology's ANALYTICALLY
+    computed swap-only fidelity (via planning.feasibility.
+    estimate_swap_only_fidelity - not a blind grid) with 8 seeds/point,
+    using L2 (deterministic admission - isolates the physical/execution
+    question from any probability-threshold choice, same rationale as
+    M9's P04). Stage B (refinement) bisects between the coarse point
+    with the highest estimated P(satisfied) below 0.95 and the lowest
+    above 0.05, adding seeds at each new midpoint, for any topology where
+    stage A found at least one point with 0.05 <= estimate <= 0.95.
+
+    Fixed across all points: reserved_memory_slots=10, duration_s=0.05,
+    min_delivered_pairs=10, planner=L2, ShortestHopCountRouting (so
+    diamond's shorter, lossier "bad" route is selected over the
+    longer "good" one - consistent with every other campaign in this
+    project, not a special case introduced here).
+
+    Every point tested (including ones discarded as clearly robust or
+    clearly failing) is persisted, per section 6's explicit requirement -
+    nothing is silently dropped.
+
+    Writes only to results/predictability_m10/raw/P11_boundary_search/ -
+    never touches P01-P02B/P03/M9/M10.1-M10.3 data.
+  planner_level: L2
+  reserved_memory_slots: 10
+  min_delivered_pairs: 10
+  duration_s: 0.05
+  timeout_s: 60
+  n_seeds_coarse: 8
+  n_seeds_refine: 8
+  max_refine_iterations: 4
+  seed_base: 100
+  topologies:
+    - name: three_node
+      topology_builder: three_node_spec
+      scenario: three_node
+      swap_only_fidelity_reference: 0.6864
+      coarse_fidelity_grid: [0.60, 0.65, 0.68, 0.70, 0.72, 0.75, 0.78, 0.80]
+    - name: four_node
+      topology_builder: linear_chain_2_spec
+      scenario: four_node
+      swap_only_fidelity_reference: 0.5542
+      coarse_fidelity_grid: [0.50, 0.53, 0.55, 0.57, 0.58, 0.60, 0.63, 0.66]
+    - name: diamond_heterogeneous
+      topology_builder: diamond_spec
+      scenario: diamond_heterogeneous
+      swap_only_fidelity_reference: 0.6864
+      coarse_fidelity_grid: [0.60, 0.65, 0.68, 0.70, 0.72, 0.75, 0.78, 0.80]
+    - name: small_mesh
+      topology_builder: small_mesh_spec
+      scenario: small_mesh
+      swap_only_fidelity_reference: 0.4476
+      coarse_fidelity_grid: [0.38, 0.40, 0.42, 0.44, 0.46, 0.48, 0.50, 0.53]
+  output_directory: results/predictability_m10
+  metadata:
+    study: predictability_m10
+    milestone: "M10.4-M10.5"
+    section: "6 - automatic decision-boundary localization"
