@@ -1,0 +1,13 @@
+{
+  "n_configurations": 18,
+  "n_trials_total": 820,
+  "bayes_lower_bound_equal_weighted": 0.04925925925925925,
+  "bayes_lower_bound_trial_weighted": 0.06829268292682927,
+  "region_coverage": {
+    "LIKELY_FAILURE": 7,
+    "LIKELY_SUCCESS": 7,
+    "TRANSITION": 2,
+    "ROBUST_FAILURE": 2
+  },
+  "n_region_mismatches": 12
+}

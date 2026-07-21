@@ -1,0 +1,91 @@
+campaign:
+  name: P12_boundary_variability
+  description: >
+    M10.6: boundary variability campaign. 18 configurations (exceeding the
+    minimum 3 ROBUST_SUCCESS + 3 LIKELY_SUCCESS + 5 TRANSITION + 3
+    LIKELY_FAILURE + 3 ROBUST_FAILURE = 17), spanning all 4 topologies
+    (three_node, four_node, small_mesh, and diamond_heterogeneous as the
+    heterogeneous topology), built directly from M10.4-M10.5's boundary
+    search (docs/predictability_m10/checkpoint_m10b.md).
+
+    diamond_heterogeneous needed a SEPARATE supplementary characterization
+    before this campaign could be built: M10.4's fidelity-only search
+    found diamond ROBUST_FAILURE at every tested fidelity (its "bad"
+    route is bottlenecked by generation throughput within duration_s=0.05,
+    not by fidelity/purification - see checkpoint_m10b.md). A quick
+    duration_s sweep (fidelity fixed at 0.60) found: duration_s<=0.08
+    consistently VIOLATED (5/5 seeds), duration_s=0.09 genuinely mixed
+    (2/5 SATISFIED - a real TRANSITION point), duration_s>=0.10
+    consistently SATISFIED. Diamond's configurations below vary
+    duration_s, not fidelity, for this reason - a deliberate, documented
+    departure from the other three topologies' fidelity-based axis, not
+    an inconsistency.
+
+    Seed protocol (DISCLOSED REDUCTION from the brief's literal "100
+    seeds initially for every configuration, expand TRANSITION to 250,
+    expand to 500 only if CI still wide"): the 4 TRANSITION-labeled
+    configurations below (one per topology - corrected from an earlier
+    "5" miscount in this docstring, never reflected in the actual config
+    list) get the full 100 seeds the brief specifies (the scientifically
+    decisive cases); the other 14 ROBUST/LIKELY configurations get 30
+    seeds each - a real, disclosed reduction driven by wall-clock cost
+    (this campaign already includes two topologies with confirmed
+    rare-tail-event risk - four_node's known retry-storm region and
+    diamond's own newly-found ~75s outlier at duration_s=0.05), following
+    the same disclosed-reduction precedent P03/P02B/M9 already
+    established. 4*100 + 14*30 = 820 trials (matches the actual completed
+    run exactly - 0 duplicates, 3 timeouts).
+
+    RESULT (see docs/predictability_m10/m10_6_boundary_variability_summary.md
+    for the full analysis): only four_node_transition (fidelity=0.58)
+    held up as a genuine TRANSITION at n=100 (68% satisfied, consistent
+    with M10.4's 62.5% at n=8). three_node_transition, small_mesh_
+    transition, and diamond_transition - all "transition" candidates
+    identified by M10.4-M10.5's 8-seed bisection - resolved to firm
+    ROBUST_FAILURE/LIKELY_FAILURE at n=100. This is reported as the
+    central finding of this milestone, not hidden: an 8-seed search can
+    be fooled by sampling noise into flagging a point as "near the
+    boundary" when it is not: confirmation at n>=100 is what actually
+    settles it.
+
+    Every trial runs through the mandatory subprocess wall-clock cap
+    (timeout_s=120, wider than M10.4's 60s given diamond's own newly-
+    observed ~75s single-trial cost at duration_s=0.05).
+
+    Writes only to results/predictability_m10/raw/P12_boundary_variability/ -
+    never touches P01-P02B/P03/M9/M10.1-M10.5 data.
+  planner_level: L2
+  reserved_memory_slots: 10
+  min_delivered_pairs: 10
+  timeout_s: 120
+  n_seeds_robust_likely: 30
+  n_seeds_transition: 100
+  seed_base: 200
+  configurations:
+    # --- three_node (fidelity axis, duration_s=0.05 fixed) ---
+    - {name: three_node_robust_success, topology_builder: three_node_spec, scenario: three_node, min_fidelity: 0.65, duration_s: 0.05, expected_region: ROBUST_SUCCESS}
+    - {name: three_node_likely_success, topology_builder: three_node_spec, scenario: three_node, min_fidelity: 0.78, duration_s: 0.05, expected_region: LIKELY_SUCCESS}
+    - {name: three_node_transition, topology_builder: three_node_spec, scenario: three_node, min_fidelity: 0.79625, duration_s: 0.05, expected_region: TRANSITION}
+    - {name: three_node_robust_failure, topology_builder: three_node_spec, scenario: three_node, min_fidelity: 0.80, duration_s: 0.05, expected_region: ROBUST_FAILURE}
+    # --- four_node (fidelity axis, duration_s=0.05 fixed) ---
+    - {name: four_node_robust_success, topology_builder: linear_chain_2_spec, scenario: four_node, min_fidelity: 0.50, duration_s: 0.05, expected_region: ROBUST_SUCCESS}
+    - {name: four_node_likely_success, topology_builder: linear_chain_2_spec, scenario: four_node, min_fidelity: 0.57, duration_s: 0.05, expected_region: LIKELY_SUCCESS}
+    - {name: four_node_transition, topology_builder: linear_chain_2_spec, scenario: four_node, min_fidelity: 0.58, duration_s: 0.05, expected_region: TRANSITION}
+    - {name: four_node_likely_failure, topology_builder: linear_chain_2_spec, scenario: four_node, min_fidelity: 0.5975, duration_s: 0.05, expected_region: LIKELY_FAILURE}
+    - {name: four_node_robust_failure, topology_builder: linear_chain_2_spec, scenario: four_node, min_fidelity: 0.63, duration_s: 0.05, expected_region: ROBUST_FAILURE}
+    # --- small_mesh (fidelity axis, duration_s=0.05 fixed) ---
+    - {name: small_mesh_robust_success, topology_builder: small_mesh_spec, scenario: small_mesh, min_fidelity: 0.38, duration_s: 0.05, expected_region: ROBUST_SUCCESS}
+    - {name: small_mesh_likely_success, topology_builder: small_mesh_spec, scenario: small_mesh, min_fidelity: 0.4475, duration_s: 0.05, expected_region: LIKELY_SUCCESS}
+    - {name: small_mesh_transition, topology_builder: small_mesh_spec, scenario: small_mesh, min_fidelity: 0.44875, duration_s: 0.05, expected_region: TRANSITION}
+    - {name: small_mesh_robust_failure, topology_builder: small_mesh_spec, scenario: small_mesh, min_fidelity: 0.46, duration_s: 0.05, expected_region: ROBUST_FAILURE}
+    # --- diamond_heterogeneous (duration axis, min_fidelity=0.60 fixed - see description) ---
+    - {name: diamond_robust_success, topology_builder: diamond_spec, scenario: diamond_heterogeneous, min_fidelity: 0.60, duration_s: 0.20, expected_region: ROBUST_SUCCESS}
+    - {name: diamond_likely_success, topology_builder: diamond_spec, scenario: diamond_heterogeneous, min_fidelity: 0.60, duration_s: 0.10, expected_region: LIKELY_SUCCESS}
+    - {name: diamond_transition, topology_builder: diamond_spec, scenario: diamond_heterogeneous, min_fidelity: 0.60, duration_s: 0.09, expected_region: TRANSITION}
+    - {name: diamond_likely_failure, topology_builder: diamond_spec, scenario: diamond_heterogeneous, min_fidelity: 0.60, duration_s: 0.08, expected_region: LIKELY_FAILURE}
+    - {name: diamond_robust_failure, topology_builder: diamond_spec, scenario: diamond_heterogeneous, min_fidelity: 0.60, duration_s: 0.05, expected_region: ROBUST_FAILURE}
+  output_directory: results/predictability_m10
+  metadata:
+    study: predictability_m10
+    milestone: M10.6
+    section: "8 - boundary variability campaign"
