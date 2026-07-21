@@ -1,0 +1,17 @@
+scenario,requested_fidelity,duration_s,route,same_route_as_p12,predicted_satisfaction_probability,p12_empirical_p_satisfied,calibration_error,final_status,planning_time_s
+three_node,0.79625,0.05,,False,,0.0,,REJECTED,35.507426
+three_node,0.79625,0.05,,False,,0.0,,REJECTED,69.736665
+three_node,0.79625,0.05,,False,,0.0,,REJECTED,137.735785
+three_node,0.79625,0.05,,False,,0.0,,TIMEOUT,
+four_node,0.58,0.05,a -> r1 -> r2 -> b,True,0.8,0.68,0.12,SATISFIED,27.677338
+four_node,0.58,0.05,a -> r1 -> r2 -> b,True,0.5,0.68,0.18000000000000005,VIOLATED,48.807321
+four_node,0.58,0.05,a -> r1 -> r2 -> b,True,0.65,0.68,0.030000000000000027,SATISFIED,97.148846
+four_node,0.58,0.05,a -> r1 -> r2 -> b,True,0.7,0.68,0.019999999999999907,SATISFIED,149.721392
+diamond_heterogeneous,0.6,0.09,r1 -> good1 -> good2 -> r3,False,1.0,0.1,0.9,SATISFIED,75.022706
+diamond_heterogeneous,0.6,0.09,r1 -> good1 -> good2 -> r3,False,1.0,0.1,0.9,SATISFIED,147.506153
+diamond_heterogeneous,0.6,0.09,r1 -> good1 -> good2 -> r3,False,1.0,0.1,0.9,SATISFIED,294.118848
+diamond_heterogeneous,0.6,0.09,r1 -> good1 -> good2 -> r3,False,1.0,0.1,0.9,SATISFIED,437.668047
+small_mesh,0.44875,0.05,,False,,0.0,,SIMULATION_ERROR,0.09582
+small_mesh,0.44875,0.05,,False,,0.0,,SIMULATION_ERROR,0.103527
+small_mesh,0.44875,0.05,,False,,0.0,,SIMULATION_ERROR,0.096504
+small_mesh,0.44875,0.05,,False,,0.0,,SIMULATION_ERROR,0.099617

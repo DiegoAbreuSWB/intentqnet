@@ -69,7 +69,49 @@ def execute_predictability_m10_trial(
     candidate_paths = generate_candidate_paths(intent, capabilities, context)
 
     t0 = time.perf_counter()
-    decision = policy.plan(intent, capabilities, candidate_paths, context)
+    try:
+        decision = policy.plan(intent, capabilities, candidate_paths, context)
+    except Exception as exc:  # noqa: BLE001
+        # L4's planning step runs REAL internal simulations
+        # (planning.planners.l4_simulation.run_internal_simulations) - it
+        # can hit the same genuine SeQUeNCe protocol assertions the outer
+        # deployment can (e.g. BBPSSW's `kept_memo.fidelity > 0.5` check,
+        # first found in P02B's real deployment, M6e) - but planning
+        # itself was never wrapped, because L1-L3-R's purely analytical
+        # planning never raises. Found exercising L4 for the first time
+        # in M10 (P13, small_mesh at a low-fidelity boundary
+        # configuration). Recorded as SIMULATION_ERROR (same convention
+        # as the outer deployment's own exception handling) rather than
+        # crashing the whole campaign - never modifies L4's own frozen code.
+        planning_time_s = time.perf_counter() - t0
+        return PredictabilityM10TrialRecord(
+            campaign=identity.campaign, trial_id=f"{identity.trial_id}:{replay_index}", scenario=identity.scenario,
+            parameter_hash=identity.parameter_hash, seed=identity.seed, intent_id=identity.intent_id,
+            planner_level=getattr(policy, "level", "unknown"), planner_name=getattr(policy, "name", "unknown"),
+            replay_index=replay_index, reserved_memory_slots=intent.requirements.reserved_memory_slots,
+            min_delivered_pairs=intent.requirements.min_delivered_pairs,
+            requested_fidelity=intent.requirements.min_fidelity, duration_s=intent.requirements.duration_s,
+            attenuation_db_per_m=(topology_spec.quantum_links[0].attenuation_db_per_m if topology_spec.quantum_links else None),
+            distance_m=distance_m, allow_purification=intent.policy.allow_purification,
+            route="", hop_count=None, feasible=False, rejection_reason=f"{type(exc).__name__}: {exc}",
+            predicted_satisfaction_probability=None, predicted_delivered_pairs=None,
+            predicted_average_fidelity=None, purification_rounds_estimate=None,
+            planning_time_s=round(planning_time_s, 6), final_status="SIMULATION_ERROR", satisfied=None,
+            delivered_pairs=None, average_fidelity=None, observed_fidelity=None, absolute_fidelity_error=None,
+            simulation_wall_time_s=None, timed_out=False, timeout_s=None,
+            eg_attempts=None, eg_success=None, ep_attempts=None, ep_success=None, es_attempts=None, es_success=None,
+            timeline_end_time_s=None, trajectory_hash=None,
+            determinism_enabled=rng_manifest.determinism_enabled, master_seed=rng_manifest.master_seed,
+            execution_seed_used=rng_manifest.execution_seed_used_by_sequence_adapter,
+            namespace_seeds_json=json.dumps(rng_manifest.namespace_seeds) if rng_manifest.namespace_seeds else None,
+            python_random_reseeded=rng_manifest.python_random_reseeded,
+            python_hash_seed_env_value=rng_manifest.python_hash_seed_env_value,
+            project_git_commit=env.project_commit, sequence_git_commit=env.sequence_commit,
+            python_version=env.python_version, numpy_version=env.dependency_versions.get("numpy", "unknown"),
+            dependency_versions_json=json.dumps(env.dependency_versions),
+            platform_system=rng_manifest.platform_system, platform_release=rng_manifest.platform_release,
+            hostname=rng_manifest.hostname, timestamp=_now_iso(),
+        )
     planning_time_s = time.perf_counter() - t0
 
     attenuation = topology_spec.quantum_links[0].attenuation_db_per_m if topology_spec.quantum_links else None

@@ -41,10 +41,12 @@ TOPOLOGY_ENDPOINTS = {
 }
 
 
-def build_planner(level: str, *, admission_threshold: float | None = None):
+def build_planner(level: str, *, admission_threshold: float | None = None, simulations_per_candidate: int | None = None):
     from ibqn.planning.planners import (
         ProbabilisticPlanner,
         ProbabilisticResourceAwarePlanner,
+        SimulationInTheLoopPlanner,
+        SimulationPlannerConfig,
         resolve_planner_policy,
     )
 
@@ -52,6 +54,12 @@ def build_planner(level: str, *, admission_threshold: float | None = None):
         return ProbabilisticPlanner(admission_threshold=admission_threshold)
     if admission_threshold is not None and level == "L3-R":
         return ProbabilisticResourceAwarePlanner(admission_threshold=admission_threshold)
+    if level == "L4" and simulations_per_candidate is not None:
+        threshold = admission_threshold if admission_threshold is not None else 0.5
+        return SimulationInTheLoopPlanner(
+            config=SimulationPlannerConfig(simulations_per_candidate=simulations_per_candidate),
+            admission_threshold=threshold,
+        )
     return resolve_planner_policy(level)
 
 
@@ -88,7 +96,7 @@ def run_trial_with_timeout(
     allow_purification: bool = True, intent_id: str = "m10-intent", timeout_s: float,
     distance_m: float | None = None, replay_index: int = 0,
     determinism_enabled: bool = False, master_seed: int = 0, verify_replay: bool = False,
-    admission_threshold: float | None = None,
+    admission_threshold: float | None = None, simulations_per_candidate: int | None = None,
 ):
     """Runs one trial in a subprocess with a hard wall-clock cap - same
     rationale as M9's `predictability_common.run_trial_with_timeout`
@@ -118,6 +126,8 @@ def run_trial_with_timeout(
             args += ["--distance-m", str(distance_m)]
         if admission_threshold is not None:
             args += ["--admission-threshold", str(admission_threshold)]
+        if simulations_per_candidate is not None:
+            args += ["--simulations-per-candidate", str(simulations_per_candidate)]
 
         config = DeterminismConfig(enabled=determinism_enabled, master_seed=master_seed, verify_replay=verify_replay)
         env = build_subprocess_environment(config, base_env=dict(os.environ))

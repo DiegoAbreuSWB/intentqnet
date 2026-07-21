@@ -1,0 +1,6 @@
+{
+  "n_total": 16,
+  "n_valid_same_route_comparisons": 4,
+  "n_route_mismatches": 4,
+  "mean_calibration_error_same_route_only": 0.0875
+}

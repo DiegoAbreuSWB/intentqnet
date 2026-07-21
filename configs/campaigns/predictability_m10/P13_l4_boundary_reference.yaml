@@ -1,0 +1,70 @@
+campaign:
+  name: P13_l4_boundary_reference
+  description: >
+    M10.7: L4 (Reference Planner - never "the best planner", section 8)
+    evaluated at the 4 candidate TRANSITION configurations M10.4-M10.5's
+    8-seed search found (four_node fidelity=0.58, three_node
+    fidelity=0.79625, small_mesh fidelity=0.44875, all duration_s=0.05;
+    diamond_heterogeneous fidelity=0.60, duration_s=0.09), at K
+    (simulations_per_candidate) in {5, 10, 20, 30}, admission_threshold=0.5.
+
+    IMPORTANT (see docs/predictability_m10/m10_6_boundary_variability_summary.md):
+    M10.6's n=100 confirmation found only four_node's point is a genuine
+    TRANSITION (68% satisfied); three_node/small_mesh/diamond's points
+    resolved to firm ROBUST_FAILURE/LIKELY_FAILURE. This campaign still
+    evaluates L4 at all 4 (unchanged from the original design) - for
+    four_node this is the intended "L4 near a real boundary" test; for
+    the other three it becomes a useful calibration check instead (does
+    L4 correctly output a low probability at a confirmed-failing
+    configuration, avoiding false confidence?), not a boundary test.
+
+    A real bug was found and fixed while smoke-testing this campaign:
+    the M10 worker script never set `PlanningContext.topology_spec`,
+    which L4 requires to build its internal-simulation SequenceAdapter
+    instances (L1-L3-R never read this field, so the gap was invisible
+    until L4 was exercised for the first time in M10) - fixed in
+    `scripts/run_predictability_m10_trial_worker.py`. A K=5 smoke test
+    on four_node_transition took 54s of planning time alone (predicted
+    probability 0.8, real deployment SATISFIED) - `timeout_s` below is
+    set to 900s (not the original 300s) since K=30 could plausibly exceed
+    5 minutes by linear extrapolation from that benchmark.
+
+    L4's `predicted_satisfaction_probability` for a given (route, intent,
+    K) is DETERMINISTIC - `_derive_internal_seeds` derives internal
+    simulation seeds from a hash of (intent, route, config), never from
+    `operational_seed` (verified, `planning/planners/l4_simulation.py`,
+    already tested in `tests/planning/planners/test_l4_simulation.py`).
+    This campaign therefore runs L4's PLANNING step once per
+    (configuration, K) - 16 total - rather than repeating it across many
+    operational seeds; the "empirical probability obtained with 100-250
+    operational seeds" this is compared against is P12's own already-
+    collected real-seed data at the identical configuration, reused
+    (never re-collected) per this project's "never re-run a campaign
+    unless indispensable" practice.
+
+    "Admission decision correctness" = whether L4's admit/reject decision
+    (at admission_threshold=0.5) matches what P12's empirical P(satisfied)
+    implies is optimal (empirical p>=0.5 -> admitting is optimal).
+    "Regret" here = |predicted_probability - empirical_probability| (a
+    calibration-error-style measure, not a fully general decision-
+    theoretic regret - defined explicitly, not assumed).
+
+    Writes only to results/predictability_m10/raw/P13_l4_boundary_reference/ -
+    never touches P01-P02B/P03/M9/M10.1-M10.6 data. Does not require P12
+    to be re-run - only its already-collected trials.csv is read.
+  admission_threshold: 0.5
+  reserved_memory_slots: 10
+  min_delivered_pairs: 10
+  timeout_s: 900
+  k_values: [5, 10, 20, 30]
+  configurations:
+    - {name: three_node_transition, topology_builder: three_node_spec, scenario: three_node, min_fidelity: 0.79625, duration_s: 0.05}
+    - {name: four_node_transition, topology_builder: linear_chain_2_spec, scenario: four_node, min_fidelity: 0.58, duration_s: 0.05}
+    - {name: small_mesh_transition, topology_builder: small_mesh_spec, scenario: small_mesh, min_fidelity: 0.44875, duration_s: 0.05}
+    - {name: diamond_transition, topology_builder: diamond_spec, scenario: diamond_heterogeneous, min_fidelity: 0.60, duration_s: 0.09}
+  seed: 200
+  output_directory: results/predictability_m10
+  metadata:
+    study: predictability_m10
+    milestone: M10.7
+    section: "12 - L4 at the boundary"

@@ -49,12 +49,19 @@ def main() -> None:
     parser.add_argument("--master-seed", type=int, default=0)
     parser.add_argument("--verify-replay", type=int, default=0)
     parser.add_argument("--admission-threshold", type=float, default=None)
+    parser.add_argument("--simulations-per-candidate", type=int, default=None)
     args = parser.parse_args()
 
     source, destination = TOPOLOGY_ENDPOINTS[args.topology_builder]
     topology = build_topology(args.topology_builder, distance_m=args.distance_m)
-    policy = build_planner(args.planner_level, admission_threshold=args.admission_threshold)
-    context = PlanningContext(routing_strategy=ShortestHopCountRouting())
+    policy = build_planner(
+        args.planner_level, admission_threshold=args.admission_threshold,
+        simulations_per_candidate=args.simulations_per_candidate,
+    )
+    # topology_spec is required by L4 (planning.planners.l4_simulation)
+    # to build fresh internal-simulation SequenceAdapter instances -
+    # harmless to pass for L1-L3-R, which never read it.
+    context = PlanningContext(routing_strategy=ShortestHopCountRouting(), topology_spec=topology)
     intent = build_intent(
         source=source, destination=destination, min_fidelity=args.min_fidelity,
         reserved_memory_slots=args.reserved_memory_slots, min_delivered_pairs=args.min_delivered_pairs,
