@@ -159,3 +159,83 @@ def run_trial_with_timeout(
                 "python_version": sys.version.split()[0], "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         return json.loads(output_json.read_text(encoding="utf-8"))
+
+
+TAIL_EVENT_WORKER_SCRIPT = Path(__file__).resolve().parent / "run_predictability_m10_tail_event_worker.py"
+
+
+def run_tail_event_trial_with_timeout(
+    *, campaign: str, scenario: str, topology_builder: str, parameter_hash: str, planner_level: str,
+    seed: int, min_fidelity: float, reserved_memory_slots: int, min_delivered_pairs: int, duration_s: float,
+    allow_purification: bool = True, intent_id: str = "m10-intent", timeout_s: float,
+    heartbeat_dir: str | Path, heartbeat_interval_s: float = 2.0, max_events: int | None = None,
+    admission_threshold: float | None = None,
+):
+    """M10.8: same subprocess-with-timeout rationale as `run_trial_with_
+    timeout`, but the heartbeat JSONL file is written to a PERSISTENT
+    `heartbeat_dir` (never a temp directory that gets cleaned up) so it
+    can be read back and classified (TIMEOUT vs. NO_PROGRESS vs.
+    MAX_RETRIES) even when the subprocess is killed mid-simulation by the
+    wall-clock cap - see `heartbeat_monitor.classify_termination`."""
+    import os
+
+    from ibqn.experiments.deterministic_context import build_subprocess_environment, DeterminismConfig
+    from ibqn.experiments.heartbeat_monitor import classify_termination
+
+    heartbeat_dir = Path(heartbeat_dir)
+    heartbeat_dir.mkdir(parents=True, exist_ok=True)
+    trial_id = f"{campaign}:{scenario}:{parameter_hash}:{planner_level}:{seed}:{intent_id}:0"
+    heartbeat_path = heartbeat_dir / f"{uuid.uuid4().hex}.jsonl"
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        output_json = Path(tmp_dir) / f"{uuid.uuid4().hex}.json"
+        args = [
+            sys.executable, str(TAIL_EVENT_WORKER_SCRIPT),
+            "--campaign", campaign, "--scenario", scenario, "--topology-builder", topology_builder,
+            "--parameter-hash", parameter_hash, "--planner-level", planner_level, "--seed", str(seed),
+            "--min-fidelity", str(min_fidelity), "--reserved-memory-slots", str(reserved_memory_slots),
+            "--min-delivered-pairs", str(min_delivered_pairs), "--duration-s", str(duration_s),
+            "--allow-purification", "1" if allow_purification else "0",
+            "--intent-id", intent_id, "--output-json", str(output_json),
+            "--heartbeat-path", str(heartbeat_path), "--heartbeat-interval-s", str(heartbeat_interval_s),
+        ]
+        if max_events is not None:
+            args += ["--max-events", str(max_events)]
+        if admission_threshold is not None:
+            args += ["--admission-threshold", str(admission_threshold)]
+
+        env = build_subprocess_environment(DeterminismConfig(enabled=False), base_env=dict(os.environ))
+        try:
+            subprocess.run(args, timeout=timeout_s, capture_output=True, text=True, env=env)
+        except subprocess.TimeoutExpired:
+            termination_reason = classify_termination(heartbeat_path, final_status="TIMEOUT", timed_out=True)
+            from ibqn.experiments.heartbeat_monitor import read_heartbeats
+
+            heartbeats = read_heartbeats(heartbeat_path)
+            return {
+                **{k: None for k in _M10_FIELDNAMES},
+                "campaign": campaign, "trial_id": trial_id, "scenario": scenario, "parameter_hash": parameter_hash,
+                "seed": seed, "intent_id": intent_id, "planner_level": planner_level, "planner_name": planner_level,
+                "replay_index": 0, "reserved_memory_slots": reserved_memory_slots,
+                "min_delivered_pairs": min_delivered_pairs, "requested_fidelity": min_fidelity,
+                "duration_s": duration_s, "allow_purification": allow_purification,
+                "feasible": True, "final_status": "TIMEOUT", "simulation_wall_time_s": timeout_s,
+                "timed_out": True, "timeout_s": timeout_s, "termination_reason": termination_reason,
+                "heartbeat_final_sim_time_s": heartbeats[-1]["sim_time_s"] if heartbeats else None,
+                "heartbeat_final_run_counter": heartbeats[-1]["run_counter"] if heartbeats else None,
+                "heartbeat_n_samples": len(heartbeats),
+                "python_version": sys.version.split()[0], "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        if not output_json.exists():
+            return {
+                **{k: None for k in _M10_FIELDNAMES},
+                "campaign": campaign, "trial_id": trial_id, "scenario": scenario, "parameter_hash": parameter_hash,
+                "seed": seed, "intent_id": intent_id, "planner_level": planner_level, "planner_name": planner_level,
+                "replay_index": 0, "reserved_memory_slots": reserved_memory_slots,
+                "min_delivered_pairs": min_delivered_pairs, "requested_fidelity": min_fidelity,
+                "duration_s": duration_s, "allow_purification": allow_purification,
+                "feasible": False, "final_status": "WORKER_ERROR", "timed_out": False, "timeout_s": timeout_s,
+                "termination_reason": "MAX_RETRIES",  # the worker self-terminated via os._exit(1) - event limit hit
+                "python_version": sys.version.split()[0], "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        return json.loads(output_json.read_text(encoding="utf-8"))

@@ -1,0 +1,59 @@
+campaign:
+  name: P14_tail_event_study
+  description: >
+    M10.8: tail-event diagnostic study. Investigates the ~48723s P02B
+    outlier's three candidate explanations (section 13): (1) a legitimate
+    stochastic tail event, (2) an RNG/replay problem, (3) a bug/loop/
+    pathological condition. M10.1's randomness audit and M10.3's replay-
+    determinism campaign already found strong evidence against (2) - the
+    only randomness source confirmed to drive physical sampling is
+    properly seeded, and the exact outlier configuration replayed
+    BITWISE_IDENTICAL across 20 replays. This campaign distinguishes (1)
+    from (3) directly, using heartbeat instrumentation
+    (experiments.heartbeat_monitor.HeartbeatMonitor) that samples
+    SeQUeNCe's Timeline (read-only: sim_time, run_counter, pending event
+    queue length) from a background thread WHILE the simulation runs,
+    written incrementally so the trail survives the trial being killed by
+    the wall-clock cap.
+
+    Targets the 3 configurations with prior evidence of rare slow/timeout
+    behavior: four_node's known retry-storm-adjacent region
+    (fidelity 0.58-0.66, from M9's P04 and this phase's own M10.4-M10.6),
+    diamond_heterogeneous's own ~75s single-trial outlier found while
+    characterizing its duration-driven transition (M10.6), and small_mesh's
+    fidelity=0.46 point (which produced ONE real TIMEOUT in P11's coarse
+    search).
+
+    Bounded scope (never "milhares de trials sem limite" - section 13's
+    explicit instruction): 40 seeds per configuration x 3 configurations =
+    120 trials, each under a 120s wall-clock cap AND a 5,000,000-event cap
+    (`HeartbeatMonitor`'s `max_events` - the ONLY reliable way to abort a
+    runaway simulation from a background thread, since the main thread is
+    blocked inside SeQUeNCe's synchronous loop; this project's isolated-
+    subprocess-per-trial architecture is what makes the resulting abrupt
+    self-termination safe).
+
+    Every trial's `termination_reason` is one of TIMEOUT, NO_PROGRESS,
+    MAX_RETRIES, SIMULATION_COMPLETE, ERROR (section 13's exact
+    vocabulary) - a safety-limit termination is NEVER relabeled as
+    SATISFIED or VIOLATED.
+
+    Writes only to results/predictability_m10/raw/P14_tail_event_study/ -
+    never touches P01-P02B/P03/M9/M10.1-M10.7 data.
+  planner_level: L2
+  reserved_memory_slots: 10
+  min_delivered_pairs: 10
+  timeout_s: 120
+  heartbeat_interval_s: 2.0
+  max_events: 5000000
+  n_seeds: 40
+  seed_base: 300
+  configurations:
+    - {name: four_node_retry_storm_region, topology_builder: linear_chain_2_spec, scenario: four_node, min_fidelity: 0.60, duration_s: 0.05}
+    - {name: diamond_duration_outlier_region, topology_builder: diamond_spec, scenario: diamond_heterogeneous, min_fidelity: 0.60, duration_s: 0.05}
+    - {name: small_mesh_timeout_point, topology_builder: small_mesh_spec, scenario: small_mesh, min_fidelity: 0.46, duration_s: 0.05}
+  output_directory: results/predictability_m10
+  metadata:
+    study: predictability_m10
+    milestone: M10.8
+    section: "13 - tail event analysis"

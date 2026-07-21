@@ -1,0 +1,4 @@
+{"wall_elapsed_s": 2.037, "sim_time_s": 0.0152377375, "run_counter": 2664, "pending_events": 109, "event_limit_exceeded": false}
+{"wall_elapsed_s": 4.063, "sim_time_s": 0.03014582501, "run_counter": 10363, "pending_events": 115, "event_limit_exceeded": false}
+{"wall_elapsed_s": 6.081, "sim_time_s": 0.041078425, "run_counter": 15863, "pending_events": 123, "event_limit_exceeded": false}
+{"wall_elapsed_s": 8.114, "sim_time_s": 0.055329225, "run_counter": 23233, "pending_events": 115, "event_limit_exceeded": false}

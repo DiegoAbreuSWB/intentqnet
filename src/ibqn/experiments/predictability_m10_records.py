@@ -104,6 +104,17 @@ class PredictabilityM10TrialRecord:
     hostname: str | None
     timestamp: str
 
+    # --- tail-event diagnostics (M10.8) ---
+    termination_reason: str | None = None
+    """One of TIMEOUT/NO_PROGRESS/MAX_RETRIES/SIMULATION_COMPLETE/ERROR
+    (section 13's vocabulary) - populated only by P14_tail_event_study;
+    `None` for every other M10 campaign. Distinct from `final_status`:
+    this classifies WHY/HOW a trial's execution ended (a safety-limit
+    diagnosis), never re-labels a genuine SATISFIED/VIOLATED outcome."""
+    heartbeat_final_sim_time_s: float | None = None
+    heartbeat_final_run_counter: int | None = None
+    heartbeat_n_samples: int | None = None
+
     @classmethod
     def fieldnames(cls) -> list[str]:
         return [f.name for f in fields(cls)]

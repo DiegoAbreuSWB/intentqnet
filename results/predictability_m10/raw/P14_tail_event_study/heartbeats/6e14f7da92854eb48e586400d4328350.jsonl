@@ -1,0 +1,11 @@
+{"wall_elapsed_s": 2.475, "sim_time_s": 0.01065255001, "run_counter": 499, "pending_events": 167, "event_limit_exceeded": false}
+{"wall_elapsed_s": 4.785, "sim_time_s": 0.01110755, "run_counter": 907, "pending_events": 148, "event_limit_exceeded": false}
+{"wall_elapsed_s": 6.808, "sim_time_s": 0.01226263751, "run_counter": 1743, "pending_events": 168, "event_limit_exceeded": false}
+{"wall_elapsed_s": 8.823, "sim_time_s": 0.0156802375, "run_counter": 3791, "pending_events": 197, "event_limit_exceeded": false}
+{"wall_elapsed_s": 10.845, "sim_time_s": 0.023162825, "run_counter": 7744, "pending_events": 296, "event_limit_exceeded": false}
+{"wall_elapsed_s": 12.902, "sim_time_s": 0.0317605625, "run_counter": 12602, "pending_events": 403, "event_limit_exceeded": false}
+{"wall_elapsed_s": 14.93, "sim_time_s": 0.0370282, "run_counter": 15244, "pending_events": 462, "event_limit_exceeded": false}
+{"wall_elapsed_s": 16.956, "sim_time_s": 0.04225835, "run_counter": 18461, "pending_events": 532, "event_limit_exceeded": false}
+{"wall_elapsed_s": 18.997, "sim_time_s": 0.045968425, "run_counter": 20284, "pending_events": 573, "event_limit_exceeded": false}
+{"wall_elapsed_s": 21.007, "sim_time_s": 0.0528035875, "run_counter": 23653, "pending_events": 665, "event_limit_exceeded": false}
+{"wall_elapsed_s": 23.022, "sim_time_s": 0.05847872501, "run_counter": 26771, "pending_events": 743, "event_limit_exceeded": false}
