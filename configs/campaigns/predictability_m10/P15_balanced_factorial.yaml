@@ -1,0 +1,59 @@
+campaign:
+  name: P15_balanced_factorial
+  description: >
+    M10.9: balanced factorial study (section 16). A computationally
+    viable SUBSET of the brief's suggested design, disclosed explicitly:
+
+    - topology: three_node, four_node (2 levels - diamond_heterogeneous
+      and small_mesh dropped to keep the factorial tractable; both are
+      already well-characterized in M10.4-M10.7)
+    - fidelity: low/medium/high, topology-specific (three_node:
+      0.65/0.72/0.78 - 0/1/2-3 purification rounds; four_node:
+      0.53/0.58/0.63 - 0/transition/failure, reusing M10.6-M10.7's own
+      confirmed genuine transition point at 0.58 for direct
+      cross-reference)
+    - duration_s: short/long (0.01/0.05 - 2 levels, not 3; "medium" is
+      not a materially different regime given this project's own prior
+      campaigns only ever used these two values)
+    - reserved_memory_slots: low/high (4/10 - 2 levels, not 3)
+    - attenuation: FIXED at this project's standard 1e-5 default (not an
+      independent factor here) - topology choice already varies loss
+      structurally (four_node's extra hop inherently adds more loss than
+      three_node), and adding attenuation as a 5th crossed factor would
+      push the design past what this phase's remaining time budget
+      allows; a real, disclosed reduction, not a silent one
+    - planner: L2-R, L3-R (2 levels, as specified)
+
+    2 topologies x 3 fidelity x 2 duration x 2 memory x 2 planner = 48
+    cells, the SAME 5 seeds (400-404) in every cell (never a different
+    seed set per cell - avoids confounding seed-driven variance with
+    factor-driven variance) = 240 trials.
+
+    No perfect collinearity: duration_s and reserved_memory_slots are
+    crossed independently here (unlike P02B/P12, which paired them into
+    a single "regime" factor) - this is the whole point of this
+    milestone, per M9's own eta-squared finding that reserved_memory_
+    slots and duration_s were perfectly collinear in the P02B design and
+    could not be separated.
+
+    Writes only to results/predictability_m10/raw/P15_balanced_factorial/ -
+    never touches P01-P02B/P03/M9/M10.1-M10.8 data.
+  reserved_memory_slots_levels: [4, 10]
+  duration_s_levels: [0.01, 0.05]
+  timeout_s: 90
+  seeds: [400, 401, 402, 403, 404]
+  planners: [L2-R, L3-R]
+  topologies:
+    - name: three_node
+      topology_builder: three_node_spec
+      scenario: three_node
+      fidelity_levels: {low: 0.65, medium: 0.72, high: 0.78}
+    - name: four_node
+      topology_builder: linear_chain_2_spec
+      scenario: four_node
+      fidelity_levels: {low: 0.53, medium: 0.58, high: 0.63}
+  output_directory: results/predictability_m10
+  metadata:
+    study: predictability_m10
+    milestone: M10.9
+    section: "16 - balanced factorial campaign"
