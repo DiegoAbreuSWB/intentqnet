@@ -1,0 +1,7 @@
+{
+  "n_total": 240,
+  "n_satisfied": 70,
+  "seed_contribution_satisfied_response": 0.0,
+  "seed_contribution_delivered_pairs_response": 0.00043049014911631484,
+  "m9_original_claim": "seed explains only 0.02% of delivered_pairs variance (one-way eta-squared, P02B data)"
+}
