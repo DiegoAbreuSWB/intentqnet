@@ -23,7 +23,14 @@ _BASE_ALLOWED_TRANSITIONS: dict[IntentStatus, frozenset[IntentStatus]] = {
     IntentStatus.PLANNING: frozenset({IntentStatus.PLANNED, IntentStatus.REJECTED}),
     IntentStatus.PLANNED: frozenset({IntentStatus.DEPLOYING}),
     IntentStatus.DEPLOYING: frozenset({IntentStatus.ACTIVE, IntentStatus.FAILED}),
-    IntentStatus.ACTIVE: frozenset({IntentStatus.SATISFIED, IntentStatus.VIOLATED}),
+    # FAILED added here (IBQN Validation-B1, see docs/paper_ibqn_validation/
+    # simulation_error_trace.md): an approved reservation's simulated
+    # execution can raise mid-run (observed cause: SeQUeNCe's own protocol
+    # assertions, e.g. BBPSSWProtocol's fidelity check) after the intent
+    # already reached ACTIVE and before assurance ever runs - previously
+    # this had no terminal edge to reach, leaving the intent stuck in
+    # ACTIVE with no path to a terminal status.
+    IntentStatus.ACTIVE: frozenset({IntentStatus.SATISFIED, IntentStatus.VIOLATED, IntentStatus.FAILED}),
     IntentStatus.SATISFIED: frozenset({IntentStatus.COMPLETED, IntentStatus.VIOLATED}),
     IntentStatus.VIOLATED: frozenset({IntentStatus.RECONCILING, IntentStatus.FAILED}),
     IntentStatus.RECONCILING: frozenset({IntentStatus.PLANNING, IntentStatus.FAILED}),

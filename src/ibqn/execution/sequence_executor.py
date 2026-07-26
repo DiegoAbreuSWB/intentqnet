@@ -270,7 +270,27 @@ class SequenceExecutor:
             )
 
     def run(self) -> None:
-        self._adapter.run()
+        """Runs the simulation. If SeQUeNCe itself raises mid-run (e.g. an
+        internal protocol assertion), every intent this executor deployed
+        that has not yet reached a terminal status is transitioned to
+        FAILED before the exception is re-raised unchanged - so callers
+        that catch it (as every existing experiment runner does, recording
+        their own harness-level `final_status="SIMULATION_ERROR"`) still
+        see identical control flow, but `IntentRepository`'s own lifecycle
+        no longer leaves the intent stuck in a non-terminal status (see
+        docs/paper_ibqn_validation/simulation_error_trace.md)."""
+        try:
+            self._adapter.run()
+        except Exception as exc:
+            now_s = self._now_s()
+            for intent_id in self._source_apps:
+                record = self._repository.get(intent_id)
+                if not record.lifecycle.is_terminal:
+                    self._repository.transition(
+                        intent_id, IntentStatus.FAILED,
+                        f"simulation raised {type(exc).__name__}: {exc}", sim_time=now_s,
+                    )
+            raise
 
     def get_app(self, intent_id: str) -> IntentRequestApp:
         """Returns the source (initiator) app - the only one that receives
