@@ -1,0 +1,13 @@
+{
+  "source_trials_csv": "results/planner_study/raw/P02b_resource_aware_planners/trials.csv",
+  "source_config": "configs/campaigns/planner_study/P02b_resource_aware_planners.yaml",
+  "planners_included": [
+    "L1",
+    "L2",
+    "L2-R"
+  ],
+  "oracle_seed_offset": 3000000,
+  "n_rejected_rows_considered": 420,
+  "project_git_commit": "8e0313d802323b702a430470cd6413e3cf01be23",
+  "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98"
+}

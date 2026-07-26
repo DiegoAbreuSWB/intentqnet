@@ -1,0 +1,42 @@
+campaign:
+  name: P16_oracle_by_planner
+  description: >
+    IBQN Validation-B2: partitions the false-rejection evidence
+    (data_sufficiency_assessment.md item B) by L1-6 planner identity,
+    something the existing F04 offline-oracle campaign
+    (results/processed/F04_planner_vs_operation/) never did - F04
+    classifies by routing_strategy/purification_policy, not by
+    planner_name. This is a pure ANALYSIS run, not a new simulation
+    campaign in the usual sense: it re-simulates only the REJECTED
+    rows already present in results/planner_study/raw/
+    P02b_resource_aware_planners/trials.csv (frozen, unmodified,
+    read-only), using the exact same topology/intent construction as
+    the original P02b run (configs/campaigns/planner_study/
+    P02b_resource_aware_planners.yaml), matched by parameter_hash.
+
+    L3 and L3-R are intentionally excluded: they have zero REJECTED
+    rows in P02b (admission_threshold=0.0 admits every candidate with
+    non-zero predicted probability), so there is nothing to oracle-test
+    for them - this is a real, disclosed absence, not an arbitrary
+    comparison choice.
+
+    Oracle seeds are deliberately offset from P02b's original seeds
+    (see oracle_seed_offset below) so the oracle's own randomness is
+    never accidentally identical to - or confused with - the original
+    (rejected) trial's seed; this mirrors the existing
+    RECONCILIATION_SEED_OFFSET precedent in experiments/runner.py.
+
+  source_campaign: P02b_resource_aware_planners
+  source_trials_csv: results/planner_study/raw/P02b_resource_aware_planners/trials.csv
+  source_config: configs/campaigns/planner_study/P02b_resource_aware_planners.yaml
+  planners_included: [L1, L2, L2-R]
+  planners_excluded_reason:
+    L3: "0 REJECTED rows in P02b (admission_threshold=0.0)"
+    L3-R: "0 REJECTED rows in P02b (admission_threshold=0.0)"
+  oracle_seed_offset: 3000000
+  oracle_max_candidates: 10
+  output_directory: results/ibqn_validation_b/P16_oracle_by_planner
+  metadata:
+    study: ibqn_architecture_validation
+    milestone: IBQN_Validation_B
+    checkpoint: checkpoint_ibqn_validation_b
