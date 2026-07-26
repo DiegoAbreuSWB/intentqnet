@@ -1,0 +1,175 @@
+{
+  "planner_family_lifecycle_counts": [
+    {
+      "planner_level": "L1",
+      "planner_name": "conservative_one_round",
+      "campaign": "P02b_resource_aware_planners",
+      "submitted": 240,
+      "admitted": 90,
+      "rejected": 150,
+      "satisfied": 36,
+      "violated": 54,
+      "simulation_error": 0,
+      "timeout": 0,
+      "false_feasibility_rate_among_admitted": 0.6
+    },
+    {
+      "planner_level": "L2",
+      "planner_name": "iterative_analytical",
+      "campaign": "P02b_resource_aware_planners",
+      "submitted": 240,
+      "admitted": 160,
+      "rejected": 80,
+      "satisfied": 36,
+      "violated": 124,
+      "simulation_error": 0,
+      "timeout": 0,
+      "false_feasibility_rate_among_admitted": 0.775
+    },
+    {
+      "planner_level": "L2-R",
+      "planner_name": "iterative_resource_aware",
+      "campaign": "P02b_resource_aware_planners",
+      "submitted": 240,
+      "admitted": 50,
+      "rejected": 190,
+      "satisfied": 50,
+      "violated": 0,
+      "simulation_error": 0,
+      "timeout": 0,
+      "false_feasibility_rate_among_admitted": 0.0
+    },
+    {
+      "planner_level": "L3",
+      "planner_name": "probabilistic",
+      "campaign": "P02b_resource_aware_planners",
+      "submitted": 240,
+      "admitted": 240,
+      "rejected": 0,
+      "satisfied": 66,
+      "violated": 134,
+      "simulation_error": 40,
+      "timeout": 0,
+      "false_feasibility_rate_among_admitted": 0.5583
+    },
+    {
+      "planner_level": "L3-R",
+      "planner_name": "probabilistic_resource_aware",
+      "campaign": "P02b_resource_aware_planners",
+      "submitted": 240,
+      "admitted": 240,
+      "rejected": 0,
+      "satisfied": 66,
+      "violated": 134,
+      "simulation_error": 40,
+      "timeout": 0,
+      "false_feasibility_rate_among_admitted": 0.5583
+    },
+    {
+      "planner_level": "L4",
+      "planner_name": "simulation_in_the_loop",
+      "campaign": "P03_l4_cost + P13_l4_boundary_reference (combined - neither alone spans admit/reject/satisfy/violate)",
+      "submitted": 76,
+      "admitted": 73,
+      "rejected": 3,
+      "satisfied": 67,
+      "violated": 1,
+      "simulation_error": 4,
+      "timeout": 1,
+      "false_feasibility_rate_among_admitted": 0.0137
+    }
+  ],
+  "assurance_correctness_check": {
+    "campaign": "P02b_resource_aware_planners",
+    "n_trials": 1200,
+    "satisfied_flag_disagrees_with_final_status_SATISFIED": 0,
+    "satisfied_flag_true_but_final_status_not_SATISFIED": 0,
+    "n_rejected_trials": 420,
+    "rejected_trials_with_an_assurance_evaluation": 0,
+    "correct": true
+  },
+  "false_rejection_false_feasibility_oracle": {
+    "source": "F02_routing + F03_purification, three_node_1_repeater only, classified by routing_strategy/purification_policy (NOT the L1-L6 planner_name axis)",
+    "matrix": [
+      {
+        "category": "FEASIBLE_AND_SATISFIED",
+        "count": 170,
+        "interpretation": "previs\u00e3o correta"
+      },
+      {
+        "category": "FEASIBLE_BUT_VIOLATED",
+        "count": 30,
+        "interpretation": "falsa viabilidade operacional"
+      },
+      {
+        "category": "INFEASIBLE_AND_REJECTED",
+        "count": 160,
+        "interpretation": "rejei\u00e7\u00e3o prevista (nunca testada contra oracle)"
+      },
+      {
+        "category": "INFEASIBLE_BUT_POTENTIALLY_SATISFIABLE",
+        "count": 240,
+        "interpretation": "falso negativo do planner (oracle confirma satisfaz\u00edvel)"
+      },
+      {
+        "category": "EXECUTION_FAILED",
+        "count": 0,
+        "interpretation": "reserva rejeitada pelo pr\u00f3prio SeQUeNCe, apesar do planner achar vi\u00e1vel"
+      }
+    ],
+    "gap_metrics": {
+      "n_total": 600,
+      "operational_success_rate": 0.2833333333333333,
+      "false_feasibility_rate": 0.15,
+      "false_rejection_rate": 1.0,
+      "fidelity_prediction_error": 0.02194409061001724,
+      "delivery_deficit": 0.0,
+      "throughput_deficit": 0.0
+    }
+  },
+  "reconciliation_counts": {
+    "campaign": "F05_reconciliation",
+    "n_trials": 100,
+    "initial_status_counts": {
+      "VIOLATED": 75,
+      "REJECTED_OR_FAILED": 20,
+      "SATISFIED": 5
+    },
+    "n_violated_entering_reconciliation": 75,
+    "recovered_by_action": {
+      "duration_increase": {
+        "false": 20,
+        "true": 20
+      },
+      "route_change": {
+        "false": 0,
+        "true": 15
+      },
+      "slot_increase": {
+        "false": 1,
+        "true": 19
+      }
+    },
+    "n_recovered_true": 54,
+    "n_recovered_false": 21
+  },
+  "overhead_breakdown": {
+    "campaign": "F06_overhead",
+    "n_trials": 60,
+    "mean_stage_wall_time_s": {
+      "intent_parsing_wall_time_s": 0.0,
+      "intent_validation_wall_time_s": 0.0,
+      "capability_extraction_wall_time_s": 0.000158,
+      "planning_wall_time_s": 0.000436,
+      "deployment_wall_time_s": 0.001328,
+      "assurance_wall_time_s": 0.007575,
+      "reconciliation_decision_wall_time_s": 0.000849,
+      "simulation_wall_time_s": 10.808199,
+      "total_orchestration_wall_time_s": 0.010619,
+      "total_trial_wall_time_s": 10.822328
+    },
+    "mean_orchestration_overhead_ratio": 0.001697,
+    "mean_planning_overhead_ratio": 6.2e-05,
+    "note": "route_application_wall_time_s and persistence_wall_time_s are not isolated in this instrumentation (see src/ibqn/experiments/overhead.py) - not a computed 0, a genuine measurement gap."
+  }
+}

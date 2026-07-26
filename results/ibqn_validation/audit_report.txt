@@ -1,0 +1,23 @@
+IBQN ARCHITECTURAL VALIDATION - DERIVED METRICS
+============================================================
+
+Planner-family lifecycle counts (P02b + P03/P13 for L4):
+  L1    submitted= 240 admitted=  90 rejected= 150 satisfied=  36 violated=  54 sim_error=  0 timeout= 0 false_feasibility_rate=0.6
+  L2    submitted= 240 admitted= 160 rejected=  80 satisfied=  36 violated= 124 sim_error=  0 timeout= 0 false_feasibility_rate=0.775
+  L2-R  submitted= 240 admitted=  50 rejected= 190 satisfied=  50 violated=   0 sim_error=  0 timeout= 0 false_feasibility_rate=0.0
+  L3    submitted= 240 admitted= 240 rejected=   0 satisfied=  66 violated= 134 sim_error= 40 timeout= 0 false_feasibility_rate=0.5583
+  L3-R  submitted= 240 admitted= 240 rejected=   0 satisfied=  66 violated= 134 sim_error= 40 timeout= 0 false_feasibility_rate=0.5583
+  L4    submitted=  76 admitted=  73 rejected=   3 satisfied=  67 violated=   1 sim_error=  4 timeout= 1 false_feasibility_rate=0.0137
+
+Assurance correctness check: PASS (0 mismatches expected; got satisfied-vs-status=0, true-vs-status=0, rejected-with-evaluation=0)
+
+F04 offline-oracle: false_rejection_rate=1.0, false_feasibility_rate=0.15, n_total=600
+
+F05 reconciliation: 75 VIOLATED trials entered reconciliation; recovered=True: 54, recovered=False: 21
+  by action: {'duration_increase': {False: 20, True: 20}, 'route_change': {False: 0, True: 15}, 'slot_increase': {False: 1, True: 19}}
+
+F06 overhead: mean orchestration_overhead_ratio=0.001697, mean planning_overhead_ratio=6.2e-05
+
+FINAL: DERIVED (informational - this script has no PASS/FAIL gate; it computes
+numbers for the architectural_validation_matrix.md tables to cite, and the
+assurance-correctness check above is the one internal consistency check it runs).
