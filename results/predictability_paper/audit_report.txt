@@ -1,0 +1,23 @@
+PREDICTABILITY PAPER INPUT AUDIT - VERDICT: PASS
+
+=== Campaigns ===
+  [PASS] P10_replay_determinism: n_trials=160, duplicates=0, unexpected_status=[]
+  [PASS] P11_boundary_search: n_trials=352, duplicates=0, unexpected_status=[]
+  [PASS] P12_boundary_variability: n_trials=820, duplicates=0, unexpected_status=[]
+  [PASS] P13_l4_boundary_reference: n_trials=16, duplicates=0, unexpected_status=[]
+  [PASS] P14_tail_event_study: n_trials=120, duplicates=0, unexpected_status=[]
+  [PASS] P15_balanced_factorial: n_trials=240, duplicates=0, unexpected_status=[]
+  [PASS] P02_variance: n_trials=200, duplicates=0, unexpected_status=[]
+  [PASS] P04_retry_storm: n_trials=40, duplicates=0, unexpected_status=[]
+  [PASS] P02b_resource_aware_planners: n_trials=1200, duplicates=0, unexpected_status=[]
+  [PASS] P03_l4_cost: n_trials=60, duplicates=0, unexpected_status=[]
+
+=== Processed files: 15/15 present ===
+=== Documentation files: 10/10 present ===
+
+=== Evidence-matrix number cross-check: 20/20 match ===
+
+=== Figures/tables: PENDING (expected before P3/P4 run) ===
+  figures present: 0, tables present: 0
+
+FINAL: PASS

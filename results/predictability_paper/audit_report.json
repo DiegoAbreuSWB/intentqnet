@@ -1,0 +1,351 @@
+{
+  "verdict": "PASS",
+  "campaigns": [
+    {
+      "campaign": "P10_replay_determinism",
+      "path": "results\\predictability_m10\\raw\\P10_replay_determinism\\trials.csv",
+      "exists": true,
+      "n_trials": 160,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "REJECTED",
+        "SATISFIED",
+        "VIOLATED"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": 0,
+      "seed_min": 7,
+      "seed_max": 7,
+      "project_git_commits": [
+        "ed1532f836e1464f3192d519aceaf7f4df8e343e"
+      ],
+      "status": "PASS"
+    },
+    {
+      "campaign": "P11_boundary_search",
+      "path": "results\\predictability_m10\\raw\\P11_boundary_search\\trials.csv",
+      "exists": true,
+      "n_trials": 352,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "REJECTED",
+        "SATISFIED",
+        "TIMEOUT",
+        "VIOLATED"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": 1,
+      "seed_min": 100,
+      "seed_max": 607,
+      "project_git_commits": [
+        "50895c1a8f3c0da60ba692fe485101f0340fa6ed"
+      ],
+      "status": "PASS"
+    },
+    {
+      "campaign": "P12_boundary_variability",
+      "path": "results\\predictability_m10\\raw\\P12_boundary_variability\\trials.csv",
+      "exists": true,
+      "n_trials": 820,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "REJECTED",
+        "SATISFIED",
+        "TIMEOUT",
+        "VIOLATED"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": 3,
+      "seed_min": 200,
+      "seed_max": 299,
+      "project_git_commits": [
+        "3eada4d39cc676240b3278de813f19477e0b0eb8"
+      ],
+      "status": "PASS"
+    },
+    {
+      "campaign": "P13_l4_boundary_reference",
+      "path": "results\\predictability_m10\\raw\\P13_l4_boundary_reference\\trials.csv",
+      "exists": true,
+      "n_trials": 16,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "REJECTED",
+        "SATISFIED",
+        "SIMULATION_ERROR",
+        "TIMEOUT",
+        "VIOLATED"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": 1,
+      "seed_min": 200,
+      "seed_max": 200,
+      "project_git_commits": [
+        "0e51e39e8b0005ff4e5d3446a173c3ae98029d2d"
+      ],
+      "status": "PASS"
+    },
+    {
+      "campaign": "P14_tail_event_study",
+      "path": "results\\predictability_m10\\raw\\P14_tail_event_study\\trials.csv",
+      "exists": true,
+      "n_trials": 120,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "REJECTED",
+        "TIMEOUT",
+        "VIOLATED"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": 2,
+      "seed_min": 300,
+      "seed_max": 339,
+      "project_git_commits": [
+        "731bae1a771e6bfe861fd95906e46c12adbfed51"
+      ],
+      "status": "PASS"
+    },
+    {
+      "campaign": "P15_balanced_factorial",
+      "path": "results\\predictability_m10\\raw\\P15_balanced_factorial\\trials.csv",
+      "exists": true,
+      "n_trials": 240,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "REJECTED",
+        "SATISFIED",
+        "TIMEOUT"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": 1,
+      "seed_min": 400,
+      "seed_max": 404,
+      "project_git_commits": [
+        "5e5edd3e823e308483272be3acffd8aaed4f46ca"
+      ],
+      "status": "PASS"
+    },
+    {
+      "campaign": "P02_variance",
+      "path": "results\\predictability\\raw\\P02_variance\\trials.csv",
+      "exists": true,
+      "n_trials": 200,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "SATISFIED"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": 0,
+      "seed_min": 0,
+      "seed_max": 99,
+      "project_git_commits": [
+        "45265cd3e6f5e0e31b495ae7d40e1476cabb7cd1",
+        "c77fac0bd7b45dec7d8e71cc99876a90164e560b"
+      ],
+      "status": "PASS"
+    },
+    {
+      "campaign": "P04_retry_storm",
+      "path": "results\\predictability\\raw\\P04_retry_storm\\trials.csv",
+      "exists": true,
+      "n_trials": 40,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "SATISFIED",
+        "VIOLATED"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": 0,
+      "seed_min": 0,
+      "seed_max": 4,
+      "project_git_commits": [
+        "45265cd3e6f5e0e31b495ae7d40e1476cabb7cd1"
+      ],
+      "status": "PASS"
+    },
+    {
+      "campaign": "P02b_resource_aware_planners",
+      "path": "results\\planner_study\\raw\\P02b_resource_aware_planners\\trials.csv",
+      "exists": true,
+      "n_trials": 1200,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "REJECTED",
+        "SATISFIED",
+        "SIMULATION_ERROR",
+        "VIOLATED"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": null,
+      "seed_min": 0,
+      "seed_max": 9,
+      "project_git_commits": [
+        "d6023524cac9554649e8b9b6c03d887f613256e4"
+      ],
+      "status": "PASS"
+    },
+    {
+      "campaign": "P03_l4_cost",
+      "path": "results\\planner_study\\raw\\P03_l4_cost\\trials.csv",
+      "exists": true,
+      "n_trials": 60,
+      "n_duplicate_trial_ids": 0,
+      "final_status_values": [
+        "SATISFIED"
+      ],
+      "unexpected_final_status_values": [],
+      "n_timed_out": null,
+      "seed_min": 0,
+      "seed_max": 9,
+      "project_git_commits": [
+        "b40a8559cc5cb6e8020c25cb848b28a0bf34db82"
+      ],
+      "status": "PASS"
+    }
+  ],
+  "processed_files": {
+    "label": "processed files",
+    "n_expected": 15,
+    "n_missing": 0,
+    "missing": []
+  },
+  "documentation_files": {
+    "label": "documentation files",
+    "n_expected": 10,
+    "n_missing": 0,
+    "missing": []
+  },
+  "evidence_matrix_number_cross_check": {
+    "n_checks": 20,
+    "n_mismatches": 0,
+    "checks": [
+      {
+        "label": "P10 n_trials",
+        "actual": 160,
+        "expected": 160,
+        "match": true
+      },
+      {
+        "label": "P11 n_trials",
+        "actual": 352,
+        "expected": 352,
+        "match": true
+      },
+      {
+        "label": "P12 n_trials",
+        "actual": 820,
+        "expected": 820,
+        "match": true
+      },
+      {
+        "label": "P13 n_trials",
+        "actual": 16,
+        "expected": 16,
+        "match": true
+      },
+      {
+        "label": "P14 n_trials",
+        "actual": 120,
+        "expected": 120,
+        "match": true
+      },
+      {
+        "label": "P14 termination_reason=SIMULATION_COMPLETE",
+        "actual": 118,
+        "expected": 118,
+        "match": true
+      },
+      {
+        "label": "P14 termination_reason=TIMEOUT",
+        "actual": 2,
+        "expected": 2,
+        "match": true
+      },
+      {
+        "label": "P14 termination_reason=NO_PROGRESS",
+        "actual": 0,
+        "expected": 0,
+        "match": true
+      },
+      {
+        "label": "P14 termination_reason=MAX_RETRIES",
+        "actual": 0,
+        "expected": 0,
+        "match": true
+      },
+      {
+        "label": "P14 termination_reason=ERROR",
+        "actual": 0,
+        "expected": 0,
+        "match": true
+      },
+      {
+        "label": "P15 n_trials",
+        "actual": 240,
+        "expected": 240,
+        "match": true
+      },
+      {
+        "label": "replay n_bitwise_identical",
+        "actual": 14,
+        "expected": 14,
+        "match": true
+      },
+      {
+        "label": "replay n_logically_identical",
+        "actual": 2,
+        "expected": 2,
+        "match": true
+      },
+      {
+        "label": "replay n_nondeterministic",
+        "actual": 0,
+        "expected": 0,
+        "match": true
+      },
+      {
+        "label": "boundary Bayes bound (equal-weighted)",
+        "actual": 0.04925925925925925,
+        "expected": 0.04925925925925925,
+        "match": true
+      },
+      {
+        "label": "boundary Bayes bound (trial-weighted)",
+        "actual": 0.06829268292682927,
+        "expected": 0.06829268292682927,
+        "match": true
+      },
+      {
+        "label": "L4 mean calibration error (same route)",
+        "actual": 0.0875,
+        "expected": 0.0875,
+        "match": true
+      },
+      {
+        "label": "L4 n_route_mismatches",
+        "actual": 4,
+        "expected": 4,
+        "match": true
+      },
+      {
+        "label": "P15 seed contribution (satisfied)",
+        "actual": 0.0,
+        "expected": 0.0,
+        "match": true
+      },
+      {
+        "label": "P15 seed contribution (delivered_pairs)",
+        "actual": 0.00043049014911631484,
+        "expected": 0.00043049014911631484,
+        "match": true
+      }
+    ]
+  },
+  "figures_and_tables": {
+    "figures_dir_exists": false,
+    "n_figures_present": 0,
+    "tables_dir_exists": false,
+    "n_tables_present": 0,
+    "status": "PENDING (expected before P3/P4 run)"
+  }
+}
