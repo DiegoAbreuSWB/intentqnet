@@ -1,0 +1,134 @@
+campaign:
+  name: P17_concurrent_intents
+  description: >
+    IBQN Validation-B3 (+B4 overhead instrumentation): the minimum
+    multi-intent campaign needed to close data_sufficiency_assessment.md
+    item G (INSUFFICIENT: no campaign exercises more than one intent at
+    a time). Reuses only already-validated topology builders
+    (demos.topologies.small_mesh via experiments.topology_catalog is NOT
+    used here - see note below; demos.topologies.star_spec IS used,
+    since it is the one topology builder in this codebase already
+    engineered and unit-tested specifically for multi-intent shared-node
+    scenarios - see docs/multi_intent_scope.md and
+    tests/integration/test_assurance_pipeline.py::
+    test_multi_intent_metric_isolation_end_to_end).
+
+    Three scenarios (see docs/paper_ibqn_validation/
+    concurrent_intent_validation.md for the full concurrency-semantics
+    discussion - do not assume "concurrent" means truly interleaved
+    real-time execution without reading that section first):
+
+    C1 non_conflicting: two intents on fully disjoint node sets
+    (demos.topologies.small_mesh_spec's top row vs. bottom row) -
+    deployed to the SAME SequenceExecutor/Timeline before one shared
+    run() call.
+
+    C2 resource_contention: two intents on demos.topologies.star_spec,
+    both routed through the shared "center" node, with center_memories
+    deliberately reduced from the builder's default (80) to induce real
+    physical memory contention - also deployed to one shared
+    Timeline/run() call.
+
+    C3 sequential_admission: same star topology/intents as C2 (normal
+    center_memories), but run as two independent, sequential episodes
+    (two separate SequenceAdapter/Timeline/SequenceExecutor instances)
+    - because IntentPolicy.priority is confirmed unused
+    (docs/multi_intent_scope.md) and NetworkCapabilities is a static,
+    per-topology-spec snapshot with no cross-intent residual-consumption
+    tracking (confirmed by inspection of network/capabilities.py and
+    planning/planners/l2_resource_aware.py), this scenario demonstrates
+    - and is expected to demonstrate - that intent B's ADMISSION decision
+    does not depend on intent A having gone first; only genuine
+    execution-time physical contention (C2) can differ from planning-time
+    expectations.
+
+  planners: [L1, L2-R]
+  planners_omitted_reason:
+    L4: "internal per-candidate simulation cost (evidence_matrix.md claim 11) would multiply across 2 intents x 3 scenarios x 10 seeds - not viable at this checkpoint's scope; see B3.1 fallback"
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  reconciliation_enabled: true
+  reconciliation_seed_offset: 5000000
+  output_directory: results/ibqn_validation_b/P17_concurrent_intents
+
+  scenarios:
+    - name: C1_non_conflicting
+      topology_builder: small_mesh_spec
+      topology_kwargs: {stop_time_s: 0.2}
+      intents:
+        - group_role: A
+          source: a0
+          destination: a3
+          min_fidelity: 0.5
+          requested_pairs: 5
+          duration_s: 0.15
+        - group_role: B
+          source: b0
+          destination: b3
+          min_fidelity: 0.5
+          requested_pairs: 5
+          duration_s: 0.15
+
+    - name: C2_resource_contention
+      # Parameters verified by smoke test (IBQN Validation-B3): with
+      # center_memories=6 and 3 pairs requested per intent through the
+      # shared "center" node, intent A's reservation is approved and
+      # intent B's is rejected by SeQUeNCe's own NetworkManager
+      # (IntentRequestApp.get_reservation_result(reservation, False) ->
+      # IntentStatus.FAILED, reason "reservation rejected by
+      # NetworkManager") - genuine physical resource contention, not a
+      # planning-time rejection and not a simulator crash.
+      # allow_purification: false avoids a separate, unrelated failure
+      # mode (a BBPSSW low-fidelity assertion) so this scenario isolates
+      # resource contention specifically.
+      topology_builder: star_spec
+      topology_kwargs: {n_leaves: 4, leaf_memories: 10, center_memories: 6, stop_time_s: 0.15}
+      intents:
+        - group_role: A
+          source: leaf1
+          destination: leaf2
+          min_fidelity: 0.55
+          requested_pairs: 3
+          duration_s: 0.1
+          allow_purification: false
+        - group_role: B
+          source: leaf3
+          destination: leaf4
+          min_fidelity: 0.55
+          requested_pairs: 3
+          duration_s: 0.1
+          allow_purification: false
+
+    - name: C3_sequential_admission
+      # Same intents as C2, but each runs as its own independent episode
+      # (fresh topology/adapter/repository/executor - see
+      # docs/paper_ibqn_validation/concurrent_intent_validation.md,
+      # "Concurrency semantics", for why this deliberately tests a
+      # different question than C2: whether ADMISSION decisions depend
+      # on submission order, not whether live physical resources are
+      # shared. NetworkCapabilities is confirmed static/per-topology-
+      # spec with no cross-intent residual tracking (network/
+      # capabilities.py, planning/planners/l2_resource_aware.py), so
+      # this scenario is expected to show order-independence.
+      topology_builder: star_spec
+      topology_kwargs: {n_leaves: 4, leaf_memories: 10, center_memories: 6, stop_time_s: 0.15}
+      sequential: true
+      intents:
+        - group_role: A
+          source: leaf1
+          destination: leaf2
+          min_fidelity: 0.55
+          requested_pairs: 3
+          duration_s: 0.1
+          allow_purification: false
+        - group_role: B
+          source: leaf3
+          destination: leaf4
+          min_fidelity: 0.55
+          requested_pairs: 3
+          duration_s: 0.1
+          allow_purification: false
+
+  metadata:
+    study: ibqn_architecture_validation
+    milestone: IBQN_Validation_B
+    checkpoint: checkpoint_ibqn_validation_b
