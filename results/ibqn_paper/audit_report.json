@@ -1,0 +1,342 @@
+{
+  "verdict": "PASS",
+  "file_checks": {
+    "missing_source_files": [],
+    "row_mismatches": [],
+    "missing_doc_files": []
+  },
+  "n_number_checks": 55,
+  "n_mismatches": 0,
+  "checks": [
+    {
+      "label": "L1.submitted",
+      "actual": 240,
+      "expected": 240,
+      "match": true
+    },
+    {
+      "label": "L1.admitted",
+      "actual": 90,
+      "expected": 90,
+      "match": true
+    },
+    {
+      "label": "L1.rejected",
+      "actual": 150,
+      "expected": 150,
+      "match": true
+    },
+    {
+      "label": "L1.satisfied",
+      "actual": 36,
+      "expected": 36,
+      "match": true
+    },
+    {
+      "label": "L1.violated",
+      "actual": 54,
+      "expected": 54,
+      "match": true
+    },
+    {
+      "label": "L2.submitted",
+      "actual": 240,
+      "expected": 240,
+      "match": true
+    },
+    {
+      "label": "L2.admitted",
+      "actual": 160,
+      "expected": 160,
+      "match": true
+    },
+    {
+      "label": "L2.rejected",
+      "actual": 80,
+      "expected": 80,
+      "match": true
+    },
+    {
+      "label": "L2.satisfied",
+      "actual": 36,
+      "expected": 36,
+      "match": true
+    },
+    {
+      "label": "L2.violated",
+      "actual": 124,
+      "expected": 124,
+      "match": true
+    },
+    {
+      "label": "L2-R.submitted",
+      "actual": 240,
+      "expected": 240,
+      "match": true
+    },
+    {
+      "label": "L2-R.admitted",
+      "actual": 50,
+      "expected": 50,
+      "match": true
+    },
+    {
+      "label": "L2-R.rejected",
+      "actual": 190,
+      "expected": 190,
+      "match": true
+    },
+    {
+      "label": "L2-R.satisfied",
+      "actual": 50,
+      "expected": 50,
+      "match": true
+    },
+    {
+      "label": "L2-R.violated",
+      "actual": 0,
+      "expected": 0,
+      "match": true
+    },
+    {
+      "label": "L3.submitted",
+      "actual": 240,
+      "expected": 240,
+      "match": true
+    },
+    {
+      "label": "L3.admitted",
+      "actual": 240,
+      "expected": 240,
+      "match": true
+    },
+    {
+      "label": "L3.rejected",
+      "actual": 0,
+      "expected": 0,
+      "match": true
+    },
+    {
+      "label": "L3.satisfied",
+      "actual": 66,
+      "expected": 66,
+      "match": true
+    },
+    {
+      "label": "L3.violated",
+      "actual": 134,
+      "expected": 134,
+      "match": true
+    },
+    {
+      "label": "L3-R.submitted",
+      "actual": 240,
+      "expected": 240,
+      "match": true
+    },
+    {
+      "label": "L3-R.admitted",
+      "actual": 240,
+      "expected": 240,
+      "match": true
+    },
+    {
+      "label": "L3-R.rejected",
+      "actual": 0,
+      "expected": 0,
+      "match": true
+    },
+    {
+      "label": "L3-R.satisfied",
+      "actual": 66,
+      "expected": 66,
+      "match": true
+    },
+    {
+      "label": "L3-R.violated",
+      "actual": 134,
+      "expected": 134,
+      "match": true
+    },
+    {
+      "label": "oracle.L1.rejected",
+      "actual": 150,
+      "expected": 150,
+      "match": true
+    },
+    {
+      "label": "oracle.L1.tested",
+      "actual": 110,
+      "expected": 110,
+      "match": true
+    },
+    {
+      "label": "oracle.L1.satisfiable",
+      "actual": 0,
+      "expected": 0,
+      "match": true
+    },
+    {
+      "label": "oracle.L2.rejected",
+      "actual": 80,
+      "expected": 80,
+      "match": true
+    },
+    {
+      "label": "oracle.L2.tested",
+      "actual": 40,
+      "expected": 40,
+      "match": true
+    },
+    {
+      "label": "oracle.L2.satisfiable",
+      "actual": 0,
+      "expected": 0,
+      "match": true
+    },
+    {
+      "label": "oracle.L2-R.rejected",
+      "actual": 190,
+      "expected": 190,
+      "match": true
+    },
+    {
+      "label": "oracle.L2-R.tested",
+      "actual": 150,
+      "expected": 150,
+      "match": true
+    },
+    {
+      "label": "oracle.L2-R.satisfiable",
+      "actual": 28,
+      "expected": 28,
+      "match": true
+    },
+    {
+      "label": "l2r_false_rejection_n",
+      "actual": 28,
+      "expected": 28,
+      "match": true
+    },
+    {
+      "label": "l2r_false_rejection_all_delivery_target_exceeds_window",
+      "actual": true,
+      "expected": true,
+      "match": true
+    },
+    {
+      "label": "f04.n_total",
+      "actual": 600,
+      "expected": 600,
+      "match": true
+    },
+    {
+      "label": "f04.false_rejection_rate",
+      "actual": 1.0,
+      "expected": 1.0,
+      "match": true
+    },
+    {
+      "label": "f04.false_feasibility_rate",
+      "actual": 0.15,
+      "expected": 0.15,
+      "match": true
+    },
+    {
+      "label": "f04.closest_margin_above_ceiling",
+      "actual": 0.0097,
+      "expected": 0.0097,
+      "match": true
+    },
+    {
+      "label": "recon.route_change.triggered",
+      "actual": 15,
+      "expected": 15,
+      "match": true
+    },
+    {
+      "label": "recon.route_change.recovered",
+      "actual": 15,
+      "expected": 15,
+      "match": true
+    },
+    {
+      "label": "recon.slot_increase.triggered",
+      "actual": 20,
+      "expected": 20,
+      "match": true
+    },
+    {
+      "label": "recon.slot_increase.recovered",
+      "actual": 19,
+      "expected": 19,
+      "match": true
+    },
+    {
+      "label": "recon.duration_increase.triggered",
+      "actual": 40,
+      "expected": 40,
+      "match": true
+    },
+    {
+      "label": "recon.duration_increase.recovered",
+      "actual": 20,
+      "expected": 20,
+      "match": true
+    },
+    {
+      "label": "recon.total.triggered",
+      "actual": 75,
+      "expected": 75,
+      "match": true
+    },
+    {
+      "label": "recon.total.recovered",
+      "actual": 54,
+      "expected": 54,
+      "match": true
+    },
+    {
+      "label": "p17.C1_non_conflicting.admitted",
+      "actual": 40,
+      "expected": 40,
+      "match": true
+    },
+    {
+      "label": "p17.C1_non_conflicting.satisfied",
+      "actual": 40,
+      "expected": 40,
+      "match": true
+    },
+    {
+      "label": "p17.C1_non_conflicting.failed",
+      "actual": 0,
+      "expected": 0,
+      "match": true
+    },
+    {
+      "label": "p17.C2_resource_contention.admitted",
+      "actual": 40,
+      "expected": 40,
+      "match": true
+    },
+    {
+      "label": "p17.C2_resource_contention.satisfied",
+      "actual": 20,
+      "expected": 20,
+      "match": true
+    },
+    {
+      "label": "p17.C2_resource_contention.failed",
+      "actual": 20,
+      "expected": 20,
+      "match": true
+    },
+    {
+      "label": "p17_lifecycle_overhead_ratio_median_below_threshold",
+      "actual": 0.0008571529697502874,
+      "expected": "< 0.01",
+      "match": true
+    }
+  ]
+}

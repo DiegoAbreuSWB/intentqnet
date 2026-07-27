@@ -1,0 +1,10 @@
+IBQN MANUSCRIPT INPUT AUDIT (P-IBQN1)
+============================================================
+
+Missing source files: 0
+Row-count mismatches: 0
+Missing doc files: 0
+
+Number cross-checks: 55, mismatches: 0
+
+FINAL: PASS
