@@ -1,0 +1,5 @@
+action,triggered,episode2_executed,recovered,failed_recovery,recovery_rate,campaign,source_file,claim_id,note
+route_change,15,15,15,0,1.0,F05_reconciliation,results/raw/F05_reconciliation/trials.csv,C9,Recovery means the second execution episode was evaluated as SATISFIED (episodes==2 for all rows; episode2 genuinely re-executed even for failed-recovery rows).
+slot_increase,20,20,19,1,0.95,F05_reconciliation,results/raw/F05_reconciliation/trials.csv,C9,Recovery means the second execution episode was evaluated as SATISFIED (episodes==2 for all rows; episode2 genuinely re-executed even for failed-recovery rows).
+duration_increase,40,40,20,20,0.5,F05_reconciliation,results/raw/F05_reconciliation/trials.csv,C9,Recovery means the second execution episode was evaluated as SATISFIED (episodes==2 for all rows; episode2 genuinely re-executed even for failed-recovery rows).
+TOTAL,75,75,54,21,0.72,F05_reconciliation,results/raw/F05_reconciliation/trials.csv,C9,Single-intent campaign only - multi-intent reconciliation behavior under contention not campaign-tested (0 VIOLATED outcomes in P17).

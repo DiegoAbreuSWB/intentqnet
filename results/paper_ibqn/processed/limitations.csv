@@ -1,0 +1,11 @@
+limitation,claim_id,source_file,campaign
+"SeQUeNCe-only evaluation, no physical hardware execution",C1-C14 (scope of every result),docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
+"Small, hand-specified topologies (three_node, four_node, diamond, small_mesh, star)",C5-C13,docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
+L4 not on the same matched seed/intent grid as L1-L3-R,"C5, C6, C13",docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
+"Offline oracle only run against selected rejected intents (P02b + F02/F03's three_node_1_repeater), not exhaustively","C7, C8",docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
+No multi-intent reconciliation campaign (P17 produced 0 VIOLATED outcomes),"C9, C10",docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
+"No planner currently has cross-intent, planning-time residual-resource awareness","C10, C11",docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
+route_application and true persistence overhead not isolated from orchestration (both P17 and frozen F06),C12,docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
+"Simulation wall time is machine-dependent, not a portable cost metric",C12,docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
+"One lifecycle bug (SIMULATION_ERROR/ACTIVE stuck state) was found and corrected during validation, not present from initial design",C2,docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
+"Predictability results (M9/M10) are supporting evidence for planner robustness, not universal or physical limits",C14,docs/paper_ibqn_validation/data_sufficiency_assessment.md,NA_NOT_APPLICABLE
