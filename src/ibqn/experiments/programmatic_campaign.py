@@ -47,9 +47,10 @@ from ..intent.models import EntanglementIntent
 from ..network.topology import NetworkTopologySpec
 from ..utils.logging import get_logger
 from .manifests import _now_iso, manifest_path, read_manifest, write_manifest
+from .parallel import TrialJob, execute_jobs
 from .persistence import append_error_record, append_trial_record, errors_jsonl_path, read_trial_ids, trials_csv_path
 from .records import TrialIdentity
-from .runner import CampaignRunSummary, execute_trial
+from .runner import CampaignRunSummary
 from .sweeps import apply_parameters, compute_parameter_hash, expand_parameter_grid
 
 logger = get_logger(__name__)
@@ -153,6 +154,7 @@ def run_programmatic_campaign(
     reconciliation_enabled: bool = False,
     fidelity_estimator_name: str = "conservative_min",
     continue_on_error: bool = True,
+    workers: int = 1,
 ) -> CampaignRunSummary:
     """Same trial-generation/execution/persistence logic as
     `CampaignRunner.run()`, but `base_topology`/`base_intents` are passed
@@ -163,7 +165,11 @@ def run_programmatic_campaign(
     `campaign_name` and a different `scenario_name`/`base_topology`/
     `base_intents` (e.g. one call per topology in a multi-topology final
     campaign); each call's own trial counts are correctly folded into the
-    manifest's rolled-up totals instead of overwriting them."""
+    manifest's rolled-up totals instead of overwriting them.
+
+    `workers > 1` runs the pending trials in that many worker processes
+    (`experiments.parallel`); results are identical trial for trial, only
+    the row order in `trials.csv` differs."""
     start = time.perf_counter()
     combinations = expand_parameter_grid(parameter_grid)
     expected_trials = len(combinations) * len(seeds) * len(base_intents)
@@ -207,6 +213,7 @@ def run_programmatic_campaign(
     completed_trials = 0
     failed_trials = 0
 
+    pending: list[TrialJob] = []
     for combination in combinations:
         parameter_hash = compute_parameter_hash(combination)
         for base_intent in base_intents:
@@ -224,30 +231,39 @@ def run_programmatic_campaign(
                 if identity.trial_id in known_trial_ids:
                     skipped_trials += 1
                     continue
+                pending.append(TrialJob(identity, params, env.project_commit, env.sequence_commit))
 
-                try:
-                    record = execute_trial(identity, params, project_commit=env.project_commit, sequence_commit=env.sequence_commit)
-                except Exception as exc:
-                    failed_trials += 1
-                    logger.warning("trial %s failed: %s: %s", identity.trial_id, type(exc).__name__, exc)
-                    append_error_record(
-                        errors_path, trial_id=identity.trial_id, campaign=campaign_name, scenario=scenario_name,
-                        parameter_hash=parameter_hash, strategy=identity.strategy, seed=seed, intent_id=base_intent.id,
-                        error_type=type(exc).__name__, error_message=str(exc), timestamp=_now_iso(),
-                    )
-                    upsert_manifest(failed_trials=failed_trials)
-                    if not continue_on_error:
-                        return CampaignRunSummary(
-                            campaign=campaign_name, expected_trials=expected_trials, completed_trials=completed_trials,
-                            skipped_trials=skipped_trials, failed_trials=failed_trials,
-                            duration_s=time.perf_counter() - start,
-                            output_files=[str(trials_path), str(errors_path), str(manifest_file)],
-                        )
-                    continue
-
-                append_trial_record(trials_path, record, known_trial_ids=known_trial_ids)
-                completed_trials += 1
+    # `workers <= 1` executes the jobs inline and in order (the original
+    # sequential behavior); more workers run them in separate processes and
+    # deliver results in completion order - see experiments.parallel.
+    outcomes = execute_jobs(pending, workers=workers)
+    try:
+        for job, outcome in outcomes:
+            identity = job.identity
+            if outcome.failed:
+                failed_trials += 1
+                logger.warning("trial %s failed: %s: %s", identity.trial_id, outcome.error_type, outcome.error_message)
+                append_error_record(
+                    errors_path, trial_id=identity.trial_id, campaign=campaign_name, scenario=scenario_name,
+                    parameter_hash=identity.parameter_hash, strategy=identity.strategy, seed=identity.seed,
+                    intent_id=identity.intent_id,
+                    error_type=outcome.error_type, error_message=outcome.error_message, timestamp=_now_iso(),
+                )
                 upsert_manifest(failed_trials=failed_trials)
+                if not continue_on_error:
+                    return CampaignRunSummary(
+                        campaign=campaign_name, expected_trials=expected_trials, completed_trials=completed_trials,
+                        skipped_trials=skipped_trials, failed_trials=failed_trials,
+                        duration_s=time.perf_counter() - start,
+                        output_files=[str(trials_path), str(errors_path), str(manifest_file)],
+                    )
+                continue
+
+            append_trial_record(trials_path, outcome.record, known_trial_ids=known_trial_ids)
+            completed_trials += 1
+            upsert_manifest(failed_trials=failed_trials)
+    finally:
+        outcomes.close()
 
     # Unconditional final upsert so the manifest reflects the fully
     # up-to-date ground truth even if the loop's last action was neither

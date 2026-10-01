@@ -125,3 +125,20 @@ def test_platform_is_a_sweep_parameter_and_a_trial_record_column():
     assert params.topology_spec.platform == "nv_2022"
     assert params.topology_spec.nodes[0].memory_efficiency == NV_2022.memory_efficiency
     assert "platform" in TrialRecord.fieldnames()
+
+
+@pytest.mark.unit
+def test_single_field_sweeps_are_applied_on_top_of_the_platform_not_overwritten_by_it():
+    """Grid order is alphabetical (`coherence_time_s` < `gate_fidelity` <
+    `platform`), but a platform replaces every hardware field - it has to go
+    first so a one-parameter sweep around a platform survives."""
+    base = linear_chain_spec(1)
+    intent = simple_intent(intent_id="x", source="a", destination="b", min_fidelity=0.6, requested_pairs=4, duration=0.1)
+    params = apply_parameters(
+        base, intent, {"coherence_time_s": 0.05, "gate_fidelity": 0.99, "platform": "siv_2024"},
+    )
+    node = params.topology_spec.nodes[1]
+    assert params.topology_spec.platform == "siv_2024"
+    assert node.gate_fidelity == 0.99 and node.coherence_time_s == 0.05   # the swept values
+    assert node.raw_fidelity == SIV_2024.raw_fidelity                       # everything else from the profile
+    assert node.measurement_fidelity == SIV_2024.measurement_fidelity

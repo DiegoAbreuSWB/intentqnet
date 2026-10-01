@@ -338,6 +338,15 @@ def apply_parameters(
         reconciliation_enabled=reconciliation_enabled,
         fidelity_estimator_name=fidelity_estimator_name,
     )
-    for name, value in combination.items():
+    # `platform` replaces every node/link hardware field wholesale, so it must
+    # be applied BEFORE any single-field sweep (`gate_fidelity`,
+    # `coherence_time_s`, `attenuation_db_per_m`, ...) meant to vary one
+    # parameter around that platform - otherwise alphabetical grid order
+    # would let the profile silently overwrite the swept value.
+    ordered = sorted(combination.items(), key=lambda item: item[0] not in _WHOLESALE_PARAMETERS)
+    for name, value in ordered:
         params = SWEEP_PARAMETERS[name].apply(params, value)
     return params
+
+
+_WHOLESALE_PARAMETERS = frozenset({"platform"})
