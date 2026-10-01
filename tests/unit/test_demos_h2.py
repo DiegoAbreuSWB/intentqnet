@@ -211,6 +211,9 @@ def test_reconciliation_episodes_table_has_expected_columns():
 
 @pytest.mark.unit
 def test_compare_purification_policies_distinguishes_feasible_from_rejected():
+    # Bell-diagonal physics (docs/physical_model.md): two 0.85 pairs swap to
+    # 0.73 and one BBPSSW round lifts that to ~0.768, so 0.65 needs no
+    # purification, 0.75 needs exactly one round.
     spec = three_node_spec()
 
     def make_intent(target):
@@ -219,7 +222,7 @@ def test_compare_purification_policies_distinguishes_feasible_from_rejected():
     df = compare_purification_policies(
         spec, make_intent,
         {"NeverPurify": NeverPurify(), "PurifyUntilTarget": PurifyUntilTarget()},
-        fidelity_targets=[0.65, 0.70],
+        fidelity_targets=[0.65, 0.75],
         seed=0,
     )
 
@@ -231,11 +234,11 @@ def test_compare_purification_policies_distinguishes_feasible_from_rejected():
     assert bool(row["feasible"]) is True
     assert bool(row["requires_purification"]) is False
 
-    row_never = df[(df["min_fidelity"] == 0.70) & (df["policy"] == "NeverPurify")].iloc[0]
+    row_never = df[(df["min_fidelity"] == 0.75) & (df["policy"] == "NeverPurify")].iloc[0]
     assert bool(row_never["feasible"]) is False
     assert row_never["final_status"] == "REJECTED"
 
-    row_purify = df[(df["min_fidelity"] == 0.70) & (df["policy"] == "PurifyUntilTarget")].iloc[0]
+    row_purify = df[(df["min_fidelity"] == 0.75) & (df["policy"] == "PurifyUntilTarget")].iloc[0]
     assert bool(row_purify["feasible"]) is True
     assert bool(row_purify["requires_purification"]) is True
     assert row_purify["final_status"] == "SATISFIED"

@@ -1,5 +1,13 @@
 # Modelo de estimativa de fidelidade (Fase J1)
 
+> **Nota (revisão de realismo físico):** todos os números deste documento
+> (swap 0,686375, teto de uma rodada 0,7203, faixa densificada 0,70–0,75)
+> são do modelo legado `formalism: ket_vector`. Sob o padrão atual
+> (`bell_diagonal`, ver `docs/physical_model.md`) o swap de dois pares 0,85
+> dá 0,73 e uma rodada de BBPSSW leva a ~0,768; o fenômeno (estimativa de
+> uma rodada vs. execução `until_target`) permanece, com outros limiares.
+> Os testes de regressão correspondentes fixam `formalism="ket_vector"`.
+
 ## O problema original
 
 `planning.feasibility.estimate_swap_only_fidelity` (até a Fase H3)

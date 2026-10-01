@@ -24,8 +24,8 @@ flowchart TD
 | Feasibility Analyzer | `src/ibqn/planning/feasibility.py` | ✅ implementado — estimativas via fórmulas reais do SeQUeNCe |
 | Intent Planner | `src/ibqn/planning/planner.py` + `routing.py`/`purification.py`/`swapping.py` | ✅ implementado — estratégias intercambiáveis |
 | Execution Plan | `src/ibqn/planning/models.py` | ✅ implementado |
-| SeQUeNCe Adapter | `src/ibqn/network/sequence_adapter.py` + `network/capabilities.py` | ✅ implementado |
-| Quantum Network Simulation | `SeQUeNCe/` (submódulo, commit `1f2680a5`) | reutilizado sem modificação |
+| SeQUeNCe Adapter | `src/ibqn/network/sequence_adapter.py` + `network/capabilities.py` + `ibqn/physics.py` (fórmulas fechadas por formalismo) | ✅ implementado — formalismo `bell_diagonal` por padrão (`docs/physical_model.md`) |
+| Quantum Network Simulation | `SeQUeNCe/` (submódulo, commit `1f2680a5`) | reutilizado sem modificação do código-fonte; um patch de runtime documentado (`network/sequence_patches.py`, ver `docs/physical_model.md`) |
 | Telemetry Collector | `sequence.utils.metrics` (nativo) + `assurance/telemetry.py` (evidência por intent) | ✅ implementado — ver `docs/assurance_design.md` |
 | Cenários / Experiment Runner | `src/ibqn/config/` (`ScenarioSpec`) + `src/ibqn/experiments/` (`Scenario`, `run_scenario`, `seeds_for_trials`) | ✅ implementado — `run_scenario` agora avalia e transiciona todo intent que chega a `ACTIVE` |
 | Intent Assurance | `src/ibqn/assurance/evaluator.py` + `violations.py` | ✅ implementado — condições avaliadas via `operator.*`, nunca `eval()` |
@@ -40,10 +40,13 @@ memórias ou regras. Essas decisões (o HOW) agora nascem em `planning/`
 se purificação é necessária a partir de estratégias intercambiáveis
 (`RoutingStrategy`, `PurificationStrategy`, `SwappingStrategy` — ver
 `docs/sequence_integration.md`). O `ExecutionPlan` resultante é executado por
-`execution/sequence_executor.py`, que ainda delega a *mecânica* de
+`execution/sequence_executor.py`, que delega a *mecânica* de
 geração/purificação/swapping ao próprio SeQUeNCe (nenhuma `Rule` é
-construída manualmente nesta versão) — o planner decide a rota e se vale a
-pena tentar, o núcleo do simulador decide como executar fisicamente.
+construída manualmente nesta versão) — o planner decide a rota, a política
+de purificação (`never`/`once`/`until_target`, executada de fato desde a
+revisão de realismo físico, ver `docs/physical_model.md`) e se vale a pena
+tentar; o núcleo do simulador decide como executar fisicamente (ordem de
+swap por bisseção, quando cada regra dispara).
 
 ## Centralização da integração com o SeQUeNCe
 

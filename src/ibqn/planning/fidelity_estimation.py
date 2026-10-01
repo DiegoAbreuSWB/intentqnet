@@ -100,29 +100,31 @@ class ConservativeMinEstimator:
         if len(route) < 2:
             raise ValueError(f"route must have at least two nodes, got {route!r}")
 
+        physics = capabilities.physics
         per_link: dict[tuple[str, str], tuple[float, float]] = {}
         hop_fidelities: list[float] = []
         for a, b in zip(route, route[1:]):
-            hop = min(capabilities.node(a).raw_fidelity, capabilities.node(b).raw_fidelity)
+            hop = physics.link_fidelity(a, b)
             hop_fidelities.append(hop)
             per_link[(a, b)] = (hop, hop)
 
-        pre_swap = 1.0
-        for hop in hop_fidelities:
-            pre_swap *= hop
-        for interior_node in route[1:-1]:
-            pre_swap *= capabilities.node(interior_node).swapping_degradation
+        pre_swap = hop_fidelities[0]
+        for interior_node, next_hop in zip(route[1:-1], hop_fidelities[1:]):
+            pre_swap = physics.swap_fidelity(pre_swap, next_hop, interior_node)
 
-        decision = purification_strategy.decide(pre_swap, target_fidelity, allow_purification)
+        decision = purification_strategy.decide(
+            pre_swap, target_fidelity, allow_purification,
+            physics=physics.purification_between(route[0], route[-1]),
+        )
         return FidelityEstimate(
             estimator_name=self.name, route=list(route), per_link_endpoint_fidelities=per_link,
             pre_swap_fidelity=pre_swap, estimated_end_to_end_fidelity=decision.fidelity_estimate,
             purification_required=decision.attempt, purification_feasible=decision.attempt,
             purification_rounds_estimate=decision.rounds_estimate, purification_note=decision.note,
             assumptions=(
-                "each hop's fidelity = min(raw_fidelity(a), raw_fidelity(b)); exact on uniform-fidelity "
-                "topologies, systematically underestimates on heterogeneous ones - see "
-                "docs/fidelity_estimation_model.md"
+                f"each hop's fidelity = min(raw_fidelity(a), raw_fidelity(b)), hops combined left-to-right with "
+                f"the {physics.formalism} swap formula (ibqn.physics); exact on uniform-fidelity topologies, "
+                "systematically underestimates on heterogeneous ones - see docs/fidelity_estimation_model.md"
             ),
         )
 
@@ -154,16 +156,31 @@ def _swap_tree_fidelity(path: list[str], capabilities: NetworkCapabilities) -> f
     docstring and docs/fidelity_estimation_model.md for the full
     derivation and its empirical verification."""
     memo: dict[str, float] = {}
+    physics = capabilities.physics
+
+    def elementary_link_fidelity(node: str, neighbor: str) -> float:
+        # ket_vector: each memory carries its OWN node's raw_fidelity
+        # (BarretKokA._entanglement_succeed), so the swap node's value is what
+        # its swap consumes. bell_diagonal: the pair's single shared state
+        # is what the swap reads (see ibqn.physics.PhysicsModel.link_fidelity).
+        if physics.is_bell_diagonal:
+            return physics.link_fidelity(node, neighbor)
+        return capabilities.node(node).raw_fidelity
 
     def resolve(node: str) -> float:
         if node in memo:
             return memo[node]
         index = path.index(node)
         left_partner, right_partner = _bisection_partners(path, node)
-        raw_fidelity = capabilities.node(node).raw_fidelity
-        left_value = raw_fidelity if left_partner == path[index - 1] else resolve(path[index - 1])
-        right_value = raw_fidelity if right_partner == path[index + 1] else resolve(path[index + 1])
-        result = left_value * right_value * capabilities.node(node).swapping_degradation
+        left_value = (
+            elementary_link_fidelity(node, path[index - 1]) if left_partner == path[index - 1]
+            else resolve(path[index - 1])
+        )
+        right_value = (
+            elementary_link_fidelity(node, path[index + 1]) if right_partner == path[index + 1]
+            else resolve(path[index + 1])
+        )
+        result = physics.swap_fidelity(left_value, right_value, node)
         memo[node] = result
         return result
 
@@ -203,14 +220,17 @@ class SequenceConsistentEstimator:
         else:
             pre_swap = _swap_tree_fidelity(route, capabilities)
             assumptions = (
-                "reproduces BarretKokA's per-node raw_fidelity assignment "
-                "(sequence/entanglement_management/generation/barret_kok.py:228) combined with the "
-                "balanced-bisection swap tree resource_manager.generate_load_rules actually builds; "
-                "only interior (swap) nodes' raw_fidelity ever contributes to the result - endpoint "
-                "raw_fidelity is irrelevant once at least one swap happens"
+                f"{capabilities.formalism} swap formula (ibqn.physics) applied along the balanced-bisection "
+                "swap tree resource_manager.generate_load_rules actually builds; under ket_vector each "
+                "elementary pair carries the swap node's OWN raw_fidelity (BarretKokA._entanglement_succeed), "
+                "so endpoint raw_fidelity is irrelevant once at least one swap happens; under bell_diagonal "
+                "the pair's single shared state is what each swap consumes"
             )
 
-        decision = purification_strategy.decide(pre_swap, target_fidelity, allow_purification)
+        decision = purification_strategy.decide(
+            pre_swap, target_fidelity, allow_purification,
+            physics=capabilities.physics.purification_between(route[0], route[-1]),
+        )
         return FidelityEstimate(
             estimator_name=self.name, route=list(route), per_link_endpoint_fidelities=per_link,
             pre_swap_fidelity=pre_swap, estimated_end_to_end_fidelity=decision.fidelity_estimate,

@@ -316,6 +316,7 @@ class ResourceAwareIterativePlanner:
             ),
             reservations=best_feasibility.reservations, requires_purification=best_feasibility.requires_purification,
             purification_rounds_estimate=best_feasibility.purification_rounds_estimate,
+            purification_mode=purification_strategy.execution_mode,
             estimated_metrics=EstimatedMetrics(
                 fidelity=estimated_fidelity, latency_s=estimate_latency_s(network_state, best_route),
             ),

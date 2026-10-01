@@ -148,3 +148,32 @@ alguns intents que o SeQUeNCe teria conseguido satisfazer com 2+ rodadas),
 em vez de superestimar. Documentado explicitamente em
 `ExecutionPlan.purification_rounds_estimate` e no `reason` de
 `FeasibilityResult` quando essa é a causa da rejeição.
+
+## Revisão de realismo físico: formalismo Bell-diagonal, decoerência e política de purificação executada
+
+As três seções anteriores ("estimativa independente da ordem de swap",
+"estimativa de purificação de uma única rodada" e a nota sobre
+`purification_mode='until_target'`) descrevem o modelo **legado**
+(`formalism: ket_vector`). A partir desta revisão o padrão é
+`formalism: bell_diagonal`, em que a fidelidade é lida do estado quântico,
+swap e purificação têm ruído de porta/medição por nó, memórias decoerem
+enquanto esperam, e a estratégia de purificação do plano é executada de
+fato pelo SeQUeNCe (`ExecutionPlan.purification_mode` →
+`Reservation.purification_mode`, via `IntentRequestApp.start_intent`).
+
+Consequências para esta integração:
+
+- `SequenceAdapter` passa a setar as quatro chaves globais do SeQUeNCe que
+  selecionam as implementações de protocolo (geração single-heralded, swap
+  e purificação BDS), gera um template de `RouterNetTopo` por roteador e
+  por enlace, e seta `gate_fid`/`meas_fid` nos roteadores construídos.
+- `ibqn.physics` concentra as fórmulas fechadas por formalismo;
+  `NetworkCapabilities.physics` é o único ponto de onde o planejamento
+  obtém aritmética de fidelidade. O produto `f1·f2·degradação` da seção
+  "estimativa independente da ordem de swap" vale só sob `ket_vector`; sob
+  BDS o parâmetro de Werner multiplica (portas ideais) - também associativo.
+- Há um único patch de runtime sobre o SeQUeNCe
+  (`network/sequence_patches.py`), ativo apenas sob BDS.
+
+Detalhes, parâmetros, validação empírica e desvios em
+`docs/physical_model.md`.

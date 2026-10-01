@@ -3,9 +3,10 @@ graph for path-finding plus the physical parameters needed to *estimate*
 fidelity/loss before running any simulation.
 
 Built once from the same `NetworkTopologySpec` that `SequenceAdapter` uses to
-configure the real hardware (`SequenceAdapter._apply_node_physical_params`),
-so `planning.*` estimates and what actually gets simulated never drift apart.
-`planning/` never imports `network.sequence_adapter` - only this module.
+configure the real hardware, so `planning.*` estimates and what actually
+gets simulated never drift apart. `planning/` never imports
+`network.sequence_adapter` - only this module (and `ibqn.physics`, which
+carries the formalism-specific closed forms both sides share).
 """
 from __future__ import annotations
 
@@ -13,6 +14,7 @@ from dataclasses import dataclass
 
 import networkx as nx
 
+from ..physics import DEPOLARIZING_ERRORS, NodePhysics, PhysicsModel
 from .topology import NetworkTopologySpec
 
 
@@ -22,6 +24,7 @@ class LinkCapability:
     destination: str
     distance_m: float
     attenuation_db_per_m: float
+    detector_efficiency: float | None = None
 
     @property
     def loss_db(self) -> float:
@@ -37,6 +40,19 @@ class NodeCapability:
     memories: int
     raw_fidelity: float
     swapping_degradation: float
+    gate_fidelity: float = 1.0
+    measurement_fidelity: float = 1.0
+    swapping_success_prob: float = 1.0
+    coherence_time_s: float = -1.0
+    cutoff_ratio: float = 1.0
+    decoherence_errors: tuple[float, float, float] = DEPOLARIZING_ERRORS
+
+    def physics(self) -> NodePhysics:
+        return NodePhysics(
+            raw_fidelity=self.raw_fidelity, swapping_degradation=self.swapping_degradation,
+            gate_fidelity=self.gate_fidelity, measurement_fidelity=self.measurement_fidelity,
+            coherence_time_s=self.coherence_time_s, decoherence_errors=self.decoherence_errors,
+        )
 
 
 class NetworkCapabilities:
@@ -46,10 +62,15 @@ class NetworkCapabilities:
 
     def __init__(self, spec: NetworkTopologySpec):
         self._classical_delay_s = spec.classical_delay_s
+        self._formalism = spec.formalism
         self._nodes: dict[str, NodeCapability] = {
             node.id: NodeCapability(
                 id=node.id, memories=node.memories,
                 raw_fidelity=node.raw_fidelity, swapping_degradation=node.swapping_degradation,
+                gate_fidelity=node.gate_fidelity, measurement_fidelity=node.measurement_fidelity,
+                swapping_success_prob=node.swapping_success_prob,
+                coherence_time_s=node.coherence_time_s, cutoff_ratio=node.cutoff_ratio,
+                decoherence_errors=node.decoherence_errors or DEPOLARIZING_ERRORS,
             )
             for node in spec.nodes
         }
@@ -57,6 +78,7 @@ class NetworkCapabilities:
             frozenset({link.source, link.destination}): LinkCapability(
                 source=link.source, destination=link.destination,
                 distance_m=link.distance_m, attenuation_db_per_m=link.attenuation_db_per_m,
+                detector_efficiency=link.detector_efficiency,
             )
             for link in spec.quantum_links
         }
@@ -67,6 +89,9 @@ class NetworkCapabilities:
                 link.source, link.destination,
                 distance_m=link.distance_m, loss_db=link.distance_m * link.attenuation_db_per_m,
             )
+        self._physics = PhysicsModel(
+            spec.formalism, {node_id: node.physics() for node_id, node in self._nodes.items()},
+        )
 
     def node(self, node_id: str) -> NodeCapability:
         try:
@@ -87,6 +112,18 @@ class NetworkCapabilities:
         return self._graph
 
     @property
+    def formalism(self) -> str:
+        """The topology's quantum-state formalism (`NetworkTopologySpec.formalism`)."""
+        return self._formalism
+
+    @property
+    def physics(self) -> PhysicsModel:
+        """Formalism-aware closed forms (swap, purification, decoherence) for
+        this topology - the ONLY place planners get fidelity arithmetic from
+        (see docs/physical_model.md)."""
+        return self._physics
+
+    @property
     def classical_delay_s(self) -> float:
         """Single classical-channel delay (seconds) applying to every node
         pair in this topology (`NetworkTopologySpec.classical_delay_s`) -
@@ -98,26 +135,14 @@ class NetworkCapabilities:
 
     def hop_fidelity(self, a: str, b: str) -> float:
         """Estimated fidelity of a freshly generated elementary pair on link
-        `a`-`b`. `Memory.raw_fidelity` is configured per-node
-        (`MemoryArray.update_memory_params`), and each side's memory is
-        independently set to *its own* node's `raw_fidelity` on success
-        (`sequence/entanglement_management/generation/barret_kok.py:228`) -
-        for a heterogeneous pair this is conservatively estimated as the
-        minimum of the two endpoints' configured value.
-
-        Confirmed (campaign C01, Fase H3, `notebooks/article/
-        A05_planner_estimation_error.ipynb`) that this genuinely
-        *underestimates* whenever a swap happens at a node whose
-        `raw_fidelity` exceeds a neighbor's: both memories feeding that
-        swap belong to the swap node itself, so the real result depends on
-        the swap node's own `raw_fidelity`, not `min(a, b)` - up to 0.083
-        (12%) off on the diamond topology's heterogeneous nodes, exactly 0
-        on every uniform-fidelity topology this project otherwise uses.
-
-        This `min()` approximation is exactly what
-        `planning.fidelity_estimation.ConservativeMinEstimator` uses (Fase
-        J1) - kept as the default estimator for reproducibility, but
-        `planning.fidelity_estimation.SequenceConsistentEstimator` now
-        reproduces the real per-node mechanism instead. See
+        `a`-`b`: `min(raw_fidelity(a), raw_fidelity(b))` (see
+        `ibqn.physics.PhysicsModel.link_fidelity` for why the minimum is the
+        conservative, formalism-independent choice). Exact whenever both
+        endpoints share the same `raw_fidelity` - every topology in this
+        project's catalog except the diamond's endpoints. Confirmed
+        (campaign C01, Fase H3) to *underestimate* the legacy ket_vector
+        model whenever a swap happens at a node whose `raw_fidelity` exceeds
+        a neighbor's; `planning.fidelity_estimation.SequenceConsistentEstimator`
+        reproduces that per-node mechanism instead. See
         docs/fidelity_estimation_model.md and docs/limitations.md."""
-        return min(self.node(a).raw_fidelity, self.node(b).raw_fidelity)
+        return self._physics.link_fidelity(a, b)

@@ -118,6 +118,28 @@ class TrialRecord:
     python_version: str
     timestamp: str
 
+    # --- physical model (physical-realism revision, docs/physical_model.md) ---
+    # Declared with defaults (and therefore last) so rows persisted before
+    # the revision still load; `None` means "not recorded", never "ideal".
+    formalism: str | None = None
+    """`NetworkTopologySpec.formalism` the trial was simulated under."""
+    platform: str | None = None
+    """`NetworkTopologySpec.platform`: the literature-calibrated hardware
+    profile the topology carries (docs/parameter_calibration.md), or None
+    when parameters were set by hand."""
+    purification_mode: str | None = None
+    """The purification policy actually EXECUTED for the (last) episode's
+    reservation - `ExecutionPlan.purification_mode`; `None` for REJECTED
+    trials that never reached execution."""
+    gate_fidelity: float | None = None
+    measurement_fidelity: float | None = None
+    swapping_success_prob: float | None = None
+    cutoff_ratio: float | None = None
+    detector_efficiency: float | None = None
+    """First node's / first link's value, like `attenuation_db_per_m`,
+    `distance_m` and `coherence_time_s` above - campaigns sweep these
+    uniformly, so one value describes the whole topology."""
+
     @classmethod
     def fieldnames(cls) -> list[str]:
         """Column order for `trials.csv` - stable across writes/reads."""

@@ -181,15 +181,19 @@ def test_c3_admission_is_order_independent_confirming_no_cross_intent_planning_s
 
 
 @pytest.mark.unit
-def test_no_planner_or_frozen_campaign_files_were_modified():
-    """Guards against this new phase accidentally touching frozen
-    planner-family or M9/M10 data while building P17."""
+def test_no_frozen_campaign_files_were_modified():
+    """Guards against accidentally touching frozen (already persisted)
+    planner-family or M9/M10 campaign data. The planner source tree used to
+    be on this list too (while P17 was being built, the planners were meant
+    to stay untouched); it was dropped in the physical-realism revision,
+    which legitimately changes the planners' fidelity arithmetic
+    (docs/physical_model.md) - planner behavior is pinned by
+    tests/planning/planners/ instead."""
     import subprocess
 
     result = subprocess.run(
         ["git", "status", "--porcelain",
-         "results/planner_study/", "results/predictability/", "results/predictability_m10/", "results/raw/",
-         "src/ibqn/planning/planners/"],
+         "results/planner_study/", "results/predictability/", "results/predictability_m10/", "results/raw/"],
         cwd=PROJECT_ROOT, capture_output=True, text=True, check=True,
     )
     assert result.stdout.strip() == "", f"unexpected changes to frozen paths:\n{result.stdout}"

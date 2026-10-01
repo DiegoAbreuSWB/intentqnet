@@ -6,6 +6,8 @@ computed from the intent's WHAT (see docs/architecture.md).
 """
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -63,6 +65,13 @@ class ExecutionPlan(BaseModel):
                      "different number of rounds at execution time - see docs/sequence_integration.md",
     )
     swapping_strategy_note: str = ""
+    purification_mode: Literal["never", "once", "until_target"] = Field(
+        default="until_target",
+        description="the purification policy the network EXECUTES for this plan's reservation "
+                     "(`Reservation.purification_mode`): SeQUeNCe's 'until_target' (default) or 'once', or IBQN's "
+                     "'never' - decided by the plan's `planning.purification.PurificationStrategy.execution_mode`, "
+                     "installed by `execution.sequence_executor` (see docs/physical_model.md)",
+    )
 
     estimated_metrics: EstimatedMetrics | None = None
 

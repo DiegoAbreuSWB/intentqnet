@@ -8,6 +8,12 @@ protocols use (`BarretKokA._entanglement_succeed`,
 further and run the *actual* simulator to confirm the estimator's
 prediction against real, observed telemetry.
 """
+# LEGACY-MODEL REGRESSION: every expected number below is a ket_vector
+# closed form (f1*f2*degradation, Dur-Briegel purification). Since the
+# physical-realism revision (docs/physical_model.md) the project default
+# is bell_diagonal, so these fixtures pin formalism="ket_vector" to keep
+# checking the legacy model they document.
+
 from __future__ import annotations
 
 import pytest
@@ -27,7 +33,7 @@ from ibqn.planning.routing import ShortestHopCountRouting
 
 
 def _spec(nodes: list[NodeSpec], links: list[QuantumLinkSpec]) -> NetworkTopologySpec:
-    return NetworkTopologySpec(nodes=nodes, quantum_links=links, stop_time_s=1.0)
+    return NetworkTopologySpec(nodes=nodes, quantum_links=links, stop_time_s=1.0, formalism="ket_vector")
 
 
 def _node(node_id: str, *, raw_fidelity: float = 0.85, swapping_degradation: float = 0.95, memories: int = 10) -> NodeSpec:

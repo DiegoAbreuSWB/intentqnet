@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..network.topology import NetworkTopologySpec, NodeSpec, QuantumLinkSpec
+from ..network.topology import DEFAULT_FORMALISM, NetworkTopologySpec, NodeSpec, QuantumLinkSpec
 
 
 class SimulationSpec(BaseModel):
@@ -36,14 +36,29 @@ class ScenarioSpec(BaseModel):
     classical_delay_s: float = Field(
         default=1e-3, ge=0, description="seconds, one-way delay for the automatic full-mesh classical network"
     )
-    formalism: str = Field(default="ket_vector", description="one of sequence.constants.*_FORMALISM")
+    formalism: str = Field(
+        default=DEFAULT_FORMALISM,
+        description="one of sequence.constants.*_FORMALISM (default bell_diagonal - docs/physical_model.md)",
+    )
+    platform: str | None = Field(
+        default=None,
+        description="name of a `network.platforms.PlatformProfile`; when set, every node's and link's hardware "
+                     "parameters are replaced by the profile's literature-calibrated values (node ids, memory "
+                     "counts and link distances are kept, and classical_delay_s becomes the longest link's fiber "
+                     "delay) - see docs/parameter_calibration.md",
+    )
     intents: list[IntentReference] = Field(min_length=1)
 
     def to_network_topology_spec(self) -> NetworkTopologySpec:
-        return NetworkTopologySpec(
+        spec = NetworkTopologySpec(
             nodes=self.nodes,
             quantum_links=self.quantum_links,
             classical_delay_s=self.classical_delay_s,
             stop_time_s=self.simulation.duration_s,
             formalism=self.formalism,
         )
+        if self.platform is not None:
+            from ..network.platforms import apply_platform, resolve_platform
+
+            spec = apply_platform(spec, resolve_platform(self.platform))
+        return spec

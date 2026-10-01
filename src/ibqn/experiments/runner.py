@@ -293,7 +293,9 @@ def execute_trial(
     start_time_s = intent.requirements.start_time_s
     attenuation = topology_spec.quantum_links[0].attenuation_db_per_m if topology_spec.quantum_links else None
     distance = topology_spec.quantum_links[0].distance_m if topology_spec.quantum_links else None
-    coherence = topology_spec.nodes[0].coherence_time_s if topology_spec.nodes else None
+    detector_efficiency = topology_spec.quantum_links[0].detector_efficiency if topology_spec.quantum_links else None
+    first_node = topology_spec.nodes[0] if topology_spec.nodes else None
+    coherence = first_node.coherence_time_s if first_node else None
 
     routing_strategy = resolve_routing_strategy(params.routing_strategy_name)
     purification_strategy = resolve_purification_policy(params.purification_policy_name)
@@ -341,6 +343,13 @@ def execute_trial(
             violations="", error_type=None, error_message=None,
             project_git_commit=project_commit, sequence_git_commit=sequence_commit,
             python_version=sys.version.split()[0], timestamp=_now_iso(),
+            formalism=topology_spec.formalism, platform=topology_spec.platform,
+            purification_mode=plan.purification_mode if plan.feasible else None,
+            gate_fidelity=first_node.gate_fidelity if first_node else None,
+            measurement_fidelity=first_node.measurement_fidelity if first_node else None,
+            swapping_success_prob=first_node.swapping_success_prob if first_node else None,
+            cutoff_ratio=first_node.cutoff_ratio if first_node else None,
+            detector_efficiency=detector_efficiency,
         )
         fields.update(overrides)
         return TrialRecord(**fields)
@@ -386,6 +395,7 @@ def execute_trial(
     recovered = None
     estimated_fidelity = plan.estimated_metrics.fidelity if plan.estimated_metrics else None
     fidelity_estimator_used = plan.fidelity_estimator
+    purification_mode_used = plan.purification_mode
     if final_status == IntentStatus.VIOLATED and params.reconciliation_enabled:
         reconciliation_routing_strategy = resolve_routing_strategy(
             _reconciliation_routing_strategy_name(params.routing_strategy_name)
@@ -408,6 +418,8 @@ def execute_trial(
             if reconciliation_result.new_plan.estimated_metrics else None
         )
         fidelity_estimator_used = reconciliation_result.new_plan.fidelity_estimator
+        if reconciliation_result.new_plan.feasible:
+            purification_mode_used = reconciliation_result.new_plan.purification_mode
 
         if reconciliation_result.new_evaluation is not None:
             evaluation = reconciliation_result.new_evaluation
@@ -429,7 +441,7 @@ def execute_trial(
 
     return _record(
         route=route_str, hop_count=hop_count, fidelity_estimator=fidelity_estimator_used,
-        estimated_fidelity=estimated_fidelity,
+        estimated_fidelity=estimated_fidelity, purification_mode=purification_mode_used,
         accepted=accepted, satisfied=satisfied, recovered=recovered, final_status=final_status.value,
         simulation_wall_time_s=round(simulation_wall_time_s, 6),
         violations=violations_str,

@@ -3,6 +3,12 @@
 math, its stopping conditions, and its integration through the same
 `IntentPlanner`/`evaluate_route` machinery L1 uses.
 """
+# LEGACY-MODEL REGRESSION: the thresholds/numbers below are ket_vector
+# closed form (f1*f2*degradation, Dur-Briegel purification). Since the
+# physical-realism revision (docs/physical_model.md) the project default
+# is bell_diagonal, so these fixtures pin formalism="ket_vector" to keep
+# checking the legacy model they document.
+
 from __future__ import annotations
 
 import pytest
@@ -121,7 +127,7 @@ def test_l2_planner_matches_l1_when_no_purification_needed():
     purification is actually attempted."""
     from ibqn.planning.planners import ConservativeOneRoundPlanner
 
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l2-no-purification", source="a", destination="b", min_fidelity=0.65,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,
@@ -138,7 +144,7 @@ def test_l2_planner_matches_l1_when_no_purification_needed():
 
 @pytest.mark.unit
 def test_l2_planner_accepts_where_l1_rejects_in_densified_range():
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l2-accepts", source="a", destination="b", min_fidelity=0.75,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,

@@ -132,8 +132,12 @@ def test_violated_case():
             NodeSpec(id="r3", memories=10, raw_fidelity=RAW_FIDELITY, swapping_degradation=DEGRADATION),
         ],
         quantum_links=[
-            QuantumLinkSpec(source="r1", destination="r2", distance_m=1000, attenuation_db_per_m=0.02),
-            QuantumLinkSpec(source="r2", destination="r3", distance_m=1000, attenuation_db_per_m=0.02),
+            # 0.03 dB/m (was 0.02 under the legacy Barrett-Kok/ket_vector model):
+            # single-heralded generation needs one heralding round instead of
+            # two, so it tolerates roughly 10x more loss before the window
+            # starves - see docs/physical_model.md.
+            QuantumLinkSpec(source="r1", destination="r2", distance_m=1000, attenuation_db_per_m=0.03),
+            QuantumLinkSpec(source="r2", destination="r3", distance_m=1000, attenuation_db_per_m=0.03),
         ],
         classical_delay_s=1e-4,
         stop_time_s=0.2,

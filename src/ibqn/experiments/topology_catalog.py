@@ -20,7 +20,7 @@ generalize, or were an artifact of those two specific topologies.
 """
 from __future__ import annotations
 
-from ..network.topology import NetworkTopologySpec, NodeSpec, QuantumLinkSpec
+from ..network.topology import DEFAULT_FORMALISM, NetworkTopologySpec, NodeSpec, QuantumLinkSpec
 
 DEFAULT_ATTENUATION_DB_PER_M = 1e-5
 DEFAULT_DISTANCE_M = 1000.0
@@ -39,6 +39,7 @@ def linear_chain_spec(
     swapping_degradation: float = DEFAULT_SWAPPING_DEGRADATION,
     classical_delay_s: float = 1e-4,
     stop_time_s: float = 0.2,
+    formalism: str = DEFAULT_FORMALISM,
 ) -> NetworkTopologySpec:
     """A linear chain `a - r1 - r2 - ... - rN - b` (T1: fixed `n_repeaters`,
     T4: sweep `n_repeaters` across [0, 1, 2, 3, 4]). `n_repeaters=0` is a
@@ -68,7 +69,7 @@ def linear_chain_spec(
     ]
     return NetworkTopologySpec(
         nodes=nodes, quantum_links=links,
-        classical_delay_s=classical_delay_s, stop_time_s=stop_time_s,
+        classical_delay_s=classical_delay_s, stop_time_s=stop_time_s, formalism=formalism,
     )
 
 
@@ -81,6 +82,7 @@ def small_mesh_spec(
     swapping_degradation: float = DEFAULT_SWAPPING_DEGRADATION,
     classical_delay_s: float = 1e-4,
     stop_time_s: float = 0.2,
+    formalism: str = DEFAULT_FORMALISM,
 ) -> NetworkTopologySpec:
     """An 8-router 2x4 grid (`a0-a3` top row, `b0-b3` bottom row), each
     router linked to its horizontal neighbor(s) and its vertical
@@ -119,7 +121,7 @@ def small_mesh_spec(
         ))
     return NetworkTopologySpec(
         nodes=nodes, quantum_links=links,
-        classical_delay_s=classical_delay_s, stop_time_s=stop_time_s,
+        classical_delay_s=classical_delay_s, stop_time_s=stop_time_s, formalism=formalism,
     )
 
 
@@ -134,6 +136,7 @@ def near_equivalent_paths_spec(
     swapping_degradation: float = DEFAULT_SWAPPING_DEGRADATION,
     classical_delay_s: float = 1e-4,
     stop_time_s: float = 0.2,
+    formalism: str = DEFAULT_FORMALISM,
 ) -> NetworkTopologySpec:
     """Two single-repeater routes (`source-mid_a-dest`,
     `source-mid_b-dest`) with deliberately CLOSE but not identical cost
@@ -158,5 +161,5 @@ def near_equivalent_paths_spec(
     ]
     return NetworkTopologySpec(
         nodes=nodes, quantum_links=links,
-        classical_delay_s=classical_delay_s, stop_time_s=stop_time_s,
+        classical_delay_s=classical_delay_s, stop_time_s=stop_time_s, formalism=formalism,
     )

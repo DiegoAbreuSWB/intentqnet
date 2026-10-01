@@ -81,6 +81,7 @@ class IntentPlanner:
             reservations=best.reservations,
             requires_purification=best.requires_purification,
             purification_rounds_estimate=best.purification_rounds_estimate,
+            purification_mode=self._purification_strategy.execution_mode,
             swapping_strategy_note=self._swapping_strategy.describe(best.route),
             estimated_metrics=EstimatedMetrics(fidelity=estimated_fidelity, latency_s=latency_s),
             fidelity_estimator=self._fidelity_estimator.name,

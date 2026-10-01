@@ -2,6 +2,12 @@
 (no SeQUeNCe simulation). End-to-end plan-then-execute is covered in
 tests/integration/test_intent_to_execution.py.
 """
+# LEGACY-MODEL REGRESSION: every expected number below is a ket_vector
+# closed form (f1*f2*degradation, Dur-Briegel purification). Since the
+# physical-realism revision (docs/physical_model.md) the project default
+# is bell_diagonal, so these fixtures pin formalism="ket_vector" to keep
+# checking the legacy model they document.
+
 import pytest
 
 from ibqn.intent.models import (
@@ -23,7 +29,7 @@ LINEAR_SPEC = NetworkTopologySpec(
         QuantumLinkSpec(source="r1", destination="r2", distance_m=1000, attenuation_db_per_m=1e-5),
         QuantumLinkSpec(source="r2", destination="r3", distance_m=1000, attenuation_db_per_m=1e-5),
     ],
-    stop_time_s=1.0,
+    stop_time_s=1.0, formalism="ket_vector",
 )
 
 # Two 2-hop routes of very different quality, so more than one candidate is
@@ -41,7 +47,7 @@ TWO_ROUTE_SPEC = NetworkTopologySpec(
         QuantumLinkSpec(source="r1", destination="bad", distance_m=1000, attenuation_db_per_m=1e-5),
         QuantumLinkSpec(source="bad", destination="r3", distance_m=1000, attenuation_db_per_m=1e-5),
     ],
-    stop_time_s=1.0,
+    stop_time_s=1.0, formalism="ket_vector",
 )
 
 
@@ -79,7 +85,7 @@ def test_planner_rejects_intent_with_no_path():
     spec = NetworkTopologySpec(
         nodes=[NodeSpec(id="r1", memories=10), NodeSpec(id="isolated", memories=10), NodeSpec(id="r3", memories=10)],
         quantum_links=[QuantumLinkSpec(source="isolated", destination="r3", distance_m=1000, attenuation_db_per_m=1e-5)],
-        stop_time_s=1.0,
+        stop_time_s=1.0, formalism="ket_vector",
     )
     planner = IntentPlanner(NetworkCapabilities(spec))
     plan = planner.plan(build_intent(min_fidelity=0.5))

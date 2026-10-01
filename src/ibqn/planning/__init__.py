@@ -1,7 +1,7 @@
 from .feasibility import FeasibilityResult, estimate_latency_s, estimate_swap_only_fidelity, evaluate_route
 from .models import EstimatedMetrics, ExecutionPlan, ResourceRequirement
 from .planner import IntentPlanner
-from .purification import NeverPurify, PurificationDecision, PurificationStrategy, PurifyUntilTarget
+from .purification import NeverPurify, PurificationDecision, PurificationStrategy, PurifyOnce, PurifyUntilTarget
 from .routing import HighestFidelityRouting, LeastLossRouting, RoutingStrategy, ShortestHopCountRouting
 from .swapping import DefaultSequenceSwappingStrategy, SwappingStrategy
 
@@ -17,6 +17,7 @@ __all__ = [
     "PurificationStrategy",
     "PurificationDecision",
     "NeverPurify",
+    "PurifyOnce",
     "PurifyUntilTarget",
     "RoutingStrategy",
     "ShortestHopCountRouting",

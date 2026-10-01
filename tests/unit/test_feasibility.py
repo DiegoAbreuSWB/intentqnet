@@ -4,6 +4,12 @@ simulator formulas (`f1*f2*degradation`, `BBPSSWCircuit.improved_fidelity`),
 never hand-derived independently (see docs/sequence_code_analysis.md,
 section 2 constraints).
 """
+# LEGACY-MODEL REGRESSION: every expected number below is a ket_vector
+# closed form (f1*f2*degradation, Dur-Briegel purification). Since the
+# physical-realism revision (docs/physical_model.md) the project default
+# is bell_diagonal, so these fixtures pin formalism="ket_vector" to keep
+# checking the legacy model they document.
+
 import pytest
 from sequence.entanglement_management.purification.bbpssw_circuit import BBPSSWCircuit
 
@@ -25,7 +31,7 @@ LINEAR_SPEC = NetworkTopologySpec(
         QuantumLinkSpec(source="r1", destination="r2", distance_m=1000, attenuation_db_per_m=1e-5),
         QuantumLinkSpec(source="r2", destination="r3", distance_m=1000, attenuation_db_per_m=1e-5),
     ],
-    stop_time_s=1.0,
+    stop_time_s=1.0, formalism="ket_vector",
 )
 
 SINGLE_SWAP_FIDELITY = 0.85 * 0.85 * 0.95
@@ -75,7 +81,7 @@ def test_estimate_swap_only_fidelity_is_order_independent_for_more_swaps():
             QuantumLinkSpec(source="b", destination="c", distance_m=1000, attenuation_db_per_m=1e-5),
             QuantumLinkSpec(source="c", destination="d", distance_m=1000, attenuation_db_per_m=1e-5),
         ],
-        stop_time_s=1.0,
+        stop_time_s=1.0, formalism="ket_vector",
     )
     capabilities = NetworkCapabilities(spec)
     fidelity, hop_fidelities = estimate_swap_only_fidelity(capabilities, ["a", "b", "c", "d"])
@@ -157,7 +163,7 @@ def test_route_infeasible_when_memory_insufficient_at_interior_node():
             QuantumLinkSpec(source="r1", destination="r2", distance_m=1000, attenuation_db_per_m=1e-5),
             QuantumLinkSpec(source="r2", destination="r3", distance_m=1000, attenuation_db_per_m=1e-5),
         ],
-        stop_time_s=1.0,
+        stop_time_s=1.0, formalism="ket_vector",
     )
     capabilities = NetworkCapabilities(spec)
     intent = build_intent(min_fidelity=0.65, requested_pairs=10)

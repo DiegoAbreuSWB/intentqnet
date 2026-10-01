@@ -19,7 +19,7 @@ from ..intent.models import EntanglementIntent
 from ..network.topology import NetworkTopologySpec
 from ..planning.fidelity_estimation import FIDELITY_ESTIMATORS, resolve_fidelity_estimator
 from ..planning.planners.l2_iterative import IterativeAnalyticalPurification
-from ..planning.purification import NeverPurify, PurificationStrategy, PurifyUntilTarget
+from ..planning.purification import NeverPurify, PurificationStrategy, PurifyOnce, PurifyUntilTarget
 from ..planning.routing import HighestFidelityRouting, LeastLossRouting, RoutingStrategy, ShortestHopCountRouting
 
 
@@ -91,6 +91,16 @@ def _intent_requirement_field(field_name: str) -> Callable[[TrialParameters, Any
     return apply
 
 
+def _apply_formalism(params: TrialParameters, value: Any) -> TrialParameters:
+    return replace(params, topology_spec=params.topology_spec.model_copy(update={"formalism": value}))
+
+
+def _apply_platform(params: TrialParameters, value: Any) -> TrialParameters:
+    from ..network.platforms import apply_platform, resolve_platform  # local import: platforms imports topology
+
+    return replace(params, topology_spec=apply_platform(params.topology_spec, resolve_platform(value)))
+
+
 def _apply_routing_strategy(params: TrialParameters, value: Any) -> TrialParameters:
     resolve_routing_strategy(value)  # raises UnknownStrategyError early if invalid
     return replace(params, routing_strategy_name=value)
@@ -147,6 +157,41 @@ SWEEP_PARAMETERS: dict[str, SweepParameter] = {
         "raw_fidelity", "topology.nodes[*].raw_fidelity", float, "dimensionless",
         _topology_node_field("raw_fidelity"),
     ),
+    # --- physical-realism revision (docs/physical_model.md) ---
+    "formalism": SweepParameter(
+        "formalism", "topology.formalism", str, "n/a", _apply_formalism,
+    ),
+    "platform": SweepParameter(
+        "platform", "topology.nodes[*]/quantum_links[*] hardware parameters", str, "n/a", _apply_platform,
+    ),
+    "gate_fidelity": SweepParameter(
+        "gate_fidelity", "topology.nodes[*].gate_fidelity", float, "dimensionless",
+        _topology_node_field("gate_fidelity"),
+    ),
+    "measurement_fidelity": SweepParameter(
+        "measurement_fidelity", "topology.nodes[*].measurement_fidelity", float, "dimensionless",
+        _topology_node_field("measurement_fidelity"),
+    ),
+    "swapping_success_prob": SweepParameter(
+        "swapping_success_prob", "topology.nodes[*].swapping_success_prob", float, "dimensionless",
+        _topology_node_field("swapping_success_prob"),
+    ),
+    "swapping_degradation": SweepParameter(
+        "swapping_degradation", "topology.nodes[*].swapping_degradation", float, "dimensionless",
+        _topology_node_field("swapping_degradation"),
+    ),
+    "cutoff_ratio": SweepParameter(
+        "cutoff_ratio", "topology.nodes[*].cutoff_ratio", float, "dimensionless",
+        _topology_node_field("cutoff_ratio"),
+    ),
+    "memory_efficiency": SweepParameter(
+        "memory_efficiency", "topology.nodes[*].memory_efficiency", float, "dimensionless",
+        _topology_node_field("memory_efficiency"),
+    ),
+    "detector_efficiency": SweepParameter(
+        "detector_efficiency", "topology.quantum_links[*].detector_efficiency", float, "dimensionless",
+        _topology_link_field("detector_efficiency"),
+    ),
     "routing_strategy": SweepParameter(
         "routing_strategy", "strategy.routing", str, "n/a", _apply_routing_strategy,
     ),
@@ -171,6 +216,10 @@ ROUTING_STRATEGIES: dict[str, type[RoutingStrategy]] = {
 PURIFICATION_POLICIES: dict[str, type[PurificationStrategy]] = {
     "disabled": NeverPurify,
     "automatic": PurifyUntilTarget,
+    # Physical-realism revision: SeQUeNCe's native `'once'` mode, executed
+    # for real (each pair purified at most one time) and estimated as one
+    # round - see planning.purification.PurifyOnce / docs/physical_model.md.
+    "once": PurifyOnce,
     # Planner-family study (M3): L2's iterative analytical purification
     # estimate, registered here (additively - "disabled"/"automatic" keep
     # their exact prior meaning) so P01 can sweep it through the existing

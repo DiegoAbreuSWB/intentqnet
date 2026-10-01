@@ -6,7 +6,7 @@ the same node/link construction.
 """
 from __future__ import annotations
 
-from ..network.topology import NetworkTopologySpec, NodeSpec, QuantumLinkSpec
+from ..network.topology import DEFAULT_FORMALISM, NetworkTopologySpec, NodeSpec, QuantumLinkSpec
 
 DIAMOND_BAD_ATTENUATION = 0.02
 DIAMOND_GOOD_ATTENUATION = 1e-5
@@ -22,6 +22,7 @@ def two_node_spec(
     raw_fidelity: float = 0.85,
     classical_delay_s: float = 1e-4,
     stop_time_s: float = 0.1,
+    formalism: str = DEFAULT_FORMALISM,
 ) -> NetworkTopologySpec:
     """Two routers (`a`, `b`) directly linked - SeQUeNCe places the BSM node
     (`BSM.a.b`) at the midpoint automatically (see
@@ -36,10 +37,11 @@ def two_node_spec(
         ],
         classical_delay_s=classical_delay_s,
         stop_time_s=stop_time_s,
+        formalism=formalism,
     )
 
 
-def diamond_spec(*, stop_time_s: float = 0.2) -> NetworkTopologySpec:
+def diamond_spec(*, stop_time_s: float = 0.2, formalism: str = DEFAULT_FORMALISM) -> NetworkTopologySpec:
     """Diamond topology with a fast-but-lossy direct route (`r1-bad-r3`) and
     a slower, near-lossless 3-hop detour (`r1-good1-good2-r3`) - the only
     topology in this project where `ShortestHopCountRouting`/
@@ -70,6 +72,7 @@ def diamond_spec(*, stop_time_s: float = 0.2) -> NetworkTopologySpec:
         ],
         classical_delay_s=1e-4,
         stop_time_s=stop_time_s,
+        formalism=formalism,
     )
 
 
@@ -83,6 +86,7 @@ def three_node_spec(
     swapping_degradation: float = 0.95,
     classical_delay_s: float = 1e-4,
     stop_time_s: float = 0.2,
+    formalism: str = DEFAULT_FORMALISM,
 ) -> NetworkTopologySpec:
     """Linear chain `a - r - b`, `r` acting as the sole repeater/swap node."""
     return NetworkTopologySpec(
@@ -100,6 +104,7 @@ def three_node_spec(
         ],
         classical_delay_s=classical_delay_s,
         stop_time_s=stop_time_s,
+        formalism=formalism,
     )
 
 
@@ -114,6 +119,7 @@ def star_spec(
     swapping_degradation: float = 0.95,
     classical_delay_s: float = 1e-4,
     stop_time_s: float = 0.1,
+    formalism: str = DEFAULT_FORMALISM,
 ) -> NetworkTopologySpec:
     """One `center` repeater connected to `n_leaves` independent leaf
     routers (`leaf1`, `leaf2`, ...) - lets multiple intents on disjoint
@@ -133,4 +139,5 @@ def star_spec(
         ],
         classical_delay_s=classical_delay_s,
         stop_time_s=stop_time_s,
+        formalism=formalism,
     )

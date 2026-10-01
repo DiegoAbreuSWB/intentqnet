@@ -11,6 +11,11 @@ fidelity (`raw_fidelity**2 * swapping_degradation`, both defaults: 0.85 and
 purification's probabilistic behavior (covered separately in
 tests/sequence_basics/test_purification.py).
 """
+# `build_linear_three_node_adapter` pins the LEGACY ket_vector model: its tests
+# assert the exact scalar swap fidelity raw**2 * degradation. The planner-driven
+# deploy() tests below use the project default (bell_diagonal) - see
+# tests/integration/test_bds_pipeline.py for the Bell-diagonal counterparts.
+
 import pytest
 
 from sequence.utils import metrics
@@ -36,7 +41,7 @@ from ibqn.planning.routing import HighestFidelityRouting
 SINGLE_SWAP_FIDELITY = 0.85 * 0.85 * 0.95  # raw_fidelity**2 * default swapping_degradation
 
 
-def build_linear_three_node_adapter(seed=0, stop_time_s=0.1):
+def build_linear_three_node_adapter(seed=0, stop_time_s=0.1, formalism="ket_vector"):
     spec = NetworkTopologySpec(
         nodes=[
             NodeSpec(id="r1", memories=10),
@@ -49,6 +54,7 @@ def build_linear_three_node_adapter(seed=0, stop_time_s=0.1):
         ],
         classical_delay_s=1e-4,
         stop_time_s=stop_time_s,
+        formalism=formalism,
     )
     return SequenceAdapter(spec, seed=seed)
 

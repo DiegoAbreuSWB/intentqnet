@@ -25,10 +25,9 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from sequence.entanglement_management.purification.bbpssw_circuit import BBPSSWCircuit
-
 from ...intent.models import EntanglementIntent
 from ...network.capabilities import NetworkCapabilities
+from ...physics import IDEAL_BBPSSW, PurificationPhysics
 from ..fidelity_estimation import ConservativeMinEstimator
 from ..planner import IntentPlanner
 from ..purification import PurificationDecision, PurificationStrategy
@@ -95,23 +94,28 @@ class IterativeAnalyticalPurification(PurificationStrategy):
         this reason)."""
         return self._last_estimate
 
-    def decide(self, swap_only_fidelity: float, target_fidelity: float, allow_purification: bool) -> PurificationDecision:
-        estimate = self._estimate(swap_only_fidelity, target_fidelity, allow_purification)
+    def decide(
+        self, swap_only_fidelity: float, target_fidelity: float, allow_purification: bool,
+        *, physics: PurificationPhysics | None = None,
+    ) -> PurificationDecision:
+        estimate = self._estimate(swap_only_fidelity, target_fidelity, allow_purification, physics=physics)
         self._last_estimate = estimate
         if not estimate.rounds:
             return PurificationDecision(
                 attempt=False, fidelity_estimate=estimate.initial_fidelity, rounds_estimate=0,
-                note=estimate.stopping_reason,
+                note=estimate.stopping_reason, execution_mode=self.execution_mode,
             )
         last = estimate.rounds[-1]
         return PurificationDecision(
             attempt=True, fidelity_estimate=last.output_fidelity, rounds_estimate=len(estimate.rounds),
-            note=estimate.stopping_reason,
+            note=estimate.stopping_reason, execution_mode=self.execution_mode,
         )
 
     def _estimate(
         self, swap_only_fidelity: float, target_fidelity: float, allow_purification: bool,
+        *, physics: PurificationPhysics | None = None,
     ) -> IterativePurificationEstimate:
+        one_round = physics or IDEAL_BBPSSW
         if swap_only_fidelity >= target_fidelity:
             return IterativePurificationEstimate(
                 initial_fidelity=swap_only_fidelity, rounds=[], target_reached=True, resource_feasible=True,
@@ -127,7 +131,7 @@ class IterativeAnalyticalPurification(PurificationStrategy):
         current_fidelity = swap_only_fidelity
         cumulative_pairs = 1
         for round_index in range(1, self._max_rounds + 1):
-            output_fidelity = BBPSSWCircuit.improved_fidelity(current_fidelity)
+            _, output_fidelity = one_round.improve(current_fidelity)
             cumulative_pairs *= PAIR_CONSUMPTION_PER_ROUND
 
             if self._max_pair_cost is not None and cumulative_pairs > self._max_pair_cost:

@@ -19,7 +19,7 @@ import sequence
 import ibqn
 from ..network.capabilities import NetworkCapabilities
 from ..network.sequence_adapter import SequenceAdapter
-from ..network.topology import NetworkTopologySpec, NodeSpec, QuantumLinkSpec
+from ..network.topology import DEFAULT_FORMALISM, NetworkTopologySpec, NodeSpec, QuantumLinkSpec
 
 _DEPENDENCIES = [
     "pydantic", "yaml", "networkx", "numpy", "scipy", "matplotlib", "pandas",
@@ -85,7 +85,7 @@ def collect_environment_info() -> EnvironmentInfo:
         sequence_commit=_sequence_commit(),
         ibqn_version=ibqn.__version__,
         project_commit=project_git_commit(),
-        default_formalism="ket_vector",
+        default_formalism=DEFAULT_FORMALISM,
         dependency_versions=_dependency_versions(),
     )
 

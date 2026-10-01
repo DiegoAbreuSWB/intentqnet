@@ -1,7 +1,10 @@
 """Estimates whether a candidate route can satisfy an intent's requirements,
 using the same closed-form formulas SeQUeNCe's own protocols use at
 simulation time - never an independently invented physics model (see
-docs/sequence_code_analysis.md, section 2 constraints).
+docs/sequence_code_analysis.md, section 2 constraints). Which formulas
+those are depends on the topology's formalism and is encapsulated in
+`ibqn.physics` (reached through `NetworkCapabilities.physics`, see
+docs/physical_model.md).
 
 Fase J1 note: the ORIGINAL claim here was that swap order never matters
 because multiplication is associative - true for `ConservativeMinEstimator`
@@ -47,13 +50,21 @@ class FeasibilityResult:
 
 def estimate_swap_only_fidelity(capabilities: NetworkCapabilities, route: list[str]) -> tuple[float, list[float]]:
     """Returns `(end_to_end_fidelity, per_hop_fidelities)` for `route`,
-    assuming no purification - see module docstring for the formula."""
+    assuming no purification: the conservative `min(raw_a, raw_b)` hop
+    model, combined left-to-right with the topology formalism's own swap
+    formula (`ibqn.physics.PhysicsModel.swap_fidelity` - `f1*f2*degradation`
+    under `ket_vector`, the Bell-diagonal gate/measurement-noise composition
+    under `bell_diagonal`). Left-to-right is exact for the ket product and
+    for ideal Bell-diagonal swaps (the Werner parameter simply multiplies);
+    with imperfect gates the real bisection order matters slightly -
+    `fidelity_estimation.SequenceConsistentEstimator` reproduces it."""
+    if len(route) < 2:
+        raise ValueError(f"route must have at least two nodes, got {route!r}")
     hop_fidelities = [capabilities.hop_fidelity(route[i], route[i + 1]) for i in range(len(route) - 1)]
-    fidelity = 1.0
-    for hop_fidelity in hop_fidelities:
-        fidelity *= hop_fidelity
-    for interior_node in route[1:-1]:
-        fidelity *= capabilities.node(interior_node).swapping_degradation
+    physics = capabilities.physics
+    fidelity = hop_fidelities[0]
+    for interior_node, next_hop in zip(route[1:-1], hop_fidelities[1:]):
+        fidelity = physics.swap_fidelity(fidelity, next_hop, interior_node)
     return fidelity, hop_fidelities
 
 

@@ -12,11 +12,15 @@ Three entry points:
 - `deploy(intent, plan)` (Etapa E): registers a brand-new `intent` and
   executes `plan` - rejects it outright if it was infeasible, otherwise
   forces the reservation onto `plan.route` (via
-  `execution.compiler.apply_route`) before submitting it. The plan's
-  purification/swapping fields are estimates recorded for later comparison
-  against observed telemetry (`assurance.evaluator`, Etapa G), not
-  additional instructions given to SeQUeNCe: it still decides
-  purification/swap order on its own, exactly as `submit()` does.
+  `execution.compiler.apply_route`) and installs the plan's purification
+  policy (`plan.purification_mode` -> `Reservation.purification_mode`, see
+  `IntentRequestApp.start_intent` and docs/physical_model.md) before
+  submitting it. Everything else the plan carries about purification/
+  swapping (`purification_rounds_estimate`, `swapping_strategy_note`) is
+  an estimate recorded for later comparison against observed telemetry
+  (`assurance.evaluator`, Etapa G): SeQUeNCe still decides swap order (its
+  balanced bisection of the path) and the reservation target fidelity is
+  the intent's own `min_fidelity`.
 - `redeploy(intent, plan)` (Etapa G, `assurance.reconciliation`): same as
   `deploy`, but for an `intent` that is *already registered* in `repository`
   (typically mid-reconciliation, sitting in status `PLANNING`) - does not
@@ -36,10 +40,15 @@ from ..intent.models import EntanglementIntent, IntentStatus
 from ..intent.repository import IntentRepository
 from ..network.sequence_adapter import SequenceAdapter
 from ..planning.models import ExecutionPlan
+from ..planning.purification import PURIFICATION_MODES
 from ..utils.logging import get_logger
 from .compiler import apply_route
 
 logger = get_logger(__name__)
+
+DEFAULT_PURIFICATION_MODE = "until_target"
+"""SeQUeNCe's own default (`Reservation.purification_mode`) - what every
+reservation executed before plans carried a purification policy."""
 
 _TELEMETRY_EVENTS = [
     EventTypes.EG_SUCCESS,
@@ -88,9 +97,51 @@ class IntentRequestApp(RequestApp):
         self.intent_id = intent_id
         self._repository = repository
         self._delivered_pairs = 0
+        self.reservation = None
+        """The `Reservation` this app's `start_intent` created (initiator
+        side only), or `None` before `start_intent`/if `RSVPProtocol.push`
+        rejected it immediately for lack of local memories."""
+        self.purification_mode: str = DEFAULT_PURIFICATION_MODE
 
     def _now_s(self) -> float:
         return self.node.timeline.now() / SECOND
+
+    def start_intent(
+        self, responder: str, start_t: int, end_t: int, memo_size: int, fidelity: float, *, purification_mode: str,
+    ) -> None:
+        """`RequestApp.start` plus the purification policy the plan chose
+        (docs/physical_model.md).
+
+        `RequestApp.start` -> `QuantumRouter.reserve_net_resource` ->
+        `NetworkManager.request` -> `RSVPProtocol.push` runs synchronously
+        and, if this node has the memories, creates the `Reservation`
+        object, books it on the local `MemoryTimeCard`s and hands the SAME
+        object to the outgoing `RSVPMessage`. SeQUeNCe relays that one
+        object by reference along the whole path (`ClassicalChannel.transmit`
+        schedules the message object itself), and every node reads
+        `reservation.purification_mode` only later, when the APPROVE comes
+        back and `ResourceManager.generate_load_rules` builds its rules -
+        so setting the attribute here, right after `start`, is seen by all
+        of them. (`RSVPProtocol.purification_mode`/`set_purification_mode`
+        exist in SeQUeNCe 1.0 but are never copied into the reservation, so
+        they cannot be used for this.)"""
+        if purification_mode not in PURIFICATION_MODES:
+            raise ValueError(f"unknown purification_mode {purification_mode!r} - supported: {PURIFICATION_MODES}")
+        self.purification_mode = purification_mode
+        self.start(responder, start_t, end_t, memo_size, fidelity)
+        self.reservation = self._find_own_reservation(responder, start_t, end_t)
+        if self.reservation is not None:
+            self.reservation.purification_mode = purification_mode
+
+    def _find_own_reservation(self, responder: str, start_t: int, end_t: int):
+        for card in self.node.network_manager.rsvp.timecards:
+            for reservation in card.reservations:
+                if (
+                    reservation.initiator == self.node.name and reservation.responder == responder
+                    and reservation.start_time == start_t and reservation.end_time == end_t
+                ):
+                    return reservation
+        return None
 
     def get_reservation_result(self, reservation, result: bool) -> None:
         super().get_reservation_result(reservation, result)
@@ -196,7 +247,7 @@ class SequenceExecutor:
         self._repository.transition(
             intent.id, IntentStatus.DEPLOYING, "submitting reservation to NetworkManager", sim_time=now_s
         )
-        self._start_reservation(intent)
+        self._start_reservation(intent, DEFAULT_PURIFICATION_MODE)
 
     def deploy(self, intent: EntanglementIntent, plan: ExecutionPlan) -> None:
         """Registers a brand-new `intent` and executes `plan`."""
@@ -226,14 +277,15 @@ class SequenceExecutor:
         self._repository.transition(intent.id, IntentStatus.PLANNED, plan.route_rationale, sim_time=now_s)
         self._repository.transition(
             intent.id, IntentStatus.DEPLOYING,
-            f"applying route {'->'.join(plan.route)} and submitting reservation to NetworkManager",
+            f"applying route {'->'.join(plan.route)} and submitting reservation to NetworkManager "
+            f"(purification_mode={plan.purification_mode})",
             sim_time=now_s,
         )
         if len(plan.route) > 2:
             apply_route(self._adapter, plan.route)
-        self._start_reservation(intent)
+        self._start_reservation(intent, plan.purification_mode)
 
-    def _start_reservation(self, intent: EntanglementIntent) -> None:
+    def _start_reservation(self, intent: EntanglementIntent, purification_mode: str) -> None:
         source = self._adapter.get_router(intent.endpoints.source)
         destination = self._adapter.get_router(intent.endpoints.destination)
         self._check_no_node_conflict(intent.id, source)
@@ -247,14 +299,15 @@ class SequenceExecutor:
         start_ps = int(intent.requirements.start_time_s * SECOND)
         end_ps = int((intent.requirements.start_time_s + intent.requirements.duration_s) * SECOND)
         logger.info(
-            "submitting reservation %s -> %s, reserved_memory_slots=%d, min_fidelity=%.3f",
+            "submitting reservation %s -> %s, reserved_memory_slots=%d, min_fidelity=%.3f, purification_mode=%s",
             intent.endpoints.source, intent.endpoints.destination,
-            intent.requirements.reserved_memory_slots, intent.requirements.min_fidelity,
+            intent.requirements.reserved_memory_slots, intent.requirements.min_fidelity, purification_mode,
             extra={"intent_id": intent.id},
         )
-        source_app.start(
+        source_app.start_intent(
             intent.endpoints.destination, start_ps, end_ps,
             intent.requirements.reserved_memory_slots, intent.requirements.min_fidelity,
+            purification_mode=purification_mode,
         )
 
     @staticmethod

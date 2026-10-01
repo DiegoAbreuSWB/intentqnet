@@ -5,6 +5,12 @@ manuscript's central finding (docs/false_rejection_root_cause.md) - never
 exact historical behavior at the byte/value level, on the real F03
 topologies, at the real densified threshold range.
 """
+# LEGACY-MODEL REGRESSION: the thresholds/numbers below are ket_vector
+# closed form (f1*f2*degradation, Dur-Briegel purification). Since the
+# physical-realism revision (docs/physical_model.md) the project default
+# is bell_diagonal, so these fixtures pin formalism="ket_vector" to keep
+# checking the legacy model they document.
+
 from __future__ import annotations
 
 import pytest
@@ -37,7 +43,7 @@ def test_l1_matches_intent_planner_exactly_on_three_node_chain(min_fidelity):
     """L1 must be byte-for-byte equivalent to calling `IntentPlanner`
     directly - it is a wrapper, not a reimplementation (see
     `planning.planners.l1_conservative`'s module docstring)."""
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = _three_node_intent(min_fidelity)
     context = PlanningContext(routing_strategy=ShortestHopCountRouting())
     candidates = generate_candidate_paths(intent, capabilities, context)
@@ -58,7 +64,7 @@ def test_l1_matches_intent_planner_exactly_on_three_node_chain(min_fidelity):
 @pytest.mark.unit
 @pytest.mark.parametrize("min_fidelity", DENSIFIED_THRESHOLDS)
 def test_l1_matches_intent_planner_exactly_on_four_node_chain(min_fidelity):
-    capabilities = NetworkCapabilities(linear_chain_spec(2, attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(linear_chain_spec(2, attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l1-regression-4node", source="a", destination="b", min_fidelity=min_fidelity,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,
@@ -78,7 +84,7 @@ def test_l1_reproduces_the_documented_one_round_ceiling():
     """The exact numbers docs/false_rejection_root_cause.md cites: swap-only
     fidelity 0.686375, one-round-purified ceiling 0.7202522030749277 -
     SATISFIED at and below the ceiling, REJECTED strictly above it."""
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     context = PlanningContext(routing_strategy=ShortestHopCountRouting())
 
     below_ceiling = _three_node_intent(0.72)
@@ -99,7 +105,7 @@ def test_l1_reproduces_the_documented_one_round_ceiling():
 def test_l1_never_predicts_fields_it_has_no_basis_for():
     """Section 4: L1 must not predict delivered pairs, throughput, or a
     satisfaction probability - those stay `None`, never a guessed number."""
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = _three_node_intent(0.65)
     context = PlanningContext(routing_strategy=ShortestHopCountRouting())
     candidates = generate_candidate_paths(intent, capabilities, context)
@@ -119,7 +125,7 @@ def test_l1_reports_correct_identity():
 
 @pytest.mark.unit
 def test_l1_produces_an_explanation_for_both_accept_and_reject():
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     context = PlanningContext(routing_strategy=ShortestHopCountRouting())
 
     accepted_intent = _three_node_intent(0.65)
