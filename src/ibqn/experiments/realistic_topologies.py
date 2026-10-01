@@ -13,6 +13,10 @@ Design choices shared by every builder:
 - **Few memories per node** (4 at endpoints, 8 at repeaters by default) -
   demonstrated nodes hold 1-2 qubits; a handful is the near-term
   multiplexing assumption, and the campaigns sweep it (`memory_size`).
+- **Independent random generators per trial**
+  (`seed_derivation="independent"`): the original `seed + position` scheme
+  makes consecutive trial seeds share generators, so "20 seeds" are not 20
+  independent samples.
 - Node ids match the original builders (`a`/`r<i>`/`b`, `r1`/`bad`/
   `good1`/`good2`/`r3`, `a0..a3`/`b0..b3`, `center`/`leaf<i>`) so intents
   and analysis code carry over.
@@ -34,7 +38,7 @@ def _spec(nodes, links: list[QuantumLinkSpec], platform: PlatformProfile, stop_t
     return NetworkTopologySpec(
         nodes=nodes, quantum_links=links,
         classical_delay_s=classical_delay_s(max(link.distance_m for link in links)),
-        classical_delay_model="fiber", stop_time_s=stop_time_s,
+        classical_delay_model="fiber", seed_derivation="independent", stop_time_s=stop_time_s,
         formalism=DEFAULT_FORMALISM, platform=platform.name,
     )
 

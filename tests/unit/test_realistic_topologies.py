@@ -137,3 +137,25 @@ def test_realistic_mesh_and_star_shapes():
     assert [n.id for n in star.nodes] == ["center", "leaf1", "leaf2", "leaf3", "leaf4"]
     assert star.node("center").memories == 16 and star.node("leaf3").memories == 4
     assert all(spec.classical_delay_model == "fiber" for spec in (mesh, star))
+
+
+@pytest.mark.unit
+def test_calibrated_topologies_give_every_trial_its_own_random_generators():
+    """With the original `seed + position` derivation, trial s+1 reuses the
+    generators trial s gave to its next entities, so statistics over
+    consecutive seeds are not over independent samples."""
+    def seeds(spec, trial_seed):
+        config = spec.to_router_net_topo_config(seed=trial_seed)
+        return [entry["seed"] for entry in config["nodes"] + config["qconnections"]]
+
+    calibrated = realistic_chain(2)
+    assert calibrated.seed_derivation == "independent"
+    per_trial = [seeds(calibrated, trial_seed) for trial_seed in range(50)]
+    flat = [seed for trial in per_trial for seed in trial]
+    assert len(flat) == len(set(flat)) == 50 * 7                      # 4 routers + 3 BSM nodes, never shared
+    assert seeds(calibrated, 7) == seeds(calibrated, 7)               # still deterministic
+    assert set(seeds(calibrated, 3)).isdisjoint(seeds(calibrated, 7_000_003))   # oracle-offset seeds stay disjoint too
+
+    legacy = calibrated.model_copy(update={"seed_derivation": "offset"})
+    assert seeds(legacy, 0) == [0, 1, 2, 3, 4, 5, 6]                  # the original scheme, unchanged
+    assert set(seeds(legacy, 0)) & set(seeds(legacy, 1))              # ...which shares generators across trials

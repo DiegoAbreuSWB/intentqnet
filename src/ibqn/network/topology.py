@@ -42,6 +42,11 @@ DEFAULT_CUTOFF_RATIO = 0.5
 
 Formalism = Literal["ket_vector", "bell_diagonal"]
 
+SEED_STRIDE = 1_000_003
+"""Under `seed_derivation="independent"` entity seeds are
+`trial_seed * SEED_STRIDE + position`: no two (trial seed, entity) pairs
+share a generator as long as a topology has fewer entities than this."""
+
 
 class NodeSpec(BaseModel):
     """A quantum router in the topology. Per-node seeds are assigned by
@@ -180,7 +185,16 @@ class NetworkTopologySpec(BaseModel):
                      "classical channel between two routers follows the quantum fiber, so its delay is the "
                      "shortest-path fiber distance divided by 2e8 m/s (5 us/km); `classical_delay_s` is then only "
                      "the fallback for router pairs with no fiber path. Matters whenever links differ in length: "
-                     "the single-heralded protocol's attempt cycle is ~3 classical delays of THAT link",
+                     "the single-heralded protocol's attempt cycle is 4-5 classical delays of THAT link",
+    )
+    seed_derivation: Literal["offset", "independent"] = Field(
+        default="offset",
+        description="how one trial seed becomes the seeds of the topology's random generators (one per router, one "
+                     "per BSM node). 'offset' (the original scheme): `seed + position`, so trial seeds 0, 1, 2, ... "
+                     "reuse each other's generators (the BSM of link 1 in trial s+1 draws the same numbers as the BSM "
+                     "of link 2 in trial s) and trials are NOT statistically independent. 'independent': "
+                     f"`seed * {1_000_003} + position`, a distinct generator for every (trial, entity) - required for "
+                     "any statistic over seeds; used by every calibrated topology",
     )
     stop_time_s: float = Field(gt=0, description="seconds, simulation stop time")
     platform: str | None = Field(
@@ -285,11 +299,21 @@ class NetworkTopologySpec(BaseModel):
             template[bsm_class] = {"detectors": [{"efficiency": link.detector_efficiency}] * 2}
         return template
 
+    def entity_seed(self, seed: int, position: int) -> int:
+        """Seed of the `position`-th random generator of a trial (routers in
+        declaration order, then one BSM node per quantum link) - see
+        `seed_derivation`."""
+        if self.seed_derivation == "offset":
+            return seed + position
+        if position >= SEED_STRIDE:
+            raise ValueError(f"a topology cannot have more than {SEED_STRIDE} seeded entities")
+        return seed * SEED_STRIDE + position
+
     def to_router_net_topo_config(self, *, seed: int) -> dict[str, Any]:
         """Builds the config `dict` for `RouterNetTopo(config)`.
 
         Per-node/per-qconnection seeds are derived deterministically from
-        `seed` by position (`seed + index`), so the same `NetworkTopologySpec`
+        `seed` by position (`entity_seed`), so the same `NetworkTopologySpec`
         + `seed` always reproduces the same topology-level randomness.
         """
         templates: dict[str, dict[str, Any]] = {}
@@ -298,7 +322,7 @@ class NetworkTopologySpec(BaseModel):
             template_name = self._router_template_name(node.id)
             templates[template_name] = self._router_template(node)
             node_entries.append({
-                "name": node.id, "type": _ROUTER_TYPE, "seed": seed + i, "memo_size": node.memories,
+                "name": node.id, "type": _ROUTER_TYPE, "seed": self.entity_seed(seed, i), "memo_size": node.memories,
                 "template": template_name,
             })
 
@@ -312,7 +336,7 @@ class NetworkTopologySpec(BaseModel):
                 "attenuation": link.attenuation_db_per_m,
                 "distance": link.distance_m,
                 "type": "meet_in_the_middle",
-                "seed": seed + len(self.nodes) + i,
+                "seed": self.entity_seed(seed, len(self.nodes) + i),
                 "template": template_name,
             })
 
