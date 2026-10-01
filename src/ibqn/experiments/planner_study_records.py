@@ -61,6 +61,29 @@ class PlannerStudyTrialRecord:
     python_version: str
     timestamp: str
 
+    # --- physical model / calibrated suite (docs/physical_model.md,
+    # docs/parameter_calibration.md) - declared with defaults, and therefore
+    # last, so rows persisted before the revision still load ---
+    formalism: str | None = None
+    platform: str | None = None
+    purification_mode: str | None = None
+    """Policy actually executed for the deployed plan; None when rejected."""
+    regime: str | None = None
+    """Campaign-declared label of the parameter combination (e.g.
+    `generous`, `marginal`) - carried on the row so analysis never has to
+    re-derive it from `parameter_hash`."""
+    allow_purification: bool | None = None
+    minimum_fidelity: float | None = None
+    discarded_pairs: int | None = None
+    eg_attempts: int | None = None
+    eg_success: int | None = None
+    ep_attempts: int | None = None
+    ep_success: int | None = None
+    es_attempts: int | None = None
+    es_success: int | None = None
+    """Source-node native counters (diagnostic, not per-intent) - same
+    convention as `experiments.records.TrialRecord`."""
+
     @classmethod
     def fieldnames(cls) -> list[str]:
         return [f.name for f in fields(cls)]

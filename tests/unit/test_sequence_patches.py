@@ -1,5 +1,5 @@
-"""Tests for `ibqn.network.sequence_patches` - the single, documented
-deviation from stock SeQUeNCe (see docs/physical_model.md).
+"""Tests for `ibqn.network.sequence_patches` - the documented deviations
+from stock SeQUeNCe (see docs/physical_model.md).
 """
 from __future__ import annotations
 
@@ -147,3 +147,100 @@ def test_live_pair_fidelity_is_none_for_a_pair_without_state():
     tl, a, b = _bds_routers()
     raw = _info(0, "RAW", 0.0, memory=a.get_components_by_type("MemoryArray")[0][0], remote_memo=None)
     assert live_pair_fidelity(raw) is None
+
+
+@pytest.mark.unit
+def test_decohering_a_memory_whose_pair_was_already_consumed_is_a_noop_not_a_crash():
+    """The race behind the second patch: the far end of a pair still calls
+    `bds_decohere` on a memory that was delivered, reset and re-excited for
+    a new attempt (`last_update_time` stamped, no Bell-diagonal state yet).
+    Stock SeQUeNCe raises KeyError and takes the whole simulation down."""
+    from sequence.components.memory import Memory
+
+    tl, a, b = _bds_routers(coherence_time=0.05)
+    memory = a.get_components_by_type("MemoryArray")[0][0]
+    memory.last_update_time = 10          # what Memory.excite(protocol="sh") stamps
+    tl.time = 1_000_000
+    assert memory.qstate_key not in tl.quantum_manager.states
+
+    remove_sequence_patches()
+    with pytest.raises(KeyError):
+        memory.bds_decohere()
+
+    apply_sequence_patches()
+    assert Memory.bds_decohere is not None
+    memory.bds_decohere()                 # no state -> nothing to decohere, no exception
+    assert memory.qstate_key not in tl.quantum_manager.states
+
+
+@pytest.mark.unit
+def test_the_decoherence_guard_leaves_real_pairs_untouched():
+    tl, a, b = _bds_routers(coherence_time=0.005)
+    info = _bds_pair(tl, a, b, 0, 0.85, last_update_ps=1)
+    remote = b.get_components_by_type("MemoryArray")[0][0]
+    tl.time = int(2e9)  # 2 ms later
+
+    remove_sequence_patches()
+    stock_tl, stock_a, stock_b = _bds_routers(coherence_time=0.005)
+    stock_info = _bds_pair(stock_tl, stock_a, stock_b, 0, 0.85, last_update_ps=1)
+    stock_tl.time = int(2e9)
+    stock_info.memory.bds_decohere()
+    expected = stock_info.memory.get_bds_fidelity()
+
+    apply_sequence_patches()
+    info.memory.bds_decohere()
+
+    assert info.memory.get_bds_fidelity() == pytest.approx(expected)   # the stock channel, unchanged
+    assert expected < 0.85
+    states = tl.quantum_manager.states
+    assert states[info.memory.qstate_key] is states[remote.qstate_key]  # both halves still share one state
+
+
+@pytest.mark.unit
+def test_decohering_the_held_half_never_writes_under_a_consumed_partner_key():
+    """One end consumed its half (memory reset -> key dropped); the other end
+    still holds its half and decoheres it. Stock SeQUeNCe writes the old
+    pair's state back under the consumed memory's key."""
+    def consumed_pair():
+        tl, a, b = _bds_routers(coherence_time=0.005)
+        info = _bds_pair(tl, a, b, 0, 0.85, last_update_ps=1)
+        remote = b.get_components_by_type("MemoryArray")[0][0]
+        remote.reset()  # the application at b consumed its half
+        tl.time = int(2e9)
+        return tl, info, remote
+
+    remove_sequence_patches()
+    tl, info, remote = consumed_pair()
+    info.memory.bds_decohere()
+    assert remote.qstate_key in tl.quantum_manager.states           # stock: stale state re-created
+
+    apply_sequence_patches()
+    tl, info, remote = consumed_pair()
+    info.memory.bds_decohere()
+    assert remote.qstate_key not in tl.quantum_manager.states       # patched: consumed half stays consumed
+    assert info.memory.get_bds_fidelity() < 0.85                    # ...while the held half still decohered
+
+
+@pytest.mark.unit
+def test_decohering_the_held_half_never_overwrites_the_partners_new_pair():
+    """Worst case of the same race: the consumed memory has already been
+    re-entangled with a third memory when the stale half is decohered."""
+    def re_entangled_pair():
+        tl, a, b = _bds_routers(coherence_time=0.005)
+        stale = _bds_pair(tl, a, b, 0, 0.85, last_update_ps=1)
+        remote = b.get_components_by_type("MemoryArray")[0][0]
+        other = a.get_components_by_type("MemoryArray")[0][1]
+        remote.reset()
+        tl.quantum_manager.set([other.qstate_key, remote.qstate_key], list(werner_elements(0.95)))
+        tl.time = int(2e9)
+        return tl, stale, remote
+
+    remove_sequence_patches()
+    tl, stale, remote = re_entangled_pair()
+    stale.memory.bds_decohere()
+    assert tl.quantum_manager.states[remote.qstate_key].state[0] < 0.9   # stock: the new 0.95 pair was overwritten
+
+    apply_sequence_patches()
+    tl, stale, remote = re_entangled_pair()
+    stale.memory.bds_decohere()
+    assert tl.quantum_manager.states[remote.qstate_key].state[0] == pytest.approx(0.95)

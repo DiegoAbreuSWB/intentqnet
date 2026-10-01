@@ -75,6 +75,7 @@ from ..feasibility import estimate_latency_s, estimate_swap_only_fidelity
 from ..fidelity_estimation import ConservativeMinEstimator
 from ..models import EstimatedMetrics, ExecutionPlan
 from .base import evaluate_candidates, to_candidate_evaluation
+from .generation_models import hop_success_probability
 from .l2_iterative import IterativeAnalyticalPurification
 from .models import PlannerDecision, PlannerExplanation, PlanningContext, ProbabilisticPlanEstimate
 
@@ -101,8 +102,10 @@ def _route_raw_pair_probability(capabilities: NetworkCapabilities, route: list[s
     configuration - see the module docstring)."""
     probability = 1.0
     for a, b in zip(route, route[1:]):
-        link = capabilities.link(a, b)
-        probability *= _link_success_probability(link.distance_m, link.attenuation_db_per_m)
+        # ket_vector: `_link_success_probability` (transmission x 1/2), as
+        # always; bell_diagonal: also the emission and detection efficiencies
+        # the single-heralded protocol depends on (generation_models).
+        probability *= hop_success_probability(capabilities, a, b)
     return probability
 
 
@@ -126,8 +129,9 @@ def estimate_probabilistic_plan(
     target_fidelity = intent.requirements.min_fidelity
     allow_purification = intent.policy.allow_purification
 
+    one_round = capabilities.physics.purification_between(route[0], route[-1])
     purification = IterativeAnalyticalPurification(max_rounds=max_rounds)
-    purification.decide(swap_only_fidelity, target_fidelity, allow_purification)
+    purification.decide(swap_only_fidelity, target_fidelity, allow_purification, physics=one_round)
     estimate = purification.last_estimate
 
     fidelity_success_probability = 1.0 if estimate.target_reached else 0.0
@@ -137,7 +141,7 @@ def estimate_probabilistic_plan(
     else:
         effective_pair_cost = 1.0
         for round_estimate in estimate.rounds:
-            round_success = _purification_round_success_probability(round_estimate.input_fidelity)
+            round_success = one_round.improve(round_estimate.input_fidelity)[0]
             round_success = max(round_success, 1e-6)  # avoid division by zero on a degenerate formula input
             effective_pair_cost *= PAIR_CONSUMPTION_PER_ROUND / round_success
 

@@ -34,13 +34,13 @@ from sequence.constants import SECOND
 from sequence.resource_management.memory_manager import MemoryInfo
 from sequence.topology.node import QuantumRouter
 from sequence.utils import metrics
-from sequence.utils.metrics.event_types import EventTypes
+from sequence.utils.metrics.event_types import EventTypes, register_event_type
 
 from ..intent.models import EntanglementIntent, IntentStatus
 from ..intent.repository import IntentRepository
 from ..network.sequence_adapter import SequenceAdapter
 from ..planning.models import ExecutionPlan
-from ..planning.purification import PURIFICATION_MODES
+from ..planning.purification import PURIFICATION_MODES, executed_purification_mode
 from ..utils.logging import get_logger
 from .compiler import apply_route
 
@@ -50,7 +50,13 @@ DEFAULT_PURIFICATION_MODE = "until_target"
 """SeQUeNCe's own default (`Reservation.purification_mode`) - what every
 reservation executed before plans carried a purification policy."""
 
+DISCARD_EVENT = register_event_type("IBQN_DISCARD")
+"""Recorded (tagged with `intent_id`) when an application releases an
+end-to-end pair that can never be delivered - see
+`IntentRequestApp._is_undeliverable`."""
+
 _TELEMETRY_EVENTS = [
+    DISCARD_EVENT,
     EventTypes.EG_SUCCESS,
     EventTypes.EG_FAILURE,
     EventTypes.EP_SUCCESS,
@@ -97,6 +103,9 @@ class IntentRequestApp(RequestApp):
         self.intent_id = intent_id
         self._repository = repository
         self._delivered_pairs = 0
+        self.discarded_pairs = 0
+        """End-to-end pairs released below target (initiator side only, so a
+        pair is counted once) - see `_is_undeliverable`."""
         self.reservation = None
         """The `Reservation` this app's `start_intent` created (initiator
         side only), or `None` before `start_intent`/if `RSVPProtocol.push`
@@ -165,6 +174,10 @@ class IntentRequestApp(RequestApp):
         remote_node_at_delivery = info.remote_node
         remote_memory_at_delivery = info.remote_memo
 
+        if self._is_undeliverable(info):
+            self._discard(info, fidelity_at_delivery, remote_node_at_delivery)
+            return
+
         if info.state == "ENTANGLED":
             pairs_before = self.memory_counter
             super().get_memory(info)
@@ -186,6 +199,47 @@ class IntentRequestApp(RequestApp):
                 remote_node=remote_node_at_delivery,
                 remote_memory=remote_memory_at_delivery,
             )
+
+    def _is_undeliverable(self, info: MemoryInfo) -> bool:
+        """True for an END-TO-END pair of this app's reservation that is
+        below the target fidelity and that no rule can still improve:
+
+        - `'never'`: any below-target end-to-end pair;
+        - `'once'`: one that has already had its single round (`PURIFIED`);
+        - `'until_target'`: never - the purification rules still own it.
+
+        Stock `RequestApp` leaves such a pair alone, so it occupies both
+        memories until the reservation ends or the memory cutoff fires. With
+        seconds-long coherence that starves the whole reservation after a
+        few unlucky pairs (measured: 5.5 delivered pairs instead of ~20 on a
+        4-node chain at a target just under the swap output) - an artifact
+        of never releasing dead pairs, not a property of the purification
+        policy being compared. Releasing them is what any application would
+        do; it never touches a pair a rule could still use (link-level
+        pairs, or pairs awaiting purification)."""
+        reservation = self.memo_to_reservation.get(info.index)
+        if reservation is None or info.state not in ("ENTANGLED", "PURIFIED"):
+            return False
+        if info.remote_node not in (reservation.initiator, reservation.responder):
+            return False  # a link-level pair still on its way through the swap tree
+        if info.fidelity >= reservation.fidelity:
+            return False
+        mode = reservation.purification_mode
+        if mode == "never":
+            return True
+        if mode == "once":
+            return info.state == "PURIFIED"
+        return False
+
+    def _discard(self, info: MemoryInfo, fidelity: float, remote_node: str | None) -> None:
+        reservation = self.memo_to_reservation[info.index]
+        if remote_node == reservation.responder:  # initiator side: count/record the pair exactly once
+            self.discarded_pairs += 1
+            metrics.record(
+                DISCARD_EVENT, self.node.name, intent_id=self.intent_id, fidelity=fidelity,
+                target_fidelity=reservation.fidelity, purification_mode=reservation.purification_mode,
+            )
+        self.node.resource_manager.update(None, info.memory, "RAW")
 
     def _count_purified_delivery(self, info: MemoryInfo) -> bool:
         """Mirrors `RequestApp.get_memory`'s matching/counting/reset logic
@@ -274,16 +328,17 @@ class SequenceExecutor:
             )
             return
 
+        purification_mode = executed_purification_mode(plan.purification_mode, intent.policy.allow_purification)
         self._repository.transition(intent.id, IntentStatus.PLANNED, plan.route_rationale, sim_time=now_s)
         self._repository.transition(
             intent.id, IntentStatus.DEPLOYING,
             f"applying route {'->'.join(plan.route)} and submitting reservation to NetworkManager "
-            f"(purification_mode={plan.purification_mode})",
+            f"(purification_mode={purification_mode})",
             sim_time=now_s,
         )
         if len(plan.route) > 2:
             apply_route(self._adapter, plan.route)
-        self._start_reservation(intent, plan.purification_mode)
+        self._start_reservation(intent, purification_mode)
 
     def _start_reservation(self, intent: EntanglementIntent, purification_mode: str) -> None:
         source = self._adapter.get_router(intent.endpoints.source)

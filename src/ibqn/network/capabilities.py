@@ -46,6 +46,8 @@ class NodeCapability:
     coherence_time_s: float = -1.0
     cutoff_ratio: float = 1.0
     decoherence_errors: tuple[float, float, float] = DEPOLARIZING_ERRORS
+    memory_efficiency: float = 1.0
+    memory_frequency_hz: float = 80e6
 
     def physics(self) -> NodePhysics:
         return NodePhysics(
@@ -71,9 +73,12 @@ class NetworkCapabilities:
                 swapping_success_prob=node.swapping_success_prob,
                 coherence_time_s=node.coherence_time_s, cutoff_ratio=node.cutoff_ratio,
                 decoherence_errors=node.decoherence_errors or DEPOLARIZING_ERRORS,
+                memory_efficiency=node.memory_efficiency, memory_frequency_hz=node.memory_frequency_hz,
             )
             for node in spec.nodes
         }
+        self._classical_delays = spec.classical_delays_s()
+        self._platform = spec.platform
         self._links: dict[frozenset[str], LinkCapability] = {
             frozenset({link.source, link.destination}): LinkCapability(
                 source=link.source, destination=link.destination,
@@ -122,6 +127,22 @@ class NetworkCapabilities:
         this topology - the ONLY place planners get fidelity arithmetic from
         (see docs/physical_model.md)."""
         return self._physics
+
+    @property
+    def platform(self) -> str | None:
+        """Name of the hardware platform profile the topology carries, if any."""
+        return self._platform
+
+    def classical_delay_between(self, a: str, b: str) -> float:
+        """One-way classical delay (seconds) between two routers - the
+        per-pair value under `classical_delay_model='fiber'`, the single
+        uniform value otherwise."""
+        if a == b:
+            return 0.0
+        try:
+            return self._classical_delays[frozenset({a, b})]
+        except KeyError:
+            raise KeyError(f"no node pair '{a}'/'{b}' in this topology") from None
 
     @property
     def classical_delay_s(self) -> float:

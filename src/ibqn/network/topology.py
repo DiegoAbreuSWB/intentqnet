@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
+import networkx as nx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from sequence.constants import SECOND
@@ -33,6 +34,9 @@ from ..physics import BELL_DIAGONAL_FORMALISM, KET_VECTOR_FORMALISM, SUPPORTED_F
 _ROUTER_TYPE = "QuantumRouter"
 
 DEFAULT_FORMALISM = BELL_DIAGONAL_FORMALISM
+FIBER_SPEED_OF_LIGHT_M_PER_S = 2e8
+"""Group velocity in silica fiber (SeQUeNCe's own `SPEED_OF_LIGHT` is 2e-4
+m/ps): 5 us of classical delay per km."""
 DEFAULT_COHERENCE_TIME_S = 1.0
 DEFAULT_CUTOFF_RATIO = 0.5
 
@@ -170,6 +174,14 @@ class NetworkTopologySpec(BaseModel):
     classical_delay_s: float = Field(
         default=1e-3, ge=0, description="seconds, one-way delay for the automatic full-mesh classical network"
     )
+    classical_delay_model: Literal["uniform", "fiber"] = Field(
+        default="uniform",
+        description="'uniform': every router pair is `classical_delay_s` apart (the original model). 'fiber': the "
+                     "classical channel between two routers follows the quantum fiber, so its delay is the "
+                     "shortest-path fiber distance divided by 2e8 m/s (5 us/km); `classical_delay_s` is then only "
+                     "the fallback for router pairs with no fiber path. Matters whenever links differ in length: "
+                     "the single-heralded protocol's attempt cycle is ~3 classical delays of THAT link",
+    )
     stop_time_s: float = Field(gt=0, description="seconds, simulation stop time")
     platform: str | None = Field(
         default=None,
@@ -206,6 +218,33 @@ class NetworkTopologySpec(BaseModel):
             if node.id == node_id:
                 return node
         raise KeyError(f"no node named '{node_id}' in this topology")
+
+    def fiber_distances_m(self) -> dict[str, dict[str, float]]:
+        """Shortest-path fiber distance (meters) between every pair of
+        routers connected through quantum links."""
+        graph = nx.Graph()
+        graph.add_nodes_from(node.id for node in self.nodes)
+        for link in self.quantum_links:
+            graph.add_edge(link.source, link.destination, distance_m=link.distance_m)
+        return {source: dict(lengths) for source, lengths in nx.all_pairs_dijkstra_path_length(graph, weight="distance_m")}
+
+    def classical_delays_s(self) -> dict[frozenset[str], float]:
+        """One-way classical delay for every router pair, per
+        `classical_delay_model`."""
+        node_ids = [node.id for node in self.nodes]
+        pairs = [frozenset({a, b}) for i, a in enumerate(node_ids) for b in node_ids[i + 1:]]
+        if self.classical_delay_model == "uniform":
+            return {pair: self.classical_delay_s for pair in pairs}
+        distances = self.fiber_distances_m()
+        delays: dict[frozenset[str], float] = {}
+        for pair in pairs:
+            a, b = tuple(pair)
+            distance = distances.get(a, {}).get(b)
+            delays[pair] = distance / FIBER_SPEED_OF_LIGHT_M_PER_S if distance is not None else self.classical_delay_s
+        return delays
+
+    def classical_delay_between(self, a: str, b: str) -> float:
+        return self.classical_delays_s()[frozenset({a, b})]
 
     @staticmethod
     def _router_template_name(node_id: str) -> str:
@@ -278,9 +317,9 @@ class NetworkTopologySpec(BaseModel):
             })
 
         node_ids = [node.id for node in self.nodes]
-        delay_ps = int(self.classical_delay_s * SECOND)
+        delays = self.classical_delays_s()
         cconnection_entries = [
-            {"node1": a, "node2": b, "delay": delay_ps}
+            {"node1": a, "node2": b, "delay": int(delays[frozenset({a, b})] * SECOND)}
             for idx, a in enumerate(node_ids)
             for b in node_ids[idx + 1:]
         ]

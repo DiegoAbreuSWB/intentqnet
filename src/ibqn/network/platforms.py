@@ -32,11 +32,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 
-from .topology import NetworkTopologySpec, NodeSpec, QuantumLinkSpec
-
-FIBER_SPEED_OF_LIGHT_M_PER_S = 2e8
-"""Group velocity in silica fiber (SeQUeNCe's `SPEED_OF_LIGHT` = 2e-4 m/ps):
-5 us of classical delay per km."""
+from .topology import FIBER_SPEED_OF_LIGHT_M_PER_S, NetworkTopologySpec, NodeSpec, QuantumLinkSpec
 
 TELECOM_C_BAND_ATTENUATION_DB_PER_M = 2.2e-4
 """0.22 dB/km measured on standard single-mode fiber at 1550 nm (van Leent
@@ -148,6 +144,19 @@ SIV_2024 = PlatformProfile(
     ),
 )
 
+SIV_2024_THEORETICAL_OPS = replace(
+    SIV_2024,
+    name="siv_2024_theoretical_ops",
+    description=(
+        "SiV 2024 hardware (link fidelity, efficiency, memory, fiber - all demonstrated values) with IDEAL local "
+        "operations: gate and measurement fidelity 1. Not a demonstrated node - the reference condition in which "
+        "BBPSSW purification behaves as in the textbook (Dur-Briegel), used alongside `siv_2024` to separate what "
+        "the management architecture does from what present-day gate noise allows"
+    ),
+    gate_fidelity=1.0,
+    measurement_fidelity=1.0,
+)
+
 NV_2022 = PlatformProfile(
     name="nv_2022",
     description=(
@@ -236,7 +245,10 @@ IDEALIZED_LEGACY = PlatformProfile(
 
 PLATFORMS: dict[str, PlatformProfile] = {
     profile.name: profile
-    for profile in (SIV_2024, TRAPPED_ION_2023, NV_2022, ATOMIC_ENSEMBLE_2024, NEAR_TERM_TARGET, IDEALIZED_LEGACY)
+    for profile in (
+        SIV_2024, SIV_2024_THEORETICAL_OPS, TRAPPED_ION_2023, NV_2022, ATOMIC_ENSEMBLE_2024,
+        NEAR_TERM_TARGET, IDEALIZED_LEGACY,
+    )
 }
 
 DEFAULT_PLATFORM = SIV_2024
@@ -285,5 +297,9 @@ def apply_platform(
     ]
     updates: dict = {"nodes": nodes, "quantum_links": links, "platform": profile.name}
     if classical_delay_from_longest_link:
+        # Classical channels follow the fiber: per-pair delays from the
+        # shortest fiber path (`classical_delay_model='fiber'`); the scalar is
+        # kept as the longest link's delay for router pairs with no path.
         updates["classical_delay_s"] = classical_delay_s(max(link.distance_m for link in links))
+        updates["classical_delay_model"] = "fiber"
     return spec.model_copy(update=updates)

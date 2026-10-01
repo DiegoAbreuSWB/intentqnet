@@ -76,10 +76,13 @@ def estimate_probabilistic_resource_aware_plan(
     intent: EntanglementIntent,
     *,
     max_rounds: int = 8,
+    generation_model: str = "same_cycle",
 ) -> ProbabilisticPlanEstimate:
     """L3-R's core per-route estimate - see the module docstring for what
     is reused from L2-R/L3-original vs. newly corrected here."""
-    resource_estimate = estimate_resource_aware_plan(capabilities, route, intent, max_rounds=max_rounds)
+    resource_estimate = estimate_resource_aware_plan(
+        capabilities, route, intent, max_rounds=max_rounds, generation_model=generation_model,
+    )
     fidelity_success_probability = 1.0 if resource_estimate.fidelity_feasible else 0.0
 
     if resource_estimate.model_limit_hit or not resource_estimate.memory_feasible:
@@ -150,6 +153,7 @@ class ProbabilisticResourceAwarePlanner:
 
     name = "probabilistic_resource_aware"
     level = "L3-R"
+    generation_model = "same_cycle"
 
     def __init__(self, *, admission_threshold: float = 0.5, max_rounds: int = 8):
         self._admission_threshold = admission_threshold
@@ -181,6 +185,7 @@ class ProbabilisticResourceAwarePlanner:
                 feasibility_by_route[tuple(route)] = result
                 probabilistic_by_route[tuple(route)] = estimate_probabilistic_resource_aware_plan(
                     network_state, route, intent, max_rounds=self._max_rounds,
+                    generation_model=self.generation_model,
                 )
 
         admissible = [
@@ -277,3 +282,13 @@ class ProbabilisticResourceAwarePlanner:
             ),
             planning_wall_time_s=planning_wall_time_s, explanation=explanation,
         )
+
+
+class ProbabilisticBufferedPlanner(ProbabilisticResourceAwarePlanner):
+    """L3-RB: L3-R's Poisson delivery model fed by the `buffered` generation
+    law (see `l2_resource_aware.BufferedResourceAwarePlanner` and
+    docs/generation_model_audit.md)."""
+
+    name = "probabilistic_resource_aware_buffered"
+    level = "L3-RB"
+    generation_model = "buffered"

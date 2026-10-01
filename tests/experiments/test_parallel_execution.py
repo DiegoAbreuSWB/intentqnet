@@ -3,6 +3,10 @@ worker processes must produce exactly the rows sequential execution does.
 """
 from __future__ import annotations
 
+import os
+from concurrent.futures.process import BrokenProcessPool
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -67,3 +71,50 @@ def test_execute_jobs_parallel_path_returns_every_result():
 def test_trial_outcome_failed_flag():
     assert TrialOutcome(error_type="ValueError", error_message="x").failed
     assert not TrialOutcome(record=None).failed
+
+
+def _die_once(job):
+    marker, value = job
+    marker = Path(marker)
+    if value == 2 and not marker.exists():
+        marker.write_text("died")
+        os._exit(1)  # what the OS does to a worker under memory pressure: no exception, no cleanup
+    return value * value
+
+
+def _always_die(job):
+    os._exit(1)
+
+
+@pytest.mark.unit
+def test_execute_jobs_resubmits_the_jobs_lost_when_a_worker_dies(tmp_path):
+    marker = tmp_path / "died-once"
+    jobs = [(str(marker), n) for n in range(6)]
+
+    results = [(job[1], result) for job, result in execute_jobs(jobs, workers=3, job_runner=_die_once)]
+
+    assert marker.exists()                                      # a worker really died mid-campaign
+    assert sorted(results) == [(n, n * n) for n in range(6)]    # every job still reported exactly once
+
+
+@pytest.mark.unit
+def test_execute_jobs_gives_up_once_the_restart_budget_is_spent():
+    with pytest.raises(BrokenProcessPool):
+        list(execute_jobs(range(4), workers=2, job_runner=_always_die, max_pool_restarts=1))
+
+
+def _numeric_thread_settings(job):
+    return {name: os.environ.get(name) for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")}
+
+
+@pytest.mark.unit
+def test_workers_load_numeric_libraries_single_threaded(monkeypatch):
+    """Multi-threaded BLAS reserves ~1 GB of committed memory per worker for
+    nothing (the simulator multiplies 4-element vectors)."""
+    for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("MKL_NUM_THREADS", "3")  # an explicit user choice is respected
+
+    settings = [result for _, result in execute_jobs(range(2), workers=2, job_runner=_numeric_thread_settings)]
+
+    assert settings == [{"OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "3"}] * 2

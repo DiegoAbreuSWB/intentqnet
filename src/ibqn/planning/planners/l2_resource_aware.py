@@ -42,13 +42,13 @@ from ..feasibility import estimate_latency_s, estimate_swap_only_fidelity
 from ..fidelity_estimation import ConservativeMinEstimator
 from ..models import EstimatedMetrics, ExecutionPlan
 from .base import evaluate_candidates, to_candidate_evaluation
+from .generation_models import BARRETT_KOK_ATTEMPT_RATE_FACTOR, BSM_SUCCESS_RATE, estimate_generation
 from .l2_iterative import IterativeAnalyticalPurification
-from .l3_probabilistic import _purification_round_success_probability
 from .models import PlannerDecision, PlannerExplanation, PlanningContext
 
-BSM_SUCCESS_RATE = 0.5
-"""Same constant `l3_probabilistic` uses - see that module's docstring for
-the SeQUeNCe source (`sequence.components.bsm`'s `success_rate` default)."""
+# `BSM_SUCCESS_RATE` (re-exported from `generation_models`) is the same
+# constant `l3_probabilistic` uses - `sequence.components.bsm`'s
+# `success_rate` default.
 
 # Conservative correction factor on the naive attempt-rate model
 # (attempt_rate = reserved_memory_slots / (2 * classical_delay_s)), applied
@@ -64,7 +64,11 @@ the SeQUeNCe source (`sequence.components.bsm`'s `success_rate` default)."""
 # probability model remain valid" section) - a wrong capacity estimate
 # should fail closed (reject a plan that might have worked) rather than
 # open (accept one that won't).
-ATTEMPT_RATE_CONSERVATIVE_FACTOR = 7.5
+ATTEMPT_RATE_CONSERVATIVE_FACTOR = BARRETT_KOK_ATTEMPT_RATE_FACTOR
+"""7.5 - now defined in `generation_models` next to the single-heralded
+constants; this is the Barrett-Kok (`ket_vector`) value. Under
+`bell_diagonal` the attempt cycle is 4 classical delays instead
+(docs/generation_model_audit.md)."""
 
 
 class RejectionReason:
@@ -132,13 +136,18 @@ def estimate_resource_aware_plan(
     intent: EntanglementIntent,
     *,
     max_rounds: int = 8,
+    generation_model: str = "same_cycle",
 ) -> ResourceAwareEstimate:
     swap_only_fidelity, _ = estimate_swap_only_fidelity(capabilities, route)
     target_fidelity = intent.requirements.min_fidelity
     allow_purification = intent.policy.allow_purification
+    # One-round BBPSSW model for the route's endpoints - Dur-Briegel under
+    # ket_vector (the original arithmetic), the gate/measurement-noise
+    # formula under bell_diagonal (ibqn.physics).
+    one_round = capabilities.physics.purification_between(route[0], route[-1])
 
     purification = IterativeAnalyticalPurification(max_rounds=max_rounds)
-    purification.decide(swap_only_fidelity, target_fidelity, allow_purification)
+    purification.decide(swap_only_fidelity, target_fidelity, allow_purification, physics=one_round)
     purification_estimate = purification.last_estimate
 
     fidelity_feasible = purification_estimate.target_reached
@@ -151,7 +160,7 @@ def estimate_resource_aware_plan(
     else:
         expected_pair_cost = 1.0
         for round_estimate in purification_estimate.rounds:
-            p = max(_purification_round_success_probability(round_estimate.input_fidelity), 1e-6)
+            p = max(one_round.improve(round_estimate.input_fidelity)[0], 1e-6)
             expected_pair_cost *= 2.0 / p
 
     # --- (1) peak simultaneous memory occupancy ---
@@ -165,24 +174,21 @@ def estimate_resource_aware_plan(
     memory_feasible = reserved_memory_slots >= peak_memory_slots_required
 
     # --- (2)/(3): generation capacity within the reservation window ---
-    hop_count = len(route) - 1
-    per_hop_probabilities = []
-    for a, b in zip(route, route[1:]):
-        link = capabilities.link(a, b)
-        transmission = 10 ** (-(link.distance_m * link.attenuation_db_per_m) / 10)
-        per_hop_probabilities.append(transmission * BSM_SUCCESS_RATE)
-    raw_pair_probability = math.prod(per_hop_probabilities) if per_hop_probabilities else 0.0
-
-    naive_attempt_rate = reserved_memory_slots / (2 * capabilities.classical_delay_s)
-    estimated_generation_rate = naive_attempt_rate / ATTEMPT_RATE_CONSERVATIVE_FACTOR
-    estimated_raw_pairs_in_window = estimated_generation_rate * intent.requirements.duration_s * raw_pair_probability
+    # Protocol- and model-specific generation estimate (generation_models):
+    # under ket_vector + "same_cycle" this is the original, audited
+    # Barrett-Kok arithmetic unchanged.
+    generation = estimate_generation(capabilities, route, reserved_memory_slots, model=generation_model)
+    raw_pair_probability = generation.raw_pair_probability
+    estimated_generation_rate = generation.attempt_rate
+    raw_end_to_end_pair_rate = generation.raw_end_to_end_pair_rate
+    estimated_raw_pairs_in_window = raw_end_to_end_pair_rate * intent.requirements.duration_s
 
     if model_limit_hit:
         estimated_final_pair_rate = 0.0
         estimated_max_delivered_pairs = 0
     else:
         estimated_final_pair_rate = (
-            (estimated_generation_rate * raw_pair_probability) / expected_pair_cost if expected_pair_cost > 0 else 0.0
+            raw_end_to_end_pair_rate / expected_pair_cost if expected_pair_cost > 0 else 0.0
         )
         estimated_max_delivered_pairs = int(math.floor(estimated_raw_pairs_in_window / expected_pair_cost)) if expected_pair_cost > 0 else 0
 
@@ -235,6 +241,7 @@ class ResourceAwareIterativePlanner:
 
     name = "iterative_resource_aware"
     level = "L2-R"
+    generation_model = "same_cycle"
 
     def __init__(self, *, max_rounds: int = 8):
         self._max_rounds = max_rounds
@@ -263,6 +270,7 @@ class ResourceAwareIterativePlanner:
                 feasibility_by_route[tuple(route)] = result
                 estimates[tuple(route)] = estimate_resource_aware_plan(
                     network_state, route, intent, max_rounds=self._max_rounds,
+                    generation_model=self.generation_model,
                 )
 
         planning_wall_time_s = time.perf_counter() - t0
@@ -352,6 +360,23 @@ class ResourceAwareIterativePlanner:
             ),
             planning_wall_time_s=planning_wall_time_s, explanation=explanation,
         )
+
+
+class BufferedResourceAwarePlanner(ResourceAwareIterativePlanner):
+    """L2-RB: L2-R's gates with the `buffered` generation law - links are
+    generated independently and wait in memory for their swap partner, so
+    each swap is a finite-buffer matching queue instead of a coincidence of
+    every hop succeeding in the same attempt cycle (generation_models,
+    docs/generation_model_audit.md). The planner-evolution step calibrated
+    hardware calls for: with per-attempt success ~1e-3 the same-cycle law
+    under-predicts multi-hop throughput by one to two orders of magnitude.
+    The estimate is the expected delivery, with no safety margin: an
+    intent whose goal sits at the expected value is admitted and met about
+    half the time (L3-RB puts a probability on exactly that)."""
+
+    name = "iterative_resource_aware_buffered"
+    level = "L2-RB"
+    generation_model = "buffered"
 
 
 def _counterfactuals_for(rejection_reason: str | None) -> list[str]:

@@ -40,6 +40,20 @@ PurificationMode = Literal["never", "once", "until_target"]
 PURIFICATION_MODES: tuple[str, ...] = ("never", "once", "until_target")
 
 
+def executed_purification_mode(plan_mode: str, allow_purification: bool) -> str:
+    """The purification policy a reservation actually runs: the plan's
+    `purification_mode`, unless the intent forbids purification
+    (`intent.policy.allow_purification` is False), in which case nothing is
+    ever purified no matter which strategy planned the route.
+
+    The planning side always honored the flag (`decide` refuses to bank on
+    purification). The execution side has to honor it separately since
+    fidelity became state-derived: a pair that met the target when it was
+    planned can decohere below it at run time, and `'until_target'` would
+    then purify it against the intent's policy."""
+    return plan_mode if allow_purification else "never"
+
+
 @dataclass(frozen=True)
 class PurificationDecision:
     attempt: bool

@@ -37,7 +37,7 @@ from ..network.sequence_adapter import SequenceAdapter
 from ..planning.fidelity_estimation import LinkFidelityEstimator
 from ..planning.models import ExecutionPlan
 from ..planning.planner import IntentPlanner
-from ..planning.purification import PurificationStrategy
+from ..planning.purification import PurificationStrategy, executed_purification_mode
 from ..planning.routing import RoutingStrategy
 from ..planning.swapping import SwappingStrategy
 from ..utils.logging import get_logger
@@ -344,7 +344,10 @@ def execute_trial(
             project_git_commit=project_commit, sequence_git_commit=sequence_commit,
             python_version=sys.version.split()[0], timestamp=_now_iso(),
             formalism=topology_spec.formalism, platform=topology_spec.platform,
-            purification_mode=plan.purification_mode if plan.feasible else None,
+            purification_mode=(
+                executed_purification_mode(plan.purification_mode, intent.policy.allow_purification)
+                if plan.feasible else None
+            ),
             gate_fidelity=first_node.gate_fidelity if first_node else None,
             measurement_fidelity=first_node.measurement_fidelity if first_node else None,
             swapping_success_prob=first_node.swapping_success_prob if first_node else None,
@@ -395,7 +398,7 @@ def execute_trial(
     recovered = None
     estimated_fidelity = plan.estimated_metrics.fidelity if plan.estimated_metrics else None
     fidelity_estimator_used = plan.fidelity_estimator
-    purification_mode_used = plan.purification_mode
+    purification_mode_used = executed_purification_mode(plan.purification_mode, intent.policy.allow_purification)
     if final_status == IntentStatus.VIOLATED and params.reconciliation_enabled:
         reconciliation_routing_strategy = resolve_routing_strategy(
             _reconciliation_routing_strategy_name(params.routing_strategy_name)
@@ -419,7 +422,9 @@ def execute_trial(
         )
         fidelity_estimator_used = reconciliation_result.new_plan.fidelity_estimator
         if reconciliation_result.new_plan.feasible:
-            purification_mode_used = reconciliation_result.new_plan.purification_mode
+            purification_mode_used = executed_purification_mode(
+                reconciliation_result.new_plan.purification_mode, intent.policy.allow_purification,
+            )
 
         if reconciliation_result.new_evaluation is not None:
             evaluation = reconciliation_result.new_evaluation
@@ -442,6 +447,7 @@ def execute_trial(
     return _record(
         route=route_str, hop_count=hop_count, fidelity_estimator=fidelity_estimator_used,
         estimated_fidelity=estimated_fidelity, purification_mode=purification_mode_used,
+        discarded_pairs=evidence.discarded_pairs if evidence is not None else None,
         accepted=accepted, satisfied=satisfied, recovered=recovered, final_status=final_status.value,
         simulation_wall_time_s=round(simulation_wall_time_s, 6),
         violations=violations_str,

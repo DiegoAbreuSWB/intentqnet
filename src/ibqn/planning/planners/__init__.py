@@ -6,9 +6,19 @@ from .l2_iterative import (
     IterativePurificationEstimate,
     PurificationRoundEstimate,
 )
-from .l2_resource_aware import RejectionReason, ResourceAwareEstimate, ResourceAwareIterativePlanner, estimate_resource_aware_plan
+from .l2_resource_aware import (
+    BufferedResourceAwarePlanner,
+    RejectionReason,
+    ResourceAwareEstimate,
+    ResourceAwareIterativePlanner,
+    estimate_resource_aware_plan,
+)
 from .l3_probabilistic import ProbabilisticPlanner, estimate_probabilistic_plan
-from .l3_resource_aware import ProbabilisticResourceAwarePlanner, estimate_probabilistic_resource_aware_plan
+from .l3_resource_aware import (
+    ProbabilisticBufferedPlanner,
+    ProbabilisticResourceAwarePlanner,
+    estimate_probabilistic_resource_aware_plan,
+)
 from .l4_simulation import PlannerSimulationSummary, SimulationInTheLoopPlanner, SimulationPlannerConfig
 from .models import (
     CandidateEvaluation,
@@ -37,6 +47,8 @@ __all__ = [
     "IterativePurificationEstimate",
     "PurificationRoundEstimate",
     "ResourceAwareIterativePlanner",
+    "BufferedResourceAwarePlanner",
+    "ProbabilisticBufferedPlanner",
     "ResourceAwareEstimate",
     "RejectionReason",
     "estimate_resource_aware_plan",

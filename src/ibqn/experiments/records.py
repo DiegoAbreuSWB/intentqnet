@@ -131,6 +131,10 @@ class TrialRecord:
     """The purification policy actually EXECUTED for the (last) episode's
     reservation - `ExecutionPlan.purification_mode`; `None` for REJECTED
     trials that never reached execution."""
+    discarded_pairs: int | None = None
+    """End-to-end pairs the application released because they were below
+    the target and no purification rule could still improve them
+    (`IntentRequestApp._is_undeliverable`); `None` when nothing was deployed."""
     gate_fidelity: float | None = None
     measurement_fidelity: float | None = None
     swapping_success_prob: float | None = None

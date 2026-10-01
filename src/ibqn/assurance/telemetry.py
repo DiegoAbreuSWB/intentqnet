@@ -23,6 +23,10 @@ from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 
+DISCARD_EVENT_NAME = "IBQN_DISCARD"
+"""`execution.sequence_executor.DISCARD_EVENT` - matched by name so this
+module does not import the executor."""
+
 
 @dataclass(frozen=True)
 class DeliveredPair:
@@ -51,6 +55,9 @@ class IntentEvidence:
     intent_id: str
     delivered_pairs: list[DeliveredPair] = field(default_factory=list)
     source_node_metrics: dict = field(default_factory=dict)
+    discarded_pairs: int = 0
+    """End-to-end pairs released below target (`IBQN_DISCARD` events tagged
+    with this intent) - diagnostic, never part of a success condition."""
 
 
 def collect_intent_evidence(intent: EntanglementIntent, *, storage=None) -> IntentEvidence:
@@ -89,7 +96,14 @@ def collect_intent_evidence(intent: EntanglementIntent, *, storage=None) -> Inte
         )
 
     delivered.sort(key=lambda pair: pair.pair_number)
+    discarded = sum(
+        1 for record in record_source.get_all()
+        if getattr(record["event_type"], "name", None) == DISCARD_EVENT_NAME and record.get("intent_id") == intent.id
+    )
 
     source_node_metrics = metrics.collect_trial_metrics(intent.endpoints.source)
 
-    return IntentEvidence(intent_id=intent.id, delivered_pairs=delivered, source_node_metrics=source_node_metrics)
+    return IntentEvidence(
+        intent_id=intent.id, delivered_pairs=delivered, source_node_metrics=source_node_metrics,
+        discarded_pairs=discarded,
+    )

@@ -301,3 +301,70 @@ def test_purified_pairs_are_delivered_and_counted_under_bell_diagonal():
     purified_seen = [obs for obs in app.observations if obs[0] == "PURIFIED"]
     assert purified_seen
     assert len(deliveries) == app.memory_counter > 0
+
+
+@pytest.mark.unit
+def test_never_mode_releases_below_target_pairs_instead_of_starving_the_reservation():
+    """Under 'never' a swapped pair below the target can never be delivered.
+    Stock `RequestApp` would leave it occupying both memories for the rest
+    of the window; the IBQN app releases it, so generation keeps going and
+    the discards are counted per intent."""
+    from ibqn.assurance.telemetry import collect_intent_evidence
+
+    _, executor, _, deliveries, events = run_chain(0.78, mode="never")
+    app = executor.get_app("bds-intent")
+    assert deliveries == []
+    assert app.discarded_pairs > 20                  # the pipeline kept producing (and releasing) 0.73 pairs
+    assert events["ES_SUCCESS"] >= app.discarded_pairs
+    assert events["IBQN_DISCARD"] == app.discarded_pairs   # recorded once per pair (initiator side)
+    evidence = collect_intent_evidence(build_intent(0.78))
+    assert evidence.discarded_pairs == app.discarded_pairs and evidence.delivered_pairs == []
+
+
+@pytest.mark.unit
+def test_until_target_never_discards_pairs_the_purification_rules_still_own():
+    _, executor, _, deliveries, events = run_chain(0.78, mode="until_target")
+    assert executor.get_app("bds-intent").discarded_pairs == 0
+    assert events["IBQN_DISCARD"] == 0
+    assert len(deliveries) > 0
+
+
+@pytest.mark.unit
+def test_once_mode_discards_only_pairs_that_already_had_their_round():
+    _, executor, _, deliveries, events = run_chain(0.78, mode="once")
+    app = executor.get_app("bds-intent")
+    assert deliveries == []                       # one round from 0.73 gives ~0.768 < 0.78
+    assert app.discarded_pairs > 0
+    assert app.discarded_pairs <= events["EP_SUCCESS"]   # only PURIFIED pairs are ever released
+
+
+@pytest.mark.unit
+def test_an_intent_that_forbids_purification_never_purifies_whatever_the_plan_says():
+    """`allow_purification=False` is a property of the intent, not of the
+    planner that produced the plan: a plan carrying SeQUeNCe's default
+    'until_target' must still execute as 'never' for such an intent."""
+    from ibqn.planning.purification import executed_purification_mode
+
+    assert executed_purification_mode("until_target", True) == "until_target"
+    assert executed_purification_mode("once", True) == "once"
+    assert executed_purification_mode("until_target", False) == "never"
+    assert executed_purification_mode("once", False) == "never"
+
+    metrics.configure()
+    metrics.reset_metrics()
+    spec = chain_spec()
+    adapter = SequenceAdapter(spec, seed=0)
+    repository = IntentRepository()
+    executor = SequenceExecutor(adapter, repository)
+    intent = build_intent(0.78)   # swap output 0.73 < 0.78: 'until_target' would purify (see the test above)
+    intent = intent.model_copy(update={"policy": intent.policy.model_copy(update={"allow_purification": False})})
+    executor.deploy(intent, ExecutionPlan(intent_id=intent.id, feasible=True, route=["a", "r1", "b"],
+                                          purification_mode="until_target"))
+    executor.run()
+
+    events = Counter(r["event_type"].name for r in metrics.storage.get_all())
+    assert executor.get_app("bds-intent").purification_mode == "never"
+    assert events["EP_SUCCESS"] == events["EP_FAILURE"] == 0
+    assert events["ES_SUCCESS"] > 0
+    deploying = [t.reason for t in repository.get(intent.id).lifecycle.history if "purification_mode" in (t.reason or "")]
+    assert deploying and "purification_mode=never" in deploying[0]

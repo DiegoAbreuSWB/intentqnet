@@ -37,7 +37,7 @@ def test_link_success_probability_decreases_with_loss():
 
 @pytest.mark.unit
 def test_route_raw_pair_probability_multiplies_across_hops():
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     per_hop = _link_success_probability(1000, 1e-5)
     route_probability = _route_raw_pair_probability(capabilities, ["a", "r", "b"])
     assert route_probability == pytest.approx(per_hop * per_hop)
@@ -57,7 +57,7 @@ def test_purification_round_success_probability_in_valid_range():
 
 @pytest.mark.unit
 def test_estimate_probabilistic_plan_no_purification_needed():
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l3-basic", source="a", destination="b", min_fidelity=0.65,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,
@@ -76,7 +76,7 @@ def test_estimate_probabilistic_plan_unreachable_fidelity_target():
     """Beyond L2's max_rounds ceiling, fidelity_success_probability must be
     exactly 0 (not a smooth decay it has no basis for) - see
     docs/l3_probabilistic_model.md, assumption 4."""
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l3-unreachable", source="a", destination="b", min_fidelity=0.9999,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,
@@ -88,7 +88,7 @@ def test_estimate_probabilistic_plan_unreachable_fidelity_target():
 
 @pytest.mark.unit
 def test_estimate_probabilistic_plan_confidence_interval_brackets_the_mean():
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l3-ci", source="a", destination="b", min_fidelity=0.65,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,
@@ -100,7 +100,7 @@ def test_estimate_probabilistic_plan_confidence_interval_brackets_the_mean():
 
 @pytest.mark.unit
 def test_estimate_probabilistic_plan_variance_matches_poisson_mean():
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l3-var", source="a", destination="b", min_fidelity=0.65,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,
@@ -111,7 +111,7 @@ def test_estimate_probabilistic_plan_variance_matches_poisson_mean():
 
 @pytest.mark.unit
 def test_probabilistic_planner_admits_high_confidence_plan():
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l3-admit", source="a", destination="b", min_fidelity=0.65,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,
@@ -128,7 +128,7 @@ def test_probabilistic_planner_admits_high_confidence_plan():
 
 @pytest.mark.unit
 def test_probabilistic_planner_rejects_below_threshold():
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l3-reject", source="a", destination="b", min_fidelity=0.9999,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,
@@ -146,7 +146,7 @@ def test_probabilistic_planner_rejects_below_threshold():
 def test_probabilistic_planner_higher_threshold_is_at_least_as_strict():
     """A higher admission_threshold must never accept an intent a lower
     threshold rejects (monotonicity of the admission rule)."""
-    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2))
+    capabilities = NetworkCapabilities(three_node_spec(attenuation_db_per_m=1e-5, stop_time_s=0.2, formalism="ket_vector"))
     intent = simple_intent(
         intent_id="l3-monotone", source="a", destination="b", min_fidelity=0.72,
         requested_pairs=10, min_delivered_pairs=10, start_time=0.01, duration=0.1,

@@ -2,12 +2,17 @@
 deviation from stock `sequence` is explicit, documented, tested and
 reversible (see docs/physical_model.md, "Deviations from stock SeQUeNCe").
 
-Only one patch exists: `ibqn_ep_rule_condition_request`, a replacement for
-`sequence.resource_management.action_condition_set.ep_rule_condition_request`
-(the condition deciding WHICH two memories a BBPSSW purification round
-consumes on the requesting side of a link). It is active ONLY while the
-Bell-diagonal formalism is active - under `ket_vector` it delegates to the
-stock function unchanged, so legacy runs are byte-identical.
+Two patches exist, both only reachable under the Bell-diagonal formalism
+(legacy `ket_vector` runs are byte-identical to stock SeQUeNCe):
+
+1. `ibqn_ep_rule_condition_request`, a replacement for
+   `sequence.resource_management.action_condition_set.ep_rule_condition_request`
+   (the condition deciding WHICH two memories a BBPSSW purification round
+   consumes on the requesting side of a link) - described below.
+2. `ibqn_bds_decohere`, a guard around `Memory.bds_decohere` - described at
+   the end of this docstring.
+
+--- Patch 1: purification pairing ------------------------------------------
 
 Why it is needed. Stock SeQUeNCe pairs a kept memory only with a measured
 memory whose recorded fidelity is EXACTLY equal
@@ -55,15 +60,64 @@ re-purify `PURIFIED` pairs, `'once'` only `ENTANGLED` ones; any other value,
 including IBQN's `'never'`, never purifies), the rule's memory scope, and
 the requesting/awaiting split between the two link endpoints - is
 preserved exactly.
+
+--- Patch 2: decoherence when one half of a pair was already consumed -----
+
+The two ends of a pair learn a protocol's outcome at different times (the
+purification requester one classical delay before the awaiter; the two
+ends of a swapped pair each after their own distance to the swapping
+node). The end that learns first may consume its half - hand it to the
+application, which resets the memory - while the other end still holds
+its half and has not processed the outcome yet. SeQUeNCe's Bell-diagonal
+protocols nevertheless update both memories of a pair from either end
+(`self.memory.bds_decohere()` and `remote_memory.bds_decohere()` in
+`BBPSSW_BDS.start`/`received_message`, `EntanglementSwappingA_BDS.start`,
+`EntanglementSwappingB_BDS.received_message`), and `Memory.bds_decohere`
+writes the decohered state back under BOTH keys of the pair. With one
+half already consumed, stock SeQUeNCe then does one of two things:
+
+(a) Crash. `Memory.reset` drops the consumed memory's state and
+    `Memory.excite` stamps `last_update_time` for its next generation
+    attempt before any new state exists; `bds_decohere` on that memory
+    raises `KeyError` and aborts the whole simulation. Needs the consumed
+    memory to be re-excited within the window between the two ends'
+    updates, which uniform classical delays rule out (a new attempt takes
+    at least two round trips) but fiber-following delays
+    (`classical_delay_model='fiber'`, docs/parameter_calibration.md) do
+    not: on the diamond's three-hop route the responder is 75 us of
+    classical path from the initiator but 25 us from its neighbor, and
+    re-excites 50 us after delivering.
+(b) Write a stale state. Decohering the half that is still held writes
+    the old pair's state back under the consumed memory's key too. Rarely
+    harmful - that memory's next reset or next heralded pair replaces it -
+    but it is a state the simulator should never hold, and if the consumed
+    memory had already been re-entangled it would overwrite the new pair.
+
+The integrity audit (`scripts/realistic/audit_state_integrity.py`, 39
+reservations over chains, the diamond and the mesh, three purification
+modes, 2 s down to 5 ms of coherence) counts both: of 34,076 decoherence
+calls, 34 were case (a) and 549 case (b), none of them onto a re-entangled
+memory; all 4,548 swap inputs and 3,608 purification inputs were pairs
+both ends still held, and no run ended with a dangling state.
+
+`ibqn_bds_decohere` keeps the stock channel and changes only its reach:
+it does nothing for a memory without a state (nothing to decohere), and a
+write-back never touches a partner key that no longer refers to the same
+pair. Physically this is the correct accounting: a consumed half stopped
+decohering when it was consumed, the half still held keeps decohering
+until its own node consumes it, and that is the fidelity the holding node
+records.
 """
 from __future__ import annotations
 
+from sequence.components.memory import Memory
 from sequence.constants import BELL_DIAGONAL_STATE_FORMALISM
 from sequence.kernel.quantum_manager import QuantumManager
 from sequence.resource_management import action_condition_set as _action_condition_set
 from sequence.resource_management import resource_manager as _resource_manager
 
 _STOCK_EP_RULE_CONDITION_REQUEST = _action_condition_set.ep_rule_condition_request
+_STOCK_BDS_DECOHERE = Memory.bds_decohere
 
 PURIFICATION_FIDELITY_FLOOR = 0.5
 """BBPSSW only improves pairs with fidelity > 1/2 (`BBPSSWProtocol.start`
@@ -140,22 +194,47 @@ def ibqn_ep_rule_condition_request(kept_memory, memory_manager, args):
     return [kept_memory, best_candidate]
 
 
+def ibqn_bds_decohere(self) -> None:
+    """`Memory.bds_decohere` confined to the pair this memory actually
+    holds - see the module docstring, patch 2. The Pauli channel itself is
+    the stock one."""
+    if self.decoherence_errors is None:
+        return _STOCK_BDS_DECOHERE(self)  # decoherence disabled: stock no-op
+    states = self.timeline.quantum_manager.states
+    state = states.get(self.qstate_key)
+    if state is None:
+        return  # pair already consumed and memory re-initialized: nothing to decohere
+    partners = {key: states.get(key) for key in state.keys if key != self.qstate_key}
+    _STOCK_BDS_DECOHERE(self)
+    for key, previous in partners.items():
+        if previous is not state:  # the partner moved on: undo the stock write-back under its key
+            if previous is None:
+                states.pop(key, None)
+            else:
+                states[key] = previous
+
+
 def apply_sequence_patches() -> None:
-    """Installs the patch (idempotent). `ResourceManager.generate_load_rules`
+    """Installs both patches (idempotent). `ResourceManager.generate_load_rules`
     binds the condition function through the name imported into
     `sequence.resource_management.resource_manager`, so that module's
     attribute is what has to change; the defining module is patched too so
     both names agree."""
     _resource_manager.ep_rule_condition_request = ibqn_ep_rule_condition_request
     _action_condition_set.ep_rule_condition_request = ibqn_ep_rule_condition_request
+    Memory.bds_decohere = ibqn_bds_decohere
 
 
 def remove_sequence_patches() -> None:
     """Restores stock SeQUeNCe behavior (used by tests that need to show the
-    difference the patch makes)."""
+    difference the patches make)."""
     _resource_manager.ep_rule_condition_request = _STOCK_EP_RULE_CONDITION_REQUEST
     _action_condition_set.ep_rule_condition_request = _STOCK_EP_RULE_CONDITION_REQUEST
+    Memory.bds_decohere = _STOCK_BDS_DECOHERE
 
 
 def sequence_patches_applied() -> bool:
-    return _resource_manager.ep_rule_condition_request is ibqn_ep_rule_condition_request
+    return (
+        _resource_manager.ep_rule_condition_request is ibqn_ep_rule_condition_request
+        and Memory.bds_decohere is ibqn_bds_decohere
+    )

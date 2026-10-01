@@ -30,6 +30,7 @@ from ..intent.repository import IntentRepository
 from ..network.capabilities import NetworkCapabilities
 from ..network.sequence_adapter import SequenceAdapter
 from ..network.topology import NetworkTopologySpec
+from ..planning.purification import executed_purification_mode
 from .planner_study_records import PlannerStudyTrialRecord
 from .records import TrialIdentity
 
@@ -47,12 +48,23 @@ def execute_trial_with_policy(
     *,
     project_commit: str | None,
     sequence_commit: str | None,
+    regime: str | None = None,
+    execution_cache: dict | None = None,
 ) -> PlannerStudyTrialRecord:
     """Plans `intent` with `policy` (an `IntentPlannerPolicy`), deploys the
     resulting plan (if feasible) via the real `SequenceExecutor`, runs the
     simulation, and evaluates assurance - exactly the same downstream
     pipeline `experiments.runner.execute_trial` uses, only the planning
-    step is swapped."""
+    step is swapped.
+
+    `execution_cache`: what the network does with an admitted plan depends
+    only on the topology, the intent, the seed, the route and the executed
+    purification mode - not on which planner chose them. A caller comparing
+    several planners on the SAME (topology, intent, seed) can pass one dict
+    for all of them; planners that pick the same route and mode then share
+    one simulation instead of repeating it (identical records either way,
+    see tests/experiments/test_planner_execution_cache.py). Never share a
+    cache across different topologies, intents or seeds."""
     from ..planning.planners.base import generate_candidate_paths
 
     metrics.configure()
@@ -85,6 +97,12 @@ def execute_trial_with_policy(
             observed_fidelity=None, absolute_fidelity_error=None, simulation_wall_time_s=None,
             project_git_commit=project_commit, sequence_git_commit=sequence_commit,
             python_version=sys.version.split()[0], timestamp=_now_iso(),
+            formalism=topology_spec.formalism, platform=topology_spec.platform,
+            purification_mode=(
+                executed_purification_mode(decision.selected_plan.purification_mode, intent.policy.allow_purification)
+                if decision.feasible else None
+            ),
+            regime=regime, allow_purification=intent.policy.allow_purification,
         )
         fields.update(overrides)
         return PlannerStudyTrialRecord(**fields)
@@ -92,10 +110,34 @@ def execute_trial_with_policy(
     if not decision.feasible:
         return _record(final_status="REJECTED")
 
+    signature = (
+        tuple(decision.selected_plan.route),
+        executed_purification_mode(decision.selected_plan.purification_mode, intent.policy.allow_purification),
+    )
+    outcome = execution_cache.get(signature) if execution_cache is not None else None
+    if outcome is None:
+        outcome = _execute_plan(intent, topology_spec, decision.selected_plan, seed=identity.seed)
+        if execution_cache is not None:
+            execution_cache[signature] = outcome
+
+    average_fidelity = outcome.get("average_fidelity")
+    estimated_fidelity = decision.predicted_average_fidelity
+    absolute_error = (
+        average_fidelity - estimated_fidelity if average_fidelity is not None and estimated_fidelity is not None
+        else None
+    )
+    return _record(**outcome, absolute_fidelity_error=absolute_error)
+
+
+def _execute_plan(intent: EntanglementIntent, topology_spec: NetworkTopologySpec, plan, *, seed: int) -> dict:
+    """Deploys `plan` on a fresh timeline, runs it and evaluates assurance.
+    Returns the measured record fields - everything in a trial record that
+    does not depend on which planner produced the plan."""
+    metrics.configure()
     repository = IntentRepository()
-    adapter = SequenceAdapter(topology_spec, seed=identity.seed)
+    adapter = SequenceAdapter(topology_spec, seed=seed)
     executor = SequenceExecutor(adapter, repository)
-    executor.deploy(intent, decision.selected_plan)
+    executor.deploy(intent, plan)
 
     t0 = time.perf_counter()
     try:
@@ -115,15 +157,21 @@ def execute_trial_with_policy(
         # while never inventing a SATISFIED/VIOLATED verdict SeQUeNCe
         # itself never reached.
         simulation_wall_time_s = time.perf_counter() - t0
-        return _record(
+        return dict(
             final_status="SIMULATION_ERROR", rejection_reason=f"{type(exc).__name__}: {exc}",
             simulation_wall_time_s=round(simulation_wall_time_s, 6),
         )
     simulation_wall_time_s = time.perf_counter() - t0
 
+    from .runner import _native_counter_metrics  # local import: `runner` imports this package's siblings
+
+    counters = _native_counter_metrics(metrics.collect_trial_metrics(intent.endpoints.source))
+
     record_status = repository.get(intent.id).lifecycle.status
     if record_status != IntentStatus.ACTIVE:
-        return _record(final_status=record_status.value, simulation_wall_time_s=round(simulation_wall_time_s, 6))
+        return dict(
+            final_status=record_status.value, simulation_wall_time_s=round(simulation_wall_time_s, 6), **counters,
+        )
 
     evidence = collect_intent_evidence(intent)
     evaluation = evaluate_intent(intent, evidence)
@@ -136,14 +184,12 @@ def execute_trial_with_policy(
         sum(p.fidelity for p in evidence.delivered_pairs) / delivered_pairs
         if evidence and delivered_pairs else None
     )
-    estimated_fidelity = decision.predicted_average_fidelity
-    absolute_error = (
-        average_fidelity - estimated_fidelity if average_fidelity is not None and estimated_fidelity is not None
-        else None
-    )
+    minimum_fidelity = min((p.fidelity for p in evidence.delivered_pairs), default=None) if evidence else None
 
-    return _record(
+    return dict(
         final_status=final_status.value, satisfied=evaluation.satisfied, delivered_pairs=delivered_pairs,
         average_fidelity=average_fidelity, observed_fidelity=average_fidelity,
-        absolute_fidelity_error=absolute_error, simulation_wall_time_s=round(simulation_wall_time_s, 6),
+        simulation_wall_time_s=round(simulation_wall_time_s, 6),
+        minimum_fidelity=minimum_fidelity, discarded_pairs=evidence.discarded_pairs if evidence else None,
+        **counters,
     )
