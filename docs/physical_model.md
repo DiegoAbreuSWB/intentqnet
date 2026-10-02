@@ -101,21 +101,47 @@ existe, mas o valor nunca é copiado para a reserva no SeQUeNCe 1.0.)
 
 | Estratégia | Estimativa | `execution_mode` | Semântica na execução |
 |---|---|---|---|
-| `NeverPurify` | nenhuma | `never` | nenhuma regra de purificação dispara (as condições do SeQUeNCe caem no `else` para valores desconhecidos). Pares abaixo do alvo ficam presos até expirar - as regras de swap exigem ambas as entradas ≥ alvo |
-| `PurifyOnce` (novo) | 1 rodada | `once` | modo nativo: cada par é purificado no máximo uma vez |
+| `NeverPurify` | nenhuma | `never` | nenhuma regra de purificação dispara (as condições do SeQUeNCe caem no `else` para valores desconhecidos). Um par fim-a-fim abaixo do alvo nunca poderá ser entregue: a aplicação o libera e o contabiliza (ver "Pares que não podem ser entregues") |
+| `PurifyOnce` (novo) | 1 rodada | `once` | modo nativo: cada par é purificado no máximo uma vez; um par que já teve sua rodada e continua abaixo do alvo é liberado |
 | `PurifyUntilTarget` (L1) | 1 rodada | `until_target` | modo nativo padrão: purifica qualquer par abaixo do alvo, inclusive já purificados. A discrepância estimativa/execução é o fenômeno estudado em `false_rejection_root_cause.md`, preservado de propósito |
 | `IterativeAnalyticalPurification` (L2) | n rodadas | `until_target` | idem |
 
 Confirmado na sonda: `never` → 0 eventos EP e 0 entregas quando o alvo
-(0,78) excede o swap (0,73); `once` → 9 rodadas, 0 entregas (uma rodada dá
+(0,78) excede o swap (0,73); `once` → 0 entregas (uma rodada dá
 0,767 < 0,78); `until_target` → 302 rodadas, 90 entregas ≥ 0,78.
+
+**A política do intent prevalece sobre a do plano.** Um intent com
+`policy.allow_purification = False` é executado com o modo `never`,
+qualquer que seja a estratégia que planejou a rota
+(`planning.purification.executed_purification_mode`, aplicado num único
+ponto, `SequenceExecutor._deploy_plan`). O lado do planejamento sempre
+respeitou a flag (`decide` não conta com purificação); o lado da execução
+precisa respeitá-la separadamente desde que a fidelidade passou a ser lida
+do estado: um par que atendia ao alvo no plano pode decoerir abaixo dele
+em execução, e `until_target` o purificaria contra a política declarada.
+O modo registrado nos resultados (`purification_mode`) é o executado.
+
+### Pares que não podem ser entregues
+
+Sob `never`, um par fim-a-fim abaixo do alvo nunca será entregue; sob
+`once`, o mesmo vale para um par que já teve sua rodada. O `RequestApp`
+original deixa esses pares ocupando as duas memórias até o corte
+(`cutoff_ratio·T` = 1 s com a memória de SiV, mais que a janela inteira de
+uma reserva de 0,3 s), o que esgota o pool e zera a geração - um artefato
+da aplicação, não da política. `IntentRequestApp` libera a memória
+(`_is_undeliverable` → `_discard`) e registra um evento `IBQN_DISCARD` por
+par, do lado do iniciador; a contagem chega à evidência do intent
+(`IntentEvidence.discarded_pairs`) e às tabelas (`discarded_pairs`). Sob
+`until_target` nada é descartado: as regras de purificação ainda são donas
+do par.
 
 ## Desvios em relação ao SeQUeNCe de fábrica
 
-Há **um** patch de runtime, em `network.sequence_patches`, ativo apenas
-enquanto o formalismo BDS está ativo (sob `ket_vector` delega à função
-original, byte-idêntico):
+Há **dois** patches de runtime, em `network.sequence_patches`, ambos só
+alcançáveis sob o formalismo BDS (sob `ket_vector` a execução é
+byte-idêntica ao SeQUeNCe original). O código do submódulo não é alterado.
 
+**Patch 1 - pareamento da purificação.**
 `ep_rule_condition_request` (qual par de memórias uma rodada de BBPSSW
 consome, no lado que pede) é substituída porque a versão original exige
 **igualdade exata** de fidelidade entre as duas memórias. Isso é um proxy
@@ -137,8 +163,76 @@ escalar do outro extremo pode já estar < 1/2 e derrubar a simulação
 canal de Pauli é markoviano. Modos, escopo de memórias e a divisão
 pede/aguarda entre os extremos são preservados.
 
-Tudo isso está testado em `tests/unit/test_sequence_patches.py`; o patch é
-reversível (`remove_sequence_patches`).
+**Patch 2 - decoerência quando metade do par já foi consumida.** Os dois
+extremos de um par ficam sabendo do resultado de um protocolo em instantes
+diferentes: na purificação, quem pede sabe um atraso clássico antes de quem
+aguarda; num swap, cada extremo sabe depois do seu próprio atraso até o nó
+que trocou. O extremo que sabe primeiro pode consumir sua metade (entregá-la
+à aplicação, que reinicia a memória) enquanto o outro ainda guarda a sua.
+Os protocolos BDS do SeQUeNCe, porém, atualizam **as duas** memórias do par
+a partir de qualquer extremo (`self.memory.bds_decohere()` e
+`remote_memory.bds_decohere()` em `BBPSSW_BDS.start`/`received_message`,
+`EntanglementSwappingA_BDS.start`, `EntanglementSwappingB_BDS.received_message`),
+e `Memory.bds_decohere` grava o estado decoerido sob as duas chaves. Com uma
+metade já consumida, o SeQUeNCe original faz uma de duas coisas:
+
+- (a) **aborta a simulação**: `Memory.reset` remove o estado da memória
+  consumida e `Memory.excite` carimba `last_update_time` para a próxima
+  tentativa antes de existir um estado novo; `bds_decohere` nessa memória
+  levanta `KeyError`. Exige que a memória consumida seja reexcitada dentro
+  da janela entre as atualizações dos dois extremos - impossível com atraso
+  clássico uniforme (uma nova tentativa leva ao menos dois round-trips), mas
+  não com atrasos que seguem a fibra: na rota de três saltos do diamante o
+  respondedor está a 75 µs do iniciador e a 25 µs do vizinho, e reexcita
+  50 µs depois de entregar;
+- (b) **grava um estado fantasma**: decoerir a metade ainda guardada
+  regrava o estado do par antigo também sob a chave da memória consumida.
+  Raramente danoso (o próximo reset ou o próximo par heraldado o
+  substitui), mas é um estado que o simulador não deveria conter, e se a
+  memória consumida já tivesse sido reentrelaçada ele sobrescreveria o par
+  novo.
+
+`ibqn_bds_decohere` mantém o canal de Pauli original e muda só o alcance:
+não faz nada numa memória sem estado, e a regravação nunca toca uma chave
+parceira que não se refere mais ao mesmo par. É também a contabilidade
+física correta: a metade consumida parou de decoerir ao ser consumida, a
+metade guardada continua decoerindo até o seu nó consumi-la, e é essa a
+fidelidade que o nó registra.
+
+A auditoria de integridade (`scripts/realistic/audit_state_integrity.py` →
+`results/realistic/audit/state_integrity_audit.csv`; 39 reservas em cadeias,
+diamante e malha, três modos de purificação, coerência de 2 s a 5 ms)
+classifica cada chamada: de 34.076 chamadas de decoerência, 34 eram o caso
+(a) e 549 o caso (b), nenhuma sobre uma memória reentrelaçada; **todas as
+4.548 entradas de swap e 3.608 entradas de purificação eram pares que os
+dois extremos ainda guardavam**, nenhuma simulação abortou e nenhuma
+terminou com estado pendurado. Ou seja: a corrida existe só no caminho de
+entrega (a metade do par já entregue), nunca alimenta um swap ou uma
+purificação com um par inexistente.
+
+Tudo isso está testado em `tests/unit/test_sequence_patches.py`; os patches
+são reversíveis (`remove_sequence_patches`).
+
+## Canais clássicos que seguem a fibra
+
+`NetworkTopologySpec.classical_delay_model = "fiber"` (usado por todas as
+topologias calibradas, `experiments.realistic_topologies`) dá a cada par de
+nós o atraso do menor caminho em fibra entre eles, a 2·10⁸ m/s (5 µs/km),
+em vez de um único atraso para todos os pares. Um enlace de 5 km tem
+25 µs de ida; os extremos de uma rota de três saltos, 75 µs. O modo
+`"uniform"` (padrão, legado) mantém o comportamento anterior.
+
+Consequência medida no ciclo de tentativa de geração (protocolo
+single-heralded; `docs/generation_model_audit.md`): cada tentativa é
+precedida de dois handshakes - o pareamento dos protocolos pelos resource
+managers (REQUEST do nó anterior na rota, RESPONSE de volta) e a negociação
+do instante de emissão, aberta pelo nó *primário* (o de nome
+lexicograficamente maior). Se o primário é quem recebeu o REQUEST, os dois
+handshakes se sobrepõem e a tentativa leva **4 atrasos** de ida; se o
+primário é quem pediu, ele precisa esperar o RESPONSE e a tentativa leva
+**5 atrasos**. O mesmo enlace físico é 20% mais lento num sentido da rota
+que no outro - um artefato do simulador que o modelo de geração dos
+planejadores reproduz (`generation_models.single_heralded_cycle_factor`).
 
 ## Fórmulas fechadas usadas pelo planejador (`ibqn.physics`)
 
@@ -174,11 +268,22 @@ e cada extremo reporta a sua própria - o estimador usa o mínimo.
 
 ## Efeitos colaterais conhecidos do modo BDS
 
-- Sob `once`/`never`, pares que não atingem o alvo ficam **presos** nas
-  memórias até o corte (`cutoff_ratio·T`) - com T = 1 s e janelas de 0,1 s,
-  isso esgota o pool e zera a taxa de geração (76 EG_SUCCESS vs. 1944 em
-  `until_target` na sonda). É a semântica do SeQUeNCe e uma consequência
-  real da política, não um bug.
+- Sob `once`/`never`, o `RequestApp` original deixaria pares que não
+  atingem o alvo **presos** nas memórias até o corte, esgotando o pool
+  (76 EG_SUCCESS vs. 1944 em `until_target` na sonda, antes da correção).
+  `IntentRequestApp` os libera e contabiliza - ver "Pares que não podem ser
+  entregues".
+- A regra de swap do SeQUeNCe escolhe o parceiro pela **ordem de índice**
+  das memórias, não pela idade do par. Quando há mais de um par esperando
+  no mesmo nó, os de índice alto podem esperar dezenas de milissegundos
+  (até 130 ms numa janela de 0,3 s na cadeia de dois repetidores) e
+  decoerem nesse tempo. É o comportamento real do simulador e uma fonte
+  física da dispersão de fidelidade entregue.
+- Os dois extremos de um par fim-a-fim avaliam a fidelidade em instantes
+  diferentes (cada um ao receber o resultado do último swap). A diferença é
+  a decoerência de dezenas de microssegundos (ΔF ~ 10⁻⁵ com T = 2 s); um
+  alvo dentro dessa faixa faria um extremo entregar e o outro não. Não foi
+  observado nas campanhas e não é tratado.
 - A taxa de geração muda em relação ao ket: o single-heralded exige a
   chegada dos dois fótons e tem sucesso de BSM 1/2 por tentativa.
 - Sob `ket_vector`, a sonda mostra que o estado armazenado é sempre um par

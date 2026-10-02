@@ -121,9 +121,14 @@ duas consequências que o manuscrito deve declarar:
    (Stephenson 2020; Krutyanskiy 2023) e as taxas demonstradas são de
    dezenas a centenas de Hz por enlace.
 2. O ciclo de tentativa no SeQUeNCe é limitado pela negociação clássica
-   entre vizinhos (≈2× o atraso clássico) e por `memory_frequency_hz`; com
-   atraso de 5 µs/km e enlaces de 1–10 km isso dá 10–100 kHz, dentro da
-   faixa real (NV 100–260 kHz; íons ≈0,8 MHz; Rb 9,7 kHz).
+   entre vizinhos - **4 ou 5 atrasos clássicos de ida** do enlace, medido
+   (`docs/generation_model_audit.md`) - e por `memory_frequency_hz`; com
+   atraso de 5 µs/km e enlaces de 2–10 km isso dá 5–25 kHz por memória,
+   abaixo das taxas de repetição dos experimentos (NV 100–260 kHz; íons
+   ≈0,8 MHz; Rb 9,7 kHz), que não esperam a heraldação de cada tentativa
+   antes da seguinte. O simulador é, portanto, conservador na taxa de
+   tentativas: a 5 km cada memória faz 10⁴ tentativas/s e, com
+   p = 5,6·10⁻³ por tentativa, gera ≈56 pares/s.
 
 Mapeamento adotado (ver `platforms.py`):
 
@@ -204,7 +209,32 @@ requisitos de Avis et al. (2023). Implicações para as campanhas:
   pena" - a varredura de `gate_fidelity` ∈ {0,937; 0,95; 0,97; 0,99; 1,0}
   responde isso diretamente.
 
-## 10. Lacunas reconhecidas
+## 10. Condições de hardware das campanhas
+
+As campanhas calibradas (`docs/realistic_campaigns.md`) rodam em duas
+condições, sempre lado a lado:
+
+| Condição | Perfil | Diferença |
+|---|---|---|
+| `literature` | `siv_2024` | todos os valores da coluna SiV acima |
+| `theoretical_ops` | `siv_2024_theoretical_ops` | os mesmos valores, exceto `gate_fidelity` = `measurement_fidelity` = 1 |
+
+A segunda **não** é um nó demonstrado. Existe porque, com as portas
+demonstradas, a purificação não tem regime em que ajude (Seção 9), e a
+arquitetura de gerência precisa ser exercitada também onde ela ajuda:
+planejar rodadas, executar a política, pagar o custo em pares. Manter o
+resto do hardware (fidelidade do par elementar, eficiência, memória, fibra)
+nos valores demonstrados isola um único fator - o ruído das operações
+locais - e deixa explícito o que é tecnologia atual e o que é referência
+teórica. Todo resultado reportado identifica a condição.
+
+Geometria: enlaces de 5 km (as demonstrações em fibra instalada têm nós a
+7,9–12,5 km em Hefei, braços de 10–15 km em Delft–Haia e um laço de 35 km
+em Boston), 4 memórias por nó extremo e 8 por repetidor, canais clássicos
+com o atraso da fibra (5 µs/km). O enlace direto do diamante usa a
+atenuação medida em fibra instalada (0,49 dB/km, Knaut 2024) em 2 × 20 km.
+
+## 11. Lacunas reconhecidas
 
 - Contagens escuras e visibilidade de interferência (0,89–0,9 em Avis et
   al.) não são modeladas pelo `SingleHeraldedBSM` do SeQUeNCe; a

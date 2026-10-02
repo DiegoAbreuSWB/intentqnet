@@ -71,9 +71,9 @@ def combo(min_fidelity, slots, duration, pairs, regime, allow_purification=True)
 
 # Fidelity reference points behind the grids (ibqn.physics, raw link 0.86):
 #   literature (g=0.937, m=0.995): swap x1 0.709, x2 0.595, x3 0.509; one BBPSSW round does not help.
-#   theoretical ops (g=m=1):      swap x1 0.746, x2 0.654, x3 0.557;
-#                                 chain1 purified 0.784 / 0.823 / 0.859 (1/2/3 rounds),
-#                                 chain2 purified 0.683 / 0.716 / 0.752.
+#   theoretical ops (g=m=1):      swap x1 0.746, x2 0.654, x3 0.578;
+#                                 chain1 purified 0.784 / 0.823 / 0.860 (1/2/3 rounds),
+#                                 chain2 purified 0.683 / 0.717 / 0.753.
 PLANNER_GRID = {
     "chain1": [
         combo(0.60, 4, 0.3, 10, "generous"),
