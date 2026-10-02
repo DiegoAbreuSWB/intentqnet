@@ -87,6 +87,9 @@ def fig_purification_policies(processed: Path, out: Path) -> None:
         for col, (hardware, title) in enumerate(HARDWARE):
             ax = axes[row][col]
             cell = table[(table["topology"] == topology) & (table["hardware"] == hardware)]
+            if cell.empty:  # campaign still running for this cell
+                ax.set_title(f"{title} - no data yet")
+                continue
             for offset, (policy, label, marker, color, ls) in enumerate(POLICIES):
                 g = cell[(cell["purification_policy"] == policy) & (cell["delivered_pairs_n"] > 0)].sort_values("requested_fidelity")
                 if g.empty:

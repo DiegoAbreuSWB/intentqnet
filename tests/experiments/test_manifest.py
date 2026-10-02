@@ -73,3 +73,41 @@ def test_update_manifest_progress_without_existing_manifest_raises(tmp_path):
     path = manifest_path(tmp_path, "does-not-exist")
     with pytest.raises(FileNotFoundError):
         update_manifest_progress(path, completed_trials=1, skipped_trials=0, failed_trials=0, output_files=[])
+
+
+@pytest.mark.unit
+def test_write_manifest_retries_while_another_process_holds_the_file(tmp_path, monkeypatch):
+    """On Windows, replacing a file that an antivirus scan or an editor has
+    open raises PermissionError for a few milliseconds - that must not
+    abort a campaign that rewrites its manifest after every trial."""
+    from ibqn.experiments import manifests
+
+    real_replace, calls = manifests.os.replace, []
+
+    def flaky_replace(source, destination):
+        calls.append(source)
+        if len(calls) <= 3:
+            raise PermissionError(5, "Access is denied")
+        real_replace(source, destination)
+
+    monkeypatch.setattr(manifests.os, "replace", flaky_replace)
+    monkeypatch.setattr(manifests, "REPLACE_RETRY_DELAY_S", 0.0)
+    target = tmp_path / "manifests" / "campaign.json"
+
+    manifests.write_manifest(target, {"campaign": "X", "completed_trials": 7})
+
+    assert len(calls) == 4
+    assert manifests.read_manifest(target) == {"campaign": "X", "completed_trials": 7}
+
+
+@pytest.mark.unit
+def test_write_manifest_gives_up_when_the_file_stays_locked(tmp_path, monkeypatch):
+    from ibqn.experiments import manifests
+
+    def locked(source, destination):
+        raise PermissionError(5, "Access is denied")
+
+    monkeypatch.setattr(manifests.os, "replace", locked)
+    monkeypatch.setattr(manifests, "REPLACE_RETRY_DELAY_S", 0.0)
+    with pytest.raises(PermissionError):
+        manifests.write_manifest(tmp_path / "campaign.json", {"campaign": "X"})

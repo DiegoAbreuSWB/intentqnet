@@ -164,6 +164,8 @@ def audit_macros(m: Macros, processed: Path) -> None:
         m.count("AuditDecoherenceNoState", row["decohere_no_state"], src)
         m.count("AuditDecoherenceStale", row["decohere_stale_recreate"] + row["decohere_stale_overwrite"], src)
         m.count("AuditDecoherenceOverwrite", row["decohere_stale_overwrite"], src)
+        m.count("AuditDecoherenceRaces",
+                row["decohere_no_state"] + row["decohere_stale_recreate"] + row["decohere_stale_overwrite"], src)
     generation = read(processed, "r00_generation_model_audit")
     if generation is not None:
         src = "r00_generation_model_audit.csv"
@@ -173,6 +175,8 @@ def audit_macros(m: Macros, processed: Path) -> None:
         m.count("AuditGenerationRuns", generation["runs"].sum(), src)
         m.count("AuditGenerationCells", len(multi), src)
         m.number("AuditBufferedPooledRatio", multi["delivered"].sum() / (multi["rate_model"] * multi["window"]).sum(), src, 3)
+        m.number("AuditBufferedSecondHalfRatio",
+                 multi["second_half"].sum() / (multi["rate_model"] * multi["window"] / 2).sum(), src, 3)
         m.percent("AuditBufferedMeanAbsError", (multi["measured/model"] - 1).abs().mean(), src)
         m.number("AuditBufferedMinRatio", multi["measured/model"].min(), src, 2)
         m.number("AuditBufferedMaxRatio", multi["measured/model"].max(), src, 2)
@@ -192,6 +196,7 @@ def routing_macros(m: Macros, processed: Path) -> None:
         src = f"r02_routing.csv[{row['hardware']},{row['topology']},{row['routing_strategy']}]"
         m.number(prefix + "Delivered", row["delivered_pairs_mean"], src)
         m.number(prefix + "Fidelity", row["average_fidelity_mean"], src, 3)
+        m.number(prefix + "EstimatedFidelity", row["estimated_fidelity"], src, 3)
         m.percent(prefix + "SatisfiedRate", row["satisfied_rate"], src, 0)
         m.count(prefix + "Hops", row["hop_count"], src)
         m.count(prefix + "Seeds", row["seeds"], src)
@@ -216,19 +221,34 @@ def purification_macros(m: Macros, processed: Path) -> None:
 
 
 def planner_macros(m: Macros, processed: Path) -> None:
-    quality = read(processed, "r04_planner_decision_quality")
+    quality = read(processed, "r04_planner_decision_table")
     if quality is not None:
         for _, row in quality.iterrows():
             prefix = macro_name("RFour", row["hardware"], row["planner_level"])
-            src = f"r04_planner_decision_quality.csv[{row['hardware']},{row['planner_level']}]"
+            src = f"r04_planner_decision_table.csv[{row['hardware']},{row['planner_level']}]"
+            m.count(prefix + "Intents", row["intents"], src)
+            m.count(prefix + "Admitted", row["admitted"], src)
+            m.count(prefix + "Satisfied", row["satisfied"], src)
+            m.count(prefix + "Violated", row["violated"], src)
+            m.count(prefix + "Rejected", row["rejected"], src)
+            m.percent(prefix + "AdmittedRate", row["admitted"] / row["intents"] if row["intents"] else float("nan"), src, 0)
+            m.percent(prefix + "SatisfiedOfAll", row["satisfied"] / row["intents"] if row["intents"] else float("nan"), src, 0)
+            m.proportion(prefix + "FalseFeas", row, "false_feasibility", src)
+            if "false_rejection_rate" in row:
+                m.proportion(prefix + "FalseRej", row, "false_rejection", src)
+    # raw outcomes (as collected) by topology and by regime, for the text's worked examples
+    for name, key, label in (("r04_planner_decision_quality_by_topology", "topology", "RFourTopo"),
+                             ("r04_planner_decision_quality_by_regime", "regime", "RFourRegime")):
+        table = read(processed, name)
+        if table is None:
+            continue
+        for _, row in table.iterrows():
+            prefix = macro_name(label, row["hardware"], row[key], row["planner_level"])
+            src = f"{name}.csv[{row['hardware']},{row[key]},{row['planner_level']}]"
             m.count(prefix + "Trials", row["trials"], src)
             m.count(prefix + "Satisfied", row["n_satisfied"], src)
             m.count(prefix + "Violated", row["n_violated"], src)
             m.count(prefix + "Rejected", row["n_rejected"], src)
-            m.percent(prefix + "AdmittedRate", row["admitted_rate"], src)
-            m.proportion(prefix + "FalseFeas", row, "false_feasibility", src)
-            if "false_rejection_rate" in row:
-                m.proportion(prefix + "FalseRej", row, "false_rejection", src)
     accuracy = read(processed, "r04_estimate_accuracy")
     if accuracy is not None:
         for _, row in accuracy.iterrows():
@@ -329,9 +349,24 @@ def multi_intent_macros(m: Macros, processed: Path) -> None:
             m.count(prefix + macro_name(column), row[column], src)
 
 
+def assurance_macros(m: Macros, processed: Path) -> None:
+    table = read(processed, "assurance_consistency")
+    if table is None:
+        return
+    row, src = table[table["campaign"] == "ALL"].iloc[0], "assurance_consistency.csv[ALL]"
+    m.count("AssuranceExecuted", row["executed"], src)
+    m.count("AssuranceRejected", row["rejected"], src)
+    m.count("AssuranceMismatches", row["classification_mismatches"], src)
+    m.count("AssuranceBelowTargetDeliveries", row["delivered_pairs_below_requested_fidelity"], src)
+    m.count("AssuranceRejectedEvaluated", row["rejected_with_an_evaluation"], src)
+    m.count("AssuranceNotEvaluated", row["other"], src)
+
+
 # --------------------------------------------------------------------------
 def planner_table(processed: Path) -> str | None:
-    quality = read(processed, "r04_planner_decision_quality")
+    """The decision-quality table: one row per planning model and hardware
+    condition, from `r04_planner_decision_table.csv`."""
+    quality = read(processed, "r04_planner_decision_table")
     if quality is None:
         return None
     has_oracle = "false_rejection_rate" in quality
@@ -343,16 +378,18 @@ def planner_table(processed: Path) -> str | None:
                 f"[{100 * row[f'{column}_ci_low']:.0f}, {100 * row[f'{column}_ci_high']:.0f}]")
 
     lines = ["% Generated by scripts/realistic/build_manuscript_inputs.py - DO NOT EDIT BY HAND.",
-             "\\begin{tabular}{llrrr" + ("l" if has_oracle else "") + "l}", "\\toprule",
-             "Hardware & Model & Sat. & Viol. & Rej. & False feasibility [95\\% CI]"
-             + (" & False rejection [95\\% CI]" if has_oracle else "") + " \\\\", "\\midrule"]
-    for hardware, label in (("literature", "Literature"), ("theoretical_ops", "Ideal ops")):
+             "\\begin{tabular}{@{}llrrr" + ("l" if has_oracle else "") + "l@{}}", "\\toprule",
+             "\\textbf{Hardware} & \\textbf{Model} & \\textbf{Sat.} & \\textbf{Viol.} & \\textbf{Rej.} & "
+             "\\textbf{False feasibility} [95\\% CI]"
+             + (" & \\textbf{False rejection} [95\\% CI]" if has_oracle else "") + " \\\\", "\\midrule"]
+    for hardware, label in (("literature", "Literature"), ("theoretical_ops", "Ideal operations")):
         rows = quality[quality["hardware"] == hardware].set_index("planner_level")
         for i, level in enumerate([p for p in PLANNER_NAMES if p in rows.index]):
             row = rows.loc[level]
+            marker = "$^{\\dagger}$" if row.get("false_rejection_basis") == "same execution" else ""
             lines.append(
-                f"{label if i == 0 else ''} & {level} & {int(row['n_satisfied'])} & {int(row['n_violated'])} & "
-                f"{int(row['n_rejected'])} & {cell(row, 'false_feasibility')}"
+                f"{label if i == 0 else ''} & {level}{marker} & {int(row['satisfied'])} & {int(row['violated'])} & "
+                f"{int(row['rejected'])} & {cell(row, 'false_feasibility')}"
                 + (f" & {cell(row, 'false_rejection')}" if has_oracle else "") + " \\\\")
         lines.append("\\midrule" if hardware == "literature" else "\\bottomrule")
     lines.append("\\end{tabular}")
@@ -360,7 +397,7 @@ def planner_table(processed: Path) -> str | None:
 
 
 BUILDERS = [physics_macros, audit_macros, routing_macros, purification_macros, planner_macros, reconciliation_macros, baseline_macros,
-            overhead_macros, resource_macros, multi_intent_macros]
+            overhead_macros, resource_macros, multi_intent_macros, assurance_macros]
 
 
 def main() -> None:

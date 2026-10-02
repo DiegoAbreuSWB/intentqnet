@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -54,12 +55,34 @@ def build_initial_manifest(spec: CampaignSpec, *, campaign_file: str | Path, exp
     }
 
 
+REPLACE_ATTEMPTS = 20
+REPLACE_RETRY_DELAY_S = 0.1
+
+
 def write_manifest(path: str | Path, manifest: dict[str, Any]) -> None:
     manifest_file = Path(path)
     manifest_file.parent.mkdir(parents=True, exist_ok=True)
     tmp_file = manifest_file.with_suffix(manifest_file.suffix + ".tmp")
     tmp_file.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    os.replace(tmp_file, manifest_file)
+    _replace_with_retry(tmp_file, manifest_file)
+
+
+def _replace_with_retry(source: Path, destination: Path) -> None:
+    """`os.replace`, retried while another process holds the destination.
+
+    On Windows a rename onto a file that is open elsewhere - an antivirus
+    scan, an indexer, an editor that watches the results directory - fails
+    with `PermissionError`. The manifest is rewritten after every trial, so
+    over a campaign of thousands of trials that collision does happen (it
+    aborted a campaign 240 trials in); the lock lasts milliseconds."""
+    for attempt in range(REPLACE_ATTEMPTS):
+        try:
+            os.replace(source, destination)
+            return
+        except PermissionError:
+            if attempt == REPLACE_ATTEMPTS - 1:
+                raise
+            time.sleep(REPLACE_RETRY_DELAY_S)
 
 
 def read_manifest(path: str | Path) -> dict[str, Any] | None:

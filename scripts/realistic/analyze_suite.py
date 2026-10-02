@@ -260,6 +260,40 @@ def planners(root: Path) -> dict[str, pd.DataFrame]:
     out["r04_l3_calibration"] = pd.DataFrame(rows)
     out["r04_l3_reliability_bins"] = pd.DataFrame(bins)
 
+    # --- one table for the manuscript: every model's admission decisions against ground truth ---
+    # Deterministic models: what they admitted/rejected, false rejection from the offline oracle.
+    # Probabilistic models were collected with admission disabled, so every intent ran: "admitted"
+    # is predicted probability >= 0.5, and both error rates are scored on that same execution.
+    rows = []
+    for _, q in out["r04_planner_decision_quality"].iterrows():
+        level = str(q["planner_level"])
+        if level in L3_FAMILY:
+            continue
+        row = dict(hardware=q["hardware"], planner_level=level, intents=int(q["trials"]), admitted=int(q["admitted_count"]),
+                   satisfied=int(q["n_satisfied"]), violated=int(q["n_violated"]), rejected=int(q["n_rejected"]),
+                   not_evaluated=int(q["n_failed"] + q["n_simulation_error"]),
+                   **{k: q[k] for k in q.index if k.startswith("false_feasibility_")})
+        if oracle is not None:
+            row.update({k: q[k] for k in q.index if k.startswith("false_rejection_")})
+            row["false_rejection_basis"] = "offline oracle"
+        rows.append(row)
+    all_l3 = trials[trials["planner_level"].isin(L3_FAMILY)]
+    for (hardware, level), g in l3.groupby(["hardware", "planner_level"]):
+        p = g["predicted_satisfaction_probability"].clip(0, 1)
+        admitted, satisfied = p >= 0.5, g["outcome"] == 1
+        submitted = len(all_l3[(all_l3["hardware"] == hardware) & (all_l3["planner_level"] == level)])
+        rows.append(dict(
+            hardware=hardware, planner_level=level, intents=submitted, admitted=int(admitted.sum()),
+            satisfied=int((admitted & satisfied).sum()), violated=int((admitted & ~satisfied).sum()),
+            rejected=int((~admitted).sum()), not_evaluated=submitted - len(g),
+            **proportion_columns("false_feasibility", int((admitted & ~satisfied).sum()), int(admitted.sum())),
+            **proportion_columns("false_rejection", int((~admitted & satisfied).sum()), int((~admitted).sum())),
+            false_rejection_basis="same execution",
+        ))
+    table = pd.DataFrame(rows)
+    table["planner_level"] = pd.Categorical(table["planner_level"], PLANNER_ORDER, ordered=True)
+    out["r04_planner_decision_table"] = table.sort_values(["hardware", "planner_level"]).reset_index(drop=True)
+
     if oracle is not None:
         rows = []
         for key, g in oracle.groupby(["hardware", "planner_level", "rejection_reason"], dropna=False):
@@ -375,11 +409,52 @@ def audits(root: Path) -> dict[str, pd.DataFrame]:
     return out
 
 
+def assurance_consistency(root: Path) -> dict[str, pd.DataFrame]:
+    """Does every executed intent's recorded outcome agree with its own
+    evidence? An intent is SATISFIED exactly when it delivered at least its
+    minimum number of pairs (only pairs at or above the requested fidelity
+    are ever delivered) - recomputed here from the delivered-pair count and
+    compared with the lifecycle status each campaign recorded."""
+    sources = [
+        ("R02_routing", root / "raw" / "R02_routing" / "trials.csv"),
+        ("R03_purification", root / "raw" / "R03_purification" / "trials.csv"),
+        ("R08_resource_semantics", root / "raw" / "R08_resource_semantics" / "trials.csv"),
+        ("R04_planner_evolution", root / "planner_study" / "R04_planner_evolution" / "trials.csv"),
+        ("R04b_simulation_planner", root / "planner_study" / "R04b_simulation_planner" / "trials.csv"),
+    ]
+    rows = []
+    for campaign, path in sources:
+        if not path.exists():
+            continue
+        frame = pd.read_csv(path)
+        executed = frame[frame["final_status"].isin(["SATISFIED", "VIOLATED"])]
+        enough = executed["delivered_pairs"] >= executed["min_delivered_pairs"]
+        if "recovered" in executed:  # a reconciled trial reports its second episode's status
+            comparable = executed[executed["recovered"].isna()]
+            enough = enough[comparable.index]
+            executed = comparable
+        below_target = executed["minimum_fidelity"].notna() & (executed["minimum_fidelity"] < executed["requested_fidelity"])
+        rows.append(dict(
+            campaign=campaign, trials=len(frame), executed=len(executed),
+            rejected=int((frame["final_status"] == "REJECTED").sum()),
+            other=int((~frame["final_status"].isin(["SATISFIED", "VIOLATED", "REJECTED"])).sum()),
+            classification_mismatches=int(((executed["final_status"] == "SATISFIED") != enough).sum()),
+            delivered_pairs_below_requested_fidelity=int(below_target.sum()),
+            rejected_with_an_evaluation=int(frame.loc[frame["final_status"] == "REJECTED", "delivered_pairs"].notna().sum()),
+        ))
+    if not rows:
+        raise FileNotFoundError(2, "no campaign with executed trials", "trials.csv")
+    table = pd.DataFrame(rows)
+    total = table.drop(columns="campaign").sum().to_dict()
+    table = pd.concat([table, pd.DataFrame([dict(campaign="ALL", **total)])], ignore_index=True)
+    return {"assurance_consistency": table}
+
+
 CAMPAIGNS = [
     ("audits", audits), ("R02 routing", routing), ("R03 purification", purification),
     ("R08 resource semantics", resource_semantics), ("R04/R04b/R05 planners", planners),
     ("R06 reconciliation", reconciliation), ("R01 baselines", baselines), ("R07 overhead", overhead),
-    ("R09 multi-intent", multi_intent),
+    ("R09 multi-intent", multi_intent), ("assurance consistency", assurance_consistency),
 ]
 
 
