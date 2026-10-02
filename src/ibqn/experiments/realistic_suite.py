@@ -157,7 +157,7 @@ def _evidence_summary(intent: EntanglementIntent) -> tuple[int, float | None]:
 def run_jobs_to_csv(
     jobs: Iterable[dict], job_runner: Callable[[dict], Any], out_csv: str | Path, *,
     key: Callable[[dict], str], workers: int, describe: Callable[[dict, dict], str] | None = None,
-    checkpoint_every: int = 40,
+    checkpoint_every: int = 10,
 ) -> pd.DataFrame:
     """Runs `jobs` (skipping any whose `key` is already in `out_csv`). A job
     returns one row (a dict) or several (a list of dicts); every row is
