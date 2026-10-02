@@ -58,6 +58,7 @@ from ..planning.planners import (
 )
 from ..planning.routing import ShortestHopCountRouting
 from .baselines import run_native_sequence_baseline, run_offline_oracle_baseline, run_static_provisioning_baseline
+from .manifests import replace_with_retry
 from .overhead import run_instrumented_trial
 from .parallel import execute_jobs
 from .planner_study_runner import execute_trial_with_policy
@@ -187,11 +188,20 @@ def run_jobs_to_csv(
             if describe is not None:
                 print(f"[{i}/{total}] {describe(job, result)}", flush=True)
             if i % checkpoint_every == 0:
-                pd.DataFrame(rows).to_csv(out_csv, index=False)
+                _write_csv(rows, out_csv)
     finally:  # an interrupted or crashed campaign keeps every row it finished
         if rows:
-            pd.DataFrame(rows).to_csv(out_csv, index=False)
+            _write_csv(rows, out_csv)
     return pd.DataFrame(rows)
+
+
+def _write_csv(rows: list[dict], out_csv: Path) -> None:
+    """Rewrites `out_csv` through a temporary file, so a checkpoint is never
+    half-written and a transient lock on the file (see
+    `manifests.replace_with_retry`) does not abort the campaign."""
+    tmp = out_csv.with_suffix(out_csv.suffix + ".tmp")
+    pd.DataFrame(rows).to_csv(tmp, index=False)
+    replace_with_retry(tmp, out_csv)
 
 
 # --------------------------------------------------------------------------

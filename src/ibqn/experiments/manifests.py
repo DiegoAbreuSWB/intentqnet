@@ -64,10 +64,10 @@ def write_manifest(path: str | Path, manifest: dict[str, Any]) -> None:
     manifest_file.parent.mkdir(parents=True, exist_ok=True)
     tmp_file = manifest_file.with_suffix(manifest_file.suffix + ".tmp")
     tmp_file.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    _replace_with_retry(tmp_file, manifest_file)
+    replace_with_retry(tmp_file, manifest_file)
 
 
-def _replace_with_retry(source: Path, destination: Path) -> None:
+def replace_with_retry(source: Path, destination: Path) -> None:
     """`os.replace`, retried while another process holds the destination.
 
     On Windows a rename onto a file that is open elsewhere - an antivirus
