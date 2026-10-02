@@ -124,7 +124,7 @@ def fig_generation_model(processed: Path, out: Path) -> None:
     """Simulator vs planner generation laws, every audited chain."""
     table = pd.read_csv(processed / "r00_generation_model_audit.csv")
     table = table[~table["reverse"].astype(bool)]
-    fig, ax = plt.subplots(figsize=(SINGLE_COLUMN, 2.25))
+    fig, ax = plt.subplots(figsize=(SINGLE_COLUMN, 2.05))
     markers = {0: "o", 1: "s", 2: "^", 3: "D"}
     for n, g in table.groupby("n_repeaters"):
         ax.errorbar(g["rate_model"], g["rate_measured"], yerr=g["rate_measured"] * g["1 sigma"], fmt=markers[n],
@@ -196,7 +196,7 @@ def fig_purification_policies_compact(processed: Path, out: Path) -> None:
     chain only, the two hardware conditions stacked on a shared axis."""
     table = pd.read_csv(processed / "r03_purification_by_policy.csv")
     table = table[table["topology"] == "chain1"]
-    fig, axes = plt.subplots(2, 1, figsize=(SINGLE_COLUMN, 2.95), sharex=True)
+    fig, axes = plt.subplots(2, 1, figsize=(SINGLE_COLUMN, 2.75), sharex=True)
     for ax, (hardware, title) in zip(axes, HARDWARE):
         cell = table[table["hardware"] == hardware]
         if cell.empty:

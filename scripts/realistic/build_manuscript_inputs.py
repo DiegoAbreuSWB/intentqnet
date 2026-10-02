@@ -518,7 +518,6 @@ def intent_example(root: Path) -> str | None:
         f"  policy        {', '.join(granted)},",
         f"{pad}max_resource_scale {pol.max_resource_scale:g}",
         f"  success       {conditions}",
-        "",
     ]
     condition = intent.validation.success_conditions[0]
     indent = " " * 11

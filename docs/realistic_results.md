@@ -106,6 +106,11 @@ a todo intent, embora 49–70% sejam satisfeitos quando executados (Brier
 
 ## 4. Reconciliação (R06) e baselines (R01)
 
+- O orçamento (memórias reservadas e duração) é declarado pelo intent, e
+  a reconciliação só o amplia até o fator que a política do intent permite
+  (`policy.max_resource_scale`; padrão 1 = orçamento fixo) e só troca de
+  rota se `allow_rerouting`. Os intents deste experimento permitem dobrar
+  o orçamento (`max_resource_scale = 2`).
 - Literatura: 79 de 99 intents violados recuperados no segundo episódio -
   troca de rota 20/20, mais memórias 20/20, mais duração 39/59 (inclui os
   20 casos de enlaces de 10 km, dos quais nenhum se recupera: dobrar a
@@ -118,7 +123,31 @@ a todo intent, embora 49–70% sejam satisfeitos quando executados (Brier
   com reconciliação, 100% satisfeitos em dois episódios; com o planejador
   L2-RB, 100% em um episódio, igual ao oráculo. O SeQUeNCe nativo também
   entrega 43,45 pares porque seu roteamento por distância prefere a rota
-  de três saltos - mas não conhece a meta nem reporta desfecho.
+  de três saltos - mas não conhece a meta nem reporta desfecho. Na mesma
+  rota e semente, SeQUeNCe nativo e IBQN com L2-RB entregam os mesmos
+  pares com as mesmas fidelidades em 20 de 20 sementes nas duas condições.
+
+## 4b. Com e sem IBQN (R10)
+
+Mesma intent, rota e semente pela pilha do SeQUeNCe puro (aplicativo de
+requisição, tabela de roteamento e modo de purificação padrão, "até o
+alvo") e pelo IBQN com o planejador de uma rodada, cuja política executa o
+mesmo modo, na cadeia de um repetidor (meta de 10 pares, 4 memórias,
+0,3 s).
+
+- Quando nenhum par precisa de purificação para atingir o alvo, os dois
+  entregam o mesmo: 47,2 pares a 0,60 nas duas condições e 30,95 a 0,70
+  na literatura (onde rodadas acontecem mas não elevam a fidelidade),
+  resultados idênticos em 20 de 20 sementes. A camada decide e observa;
+  não muda o que a rede faz.
+- Quando um par só atinge o alvo purificado, os caminhos se separam: o
+  aplicativo padrão do SeQUeNCe só aceita pares no estado "entangled" e
+  ignora os purificados. Com operações ideais e alvo 0,76 ele não entrega
+  nenhum par em 20 de 20 sementes; o IBQN entrega 14,0 por janela e
+  satisfaz o intent em 19.
+- Acima da saída do swap na literatura (0,76), o SeQUeNCe puro reserva as
+  memórias pela janela inteira, não entrega nada e não reporta nada; o
+  IBQN rejeita o intent no planejamento (20 de 20).
 
 ## 5. Multi-intent (R09) e overhead (R07)
 
@@ -146,5 +175,5 @@ a todo intent, embora 49–70% sejam satisfeitos quando executados (Brier
    margem estocástica.
 
 O manuscrito (`paper_ibqn_v2/`) tem duas versões construídas das mesmas
-macros: a de conferência, de 6 páginas (`main.tex`), e a estendida, de 11
+macros: a de conferência, de 6 páginas (`main.tex`), e a estendida, de 12
 (`main_extended.tex`); ver `paper_ibqn_v2/README.md`.

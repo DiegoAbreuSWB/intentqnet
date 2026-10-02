@@ -663,6 +663,25 @@ theoretical_ops ibqn_resource_aware_planner  diamond     20              20     
 theoretical_ops              offline_oracle  diamond     20              20           20            1.0           0.8389               1.0                 20               20            20             1.0            0.8389             1.0000                 44.30                 42.8992                  45.7008                 20                 0.6437                   0.6431                    0.6442                  20 r1 -> good1 -> good2 -> r3            2.0                   22.6539
 ```
 
+## r01_native_vs_resource_aware
+
+```
+       hardware  seeds  same_route_seeds  same_delivered_pairs_seeds  same_average_fidelity_seeds
+     literature     20                20                          20                           20
+theoretical_ops     20                20                          20                           20
+```
+
+## r10_application_layer
+
+```
+       hardware  requested_fidelity  seeds  stock_reservations_accepted  stock_delivered_pairs_mean  stock_delivered_pairs_ci_low  stock_delivered_pairs_ci_high  stock_delivered_pairs_n  stock_seeds_with_no_pair  stock_satisfied  ibqn_n_satisfied  ibqn_n_violated  ibqn_n_rejected  ibqn_n_failed  ibqn_n_simulation_error  ibqn_delivered_pairs_mean  ibqn_delivered_pairs_ci_low  ibqn_delivered_pairs_ci_high  ibqn_delivered_pairs_n ibqn_purification_mode  same_route_seeds  identical_outcome_seeds
+     literature                0.60     20                           20                       47.20                       44.2966                        50.1034                       20                         0               20                20                0                0              0                        0                      47.20                      44.2966                       50.1034                      20           until_target                20                       20
+     literature                0.70     20                           20                       30.95                       27.9843                        33.9157                       20                         0               20                20                0                0              0                        0                      30.95                      27.9843                       33.9157                      20           until_target                20                       20
+     literature                0.76     20                           20                        0.00                        0.0000                         0.0000                       20                        20                0                 0                0               20              0                        0                        NaN                          NaN                           NaN                       0                    NaN                 0                        0
+theoretical_ops                0.60     20                           20                       47.20                       44.2966                        50.1034                       20                         0               20                20                0                0              0                        0                      47.20                      44.2966                       50.1034                      20           until_target                20                       20
+theoretical_ops                0.76     20                           20                        0.00                        0.0000                         0.0000                       20                        20                0                19                1                0              0                        0                      14.00                      12.7758                       15.2242                      20           until_target                20                        0
+```
+
 ## r07_overhead
 
 ```

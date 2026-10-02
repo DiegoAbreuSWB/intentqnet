@@ -1,0 +1,6 @@
+hardware,requested_fidelity,seeds,stock_reservations_accepted,stock_delivered_pairs_mean,stock_delivered_pairs_ci_low,stock_delivered_pairs_ci_high,stock_delivered_pairs_n,stock_seeds_with_no_pair,stock_satisfied,ibqn_n_satisfied,ibqn_n_violated,ibqn_n_rejected,ibqn_n_failed,ibqn_n_simulation_error,ibqn_delivered_pairs_mean,ibqn_delivered_pairs_ci_low,ibqn_delivered_pairs_ci_high,ibqn_delivered_pairs_n,ibqn_purification_mode,same_route_seeds,identical_outcome_seeds
+literature,0.6,20,20,47.2,44.29664251750848,50.103357482491525,20,0,20,20,0,0,0,0,47.2,44.29664251750848,50.103357482491525,20,until_target,20,20
+literature,0.7,20,20,30.95,27.98427785586335,33.915722144136645,20,0,20,20,0,0,0,0,30.95,27.98427785586335,33.915722144136645,20,until_target,20,20
+literature,0.76,20,20,0.0,0.0,0.0,20,20,0,0,0,20,0,0,,,,0,,0,0
+theoretical_ops,0.6,20,20,47.2,44.29664251750848,50.103357482491525,20,0,20,20,0,0,0,0,47.2,44.29664251750848,50.103357482491525,20,until_target,20,20
+theoretical_ops,0.76,20,20,0.0,0.0,0.0,20,20,0,19,1,0,0,0,14.0,12.775795145278359,15.224204854721641,20,until_target,20,0

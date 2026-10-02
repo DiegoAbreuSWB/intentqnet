@@ -21,6 +21,7 @@ evidence base of the manuscript (`paper_ibqn_v2/`).
 | `overhead/R07_overhead/trials.csv` | R07 | 120 |
 | `raw/R08_resource_semantics/trials.csv` | R08 | 160 |
 | `multi_intent/R09_multi_intent/{jobs,groups,intents}.csv` | R09 | 120 groups / 240 intents |
+| `baselines/R10_application_layer/trials.csv` | R10 stock SeQUeNCe vs IBQN, same route and seed | 200 (100 per path) |
 | `manifests/*.json` | campaign manifests of R02, R03, R08 | |
 | `processed/*.csv`, `processed/SUMMARY.md` | tables computed by `scripts/realistic/analyze_suite.py` | |
 | `figures/*.pdf`, `*.png` | figures drawn by `scripts/realistic/generate_figures.py` | |
@@ -42,6 +43,12 @@ scenario name) identifies it.
   `utils/power.py`: keep the machine awake). Nothing that affects a
   simulation, a planning decision or an evaluation changed, so the rows are
   mutually consistent (`git diff aab2fed 1014042 -- src`).
+- R10 ran later, at `11e8444`, the commit that makes the intent's policy
+  bound reconciliation (`policy.max_resource_scale`, `allow_rerouting`).
+  That change touches only the reconciliation decision, and R06 declares
+  the permission it uses (`max_resource_scale = 2`): rerunning three seeds
+  of every R06 case with `11e8444` reproduced the committed rows field by
+  field (36 jobs, 0 mismatching fields).
 - Seeds: every (trial, node) pair has its own random generator
   (`seed_derivation="independent"`); the oracle and the second
   reconciliation episode use seeds offset from the trial's.
