@@ -155,4 +155,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from ibqn.utils.power import keep_system_awake
+
+    with keep_system_awake():
+        main()

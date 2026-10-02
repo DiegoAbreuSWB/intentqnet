@@ -52,6 +52,7 @@ from ibqn.experiments.realistic_suite import (  # noqa: E402
     run_planner_case_job,
     run_reconciliation_job,
 )
+from ibqn.utils.power import keep_system_awake  # noqa: E402
 
 DEFAULT_OUT = PROJECT_ROOT / "results" / "realistic"
 HARDWARE_CONDITIONS = list(HARDWARE)
@@ -389,15 +390,20 @@ def main() -> None:
     parser.add_argument("--seeds", type=int, default=None, help="number of seeds (default: per-campaign)")
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--allow-sleep", action="store_true",
+                        help="do not ask the operating system to stay awake while the campaign runs")
     args = parser.parse_args()
     names = ALL_ORDER if args.campaign == "all" else [args.campaign]
     requested_seeds = args.seeds
-    for name in names:
-        args.seeds = requested_seeds if requested_seeds is not None else DEFAULT_SEEDS[name]
-        t0 = time.perf_counter()
-        print(f"\n===== {name} (seeds={args.seeds}, workers={args.workers}, out={args.out}) =====", flush=True)
-        CAMPAIGNS[name](args)
-        print(f"===== {name} done in {time.perf_counter() - t0:.0f}s =====", flush=True)
+    with keep_system_awake(not args.allow_sleep) as awake:
+        if awake:
+            print("the system will not idle-sleep while this campaign runs (--allow-sleep to disable)", flush=True)
+        for name in names:
+            args.seeds = requested_seeds if requested_seeds is not None else DEFAULT_SEEDS[name]
+            t0 = time.perf_counter()
+            print(f"\n===== {name} (seeds={args.seeds}, workers={args.workers}, out={args.out}) =====", flush=True)
+            CAMPAIGNS[name](args)
+            print(f"===== {name} done in {time.perf_counter() - t0:.0f}s =====", flush=True)
 
 
 if __name__ == "__main__":
