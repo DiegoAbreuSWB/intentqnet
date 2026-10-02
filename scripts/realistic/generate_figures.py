@@ -44,7 +44,8 @@ SINGLE_COLUMN, DOUBLE_COLUMN = 3.5, 7.16  # IEEE conference column widths, inche
 
 def save(fig, out_dir: Path, name: str) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_dir / f"{name}.pdf", bbox_inches="tight")
+    # no creation date: regenerating an unchanged figure reproduces the same bytes
+    fig.savefig(out_dir / f"{name}.pdf", bbox_inches="tight", metadata={"CreationDate": None})
     fig.savefig(out_dir / f"{name}.png", bbox_inches="tight", dpi=220)
     plt.close(fig)
     print(f"wrote {name}.pdf / .png")
@@ -60,7 +61,7 @@ def fig_generation_model(processed: Path, out: Path) -> None:
     """Simulator vs planner generation laws, every audited chain."""
     table = pd.read_csv(processed / "r00_generation_model_audit.csv")
     table = table[~table["reverse"].astype(bool)]
-    fig, ax = plt.subplots(figsize=(SINGLE_COLUMN, 2.7))
+    fig, ax = plt.subplots(figsize=(SINGLE_COLUMN, 2.25))
     markers = {0: "o", 1: "s", 2: "^", 3: "D"}
     for n, g in table.groupby("n_repeaters"):
         ax.errorbar(g["rate_model"], g["rate_measured"], yerr=g["rate_measured"] * g["1 sigma"], fmt=markers[n],
@@ -78,9 +79,34 @@ def fig_generation_model(processed: Path, out: Path) -> None:
     save(fig, out, "fig_generation_model")
 
 
+def _purification_panel(ax, cell: pd.DataFrame, *, small: bool = False) -> None:
+    """One (topology, hardware) panel: delivered pairs per executed policy
+    against the requested fidelity, the delivery goal, and the targets that
+    every policy rejected at planning time."""
+    for offset, (policy, label, marker, color, ls) in enumerate(POLICIES):
+        g = cell[(cell["purification_policy"] == policy) & (cell["delivered_pairs_n"] > 0)].sort_values("requested_fidelity")
+        if g.empty:
+            continue
+        x = g["requested_fidelity"] + (offset - 1.5) * 0.0025
+        ax.errorbar(x, g["delivered_pairs_mean"], yerr=errorbars(g, "delivered_pairs"), marker=marker, ms=3.5,
+                    mfc="none", color=color, ls=ls, lw=0.9, elinewidth=0.6, capsize=1.5, label=label)
+    ax.axhline(10, color="black", lw=0.6, ls=(0, (1, 2)))
+    # targets every policy rejected at planning time (nothing was executed)
+    by_target = cell.groupby("requested_fidelity").agg(rejected=("n_rejected", "sum"), trials=("seeds", "sum"))
+    all_rejected = by_target.index[by_target["rejected"] == by_target["trials"]]
+    targets = sorted(cell["requested_fidelity"].unique())
+    if len(all_rejected):
+        left = (max(t for t in targets if t < all_rejected.min()) + all_rejected.min()) / 2
+        ax.axvspan(left, targets[-1] + 0.012, color="0.88", lw=0)
+        ax.text((left + targets[-1] + 0.012) / 2, 0.5, "rejected at planning\nby every policy", ha="center",
+                va="center", fontsize=6 if small else 6.5, transform=ax.get_xaxis_transform())
+    ax.set_xlim(targets[0] - 0.012, targets[-1] + 0.012)
+    ax.set_ylim(bottom=-2)
+
+
 def fig_purification_policies(processed: Path, out: Path) -> None:
     """Delivered pairs per executed purification policy against the target
-    fidelity, chain with one repeater, both hardware conditions."""
+    fidelity, chains with one and two repeaters, both hardware conditions."""
     table = pd.read_csv(processed / "r03_purification_by_policy.csv")
     fig, axes = plt.subplots(2, 2, figsize=(DOUBLE_COLUMN, 3.9), sharey="row")
     for row, topology in enumerate(["chain1", "chain2"]):
@@ -90,34 +116,38 @@ def fig_purification_policies(processed: Path, out: Path) -> None:
             if cell.empty:  # campaign still running for this cell
                 ax.set_title(f"{title} - no data yet")
                 continue
-            for offset, (policy, label, marker, color, ls) in enumerate(POLICIES):
-                g = cell[(cell["purification_policy"] == policy) & (cell["delivered_pairs_n"] > 0)].sort_values("requested_fidelity")
-                if g.empty:
-                    continue
-                x = g["requested_fidelity"] + (offset - 1.5) * 0.0025
-                ax.errorbar(x, g["delivered_pairs_mean"], yerr=errorbars(g, "delivered_pairs"), marker=marker, ms=3.5,
-                            mfc="none", color=color, ls=ls, lw=0.9, elinewidth=0.6, capsize=1.5, label=label)
-            ax.axhline(10, color="black", lw=0.6, ls=(0, (1, 2)))
-            # targets every policy rejected at planning time (nothing was executed)
-            by_target = cell.groupby("requested_fidelity").agg(rejected=("n_rejected", "sum"), trials=("seeds", "sum"))
-            all_rejected = by_target.index[by_target["rejected"] == by_target["trials"]]
-            targets = sorted(cell["requested_fidelity"].unique())
-            if len(all_rejected):
-                left = (max(t for t in targets if t < all_rejected.min()) + all_rejected.min()) / 2
-                ax.axvspan(left, targets[-1] + 0.012, color="0.88", lw=0)
-                ax.text((left + targets[-1] + 0.012) / 2, 0.5, "rejected at planning\nby every policy", ha="center",
-                        va="center", fontsize=6.5, transform=ax.get_xaxis_transform())
-            ax.set_xlim(targets[0] - 0.012, targets[-1] + 0.012)
+            _purification_panel(ax, cell)
             ax.set_title(f"{title} - {'one' if topology == 'chain1' else 'two'} repeater{'s' if topology == 'chain2' else ''}")
             if row == 1:
                 ax.set_xlabel("Requested minimum fidelity")
             if col == 0:
                 ax.set_ylabel("Delivered pairs in 0.3 s")
-            ax.set_ylim(bottom=-2)
     handles, labels = axes[0][1].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False, bbox_to_anchor=(0.5, -0.03))
     fig.tight_layout(rect=(0, 0.04, 1, 1))
     save(fig, out, "fig_purification_policies")
+
+
+def fig_purification_policies_compact(processed: Path, out: Path) -> None:
+    """Single-column version for the six-page manuscript: the one-repeater
+    chain only, the two hardware conditions stacked on a shared axis."""
+    table = pd.read_csv(processed / "r03_purification_by_policy.csv")
+    table = table[table["topology"] == "chain1"]
+    fig, axes = plt.subplots(2, 1, figsize=(SINGLE_COLUMN, 2.95), sharex=True)
+    for ax, (hardware, title) in zip(axes, HARDWARE):
+        cell = table[table["hardware"] == hardware]
+        if cell.empty:
+            ax.set_title(f"{title} - no data yet")
+            continue
+        _purification_panel(ax, cell, small=True)
+        ax.set_title(title, pad=3)
+    axes[1].set_xlabel("Requested minimum fidelity")
+    fig.supylabel("Delivered pairs in 0.3 s", fontsize=8, x=0.03, y=0.56)
+    handles, labels = axes[1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=2, frameon=False, bbox_to_anchor=(0.5, -0.01), columnspacing=1.2,
+               handletextpad=0.4)
+    fig.tight_layout(rect=(0.03, 0.085, 1, 1), h_pad=0.6)
+    save(fig, out, "fig_purification_policies_compact")
 
 
 def fig_planner_decision_quality(processed: Path, out: Path) -> None:
@@ -212,8 +242,8 @@ def fig_resource_semantics(processed: Path, out: Path) -> None:
     save(fig, out, "fig_resource_semantics")
 
 
-FIGURES = [fig_generation_model, fig_purification_policies, fig_planner_decision_quality, fig_routing, fig_reconciliation,
-           fig_resource_semantics]
+FIGURES = [fig_generation_model, fig_purification_policies, fig_purification_policies_compact, fig_planner_decision_quality,
+           fig_routing, fig_reconciliation, fig_resource_semantics]
 
 
 def main() -> None:
