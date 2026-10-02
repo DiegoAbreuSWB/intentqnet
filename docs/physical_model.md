@@ -202,9 +202,9 @@ fidelidade que o nó registra.
 A auditoria de integridade (`scripts/realistic/audit_state_integrity.py` →
 `results/realistic/audit/state_integrity_audit.csv`; 39 reservas em cadeias,
 diamante e malha, três modos de purificação, coerência de 2 s a 5 ms)
-classifica cada chamada: de 34.076 chamadas de decoerência, 34 eram o caso
-(a) e 549 o caso (b), nenhuma sobre uma memória reentrelaçada; **todas as
-4.548 entradas de swap e 3.608 entradas de purificação eram pares que os
+classifica cada chamada: de 34.906 chamadas de decoerência, 33 eram o caso
+(a) e 551 o caso (b), nenhuma sobre uma memória reentrelaçada; **todas as
+4.656 entradas de swap e 3.704 entradas de purificação eram pares que os
 dois extremos ainda guardavam**, nenhuma simulação abortou e nenhuma
 terminou com estado pendurado. Ou seja: a corrida existe só no caminho de
 entrega (a metade do par já entregue), nunca alimenta um swap ou uma
