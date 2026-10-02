@@ -57,3 +57,6 @@ article/icc2027_ibqn/main.blg
 article/icc2027_ibqn/main.log
 article/icc2027_ibqn/main.out
 
+
+# Locally compiled manuscript PDFs (see paper_ibqn_v2/README.md, "Building")
+paper_ibqn_v2/build/

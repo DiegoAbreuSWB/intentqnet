@@ -144,3 +144,7 @@ a todo intent, embora 49–70% sejam satisfeitos quando executados (Brier
    modelo novo, escrito nesta revisão em resposta ao oráculo e à auditoria.
 3. Limitação honesta que fica: nenhum planejador modela decoerência nem
    margem estocástica.
+
+O manuscrito (`paper_ibqn_v2/`) tem duas versões construídas das mesmas
+macros: a de conferência, de 6 páginas (`main.tex`), e a estendida, de 11
+(`main_extended.tex`); ver `paper_ibqn_v2/README.md`.
