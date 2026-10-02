@@ -73,10 +73,11 @@ purificáveis durante toda a vida útil.
 
 Na sonda de validação (cadeia de 3 nós, T = 1 s, janela de 0,1 s):
 
-- 665 pares entregues com fidelidade média 0,7288 e **147 valores distintos**
-  (antes: todos exatamente 0,6864). O valor fechado do swap de dois pares
-  Werner 0,85 é 0,73; a diferença é a decoerência durante a espera pelo
-  segundo enlace.
+- 665 pares entregues com fidelidade média 0,7288, entre 0,7212 e 0,7292, e
+  **147 valores distintos** a seis casas decimais (351 exatos; antes: todos
+  exatamente 0,6864). O valor fechado do swap de dois pares Werner 0,85 é
+  0,73; a diferença é a decoerência durante a espera pelo segundo enlace
+  (`notebooks/02_sequence_three_node_swapping.ipynb` reproduz a sonda).
 - 0 divergências entre o escalar reportado (`MemoryInfo.fidelity`) e o
   estado armazenado, em 665 pares.
 - Com T = 10 ms a média cai para 0,64; com T = 2 ms nenhum par atinge o alvo

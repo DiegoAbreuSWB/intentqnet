@@ -1,0 +1,7 @@
+campaign,trials,executed,rejected,other,classification_mismatches,delivered_pairs_below_requested_fidelity,rejected_with_an_evaluation
+R02_routing,240,240,0,0,0,0,0
+R03_purification,2240,1320,920,0,0,0,0
+R08_resource_semantics,160,160,0,0,0,0,0
+R04_planner_evolution,3080,2340,740,0,0,0,0
+R04b_simulation_planner,60,40,20,0,0,0,0
+ALL,5780,4100,1680,0,0,0,0

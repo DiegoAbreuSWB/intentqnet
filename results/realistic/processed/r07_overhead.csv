@@ -1,0 +1,7 @@
+hardware,condition,topology,seeds,orchestration_overhead_ratio_median,orchestration_overhead_ratio_max,planning_overhead_ratio_median,intent_parsing_wall_time_s_median,intent_validation_wall_time_s_median,capability_extraction_wall_time_s_median,planning_wall_time_s_median,deployment_wall_time_s_median,assurance_wall_time_s_median,simulation_wall_time_s_median,total_orchestration_wall_time_s_median,total_trial_wall_time_s_median
+literature,ibqn_instrumented,chain1,20,0.0047005043541554,0.0060703765120333,3.946544772817192e-05,0.0,0.0,0.00032539998937859997,0.00039000000106165,0.0002596999838715,0.044653749995632055,9.708654799993383,0.0460143499949481,9.745231950000743
+literature,native_sequence,chain1,20,0.0002949655519077,0.0003441599273395,0.0,,,,0.0,,,9.6144395,,9.6164375
+literature,static_provisioning,chain1,20,0.00535808211060625,0.0065868897988119,3.221464996505763e-05,,,,0.000341,,,10.1901115,,10.247963500000001
+theoretical_ops,ibqn_instrumented,chain1,20,0.0042349219675083,0.0050790855633148,3.254470280321038e-05,0.0,0.0,0.00031704999855714996,0.0003956500149797,0.00027330001466905,0.0491702999861445,11.77216784999473,0.05026684998301785,11.824875050006085
+theoretical_ops,native_sequence,chain1,20,0.0002505037944305,0.000293338509267,0.0,,,,0.0,,,11.602533000000001,,11.605516
+theoretical_ops,static_provisioning,chain1,20,0.00537737264621335,0.0068830708551555,3.6475467605025385e-05,,,,0.0004205,,,11.259705,,11.3242905

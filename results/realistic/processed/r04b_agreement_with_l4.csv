@@ -1,0 +1,8 @@
+planner_level,matched_trials,same_admission_decision,same_final_status
+L1,60,40,40
+L2,60,40,40
+L2-R,60,20,20
+L2-RB,60,60,60
+L3,60,40,40
+L3-R,60,40,40
+L3-RB,60,40,40

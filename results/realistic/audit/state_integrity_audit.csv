@@ -1,0 +1,40 @@
+topology,hardware,route,min_fidelity,purification_mode,duration_s,coherence_time_s,seed,error,delivered_pairs,mean_fidelity,discarded_pairs,swaps,purification_successes,purification_failures,dangling_states_at_end,decohere_callers,decohere_ok,swap_input_ok,purification_input_ok,decohere_reset_noop,swap_input_reset_noop,purification_input_reset_noop,decohere_no_state,swap_input_no_state,purification_input_no_state,decohere_stale_recreate,swap_input_stale_recreate,purification_input_stale_recreate,decohere_stale_overwrite,swap_input_stale_overwrite,purification_input_stale_overwrite
+chain1,literature,a->r1->b,0.7,never,0.3,2.0,0,,42,0.7050887345388636,10,52,0,0,0,stale_recreate@swapping_bds.py:received_message x52,524,104,0,52,0,0,0,0,0,52,0,0,0,0,0
+chain1,literature,a->r1->b,0.7,never,0.3,2.0,1,,43,0.7058286725180106,10,53,0,0,0,stale_recreate@swapping_bds.py:received_message x53,534,106,0,53,0,0,0,0,0,53,0,0,0,0,0
+chain1,literature,a->r1->b,0.7,never,0.3,2.0,2,,38,0.7062319596352279,7,45,0,0,0,stale_recreate@swapping_bds.py:received_message x45,454,90,0,45,0,0,0,0,0,45,0,0,0,0,0
+chain1,theoretical_ops,a->r1->b,0.75,until_target,0.3,0.005,0,,0,,0,31,0,0,0,,548,62,0,0,0,0,0,0,0,0,0,0,0,0,0
+chain1,theoretical_ops,a->r1->b,0.75,until_target,0.3,0.005,1,,0,,0,33,0,0,0,,582,66,0,0,0,0,0,0,0,0,0,0,0,0,0
+chain1,theoretical_ops,a->r1->b,0.75,until_target,0.3,0.005,2,,0,,0,22,0,0,0,,422,44,0,0,0,0,0,0,0,0,0,0,0,0,0
+chain1,theoretical_ops,a->r1->b,0.78,once,0.3,2.0,0,,3,0.7815466768800124,12,47,30,16,0,stale_recreate@bbpssw_bds.py:received_message x15,918,94,184,15,0,0,0,0,0,15,0,0,0,0,0
+chain1,theoretical_ops,a->r1->b,0.78,once,0.3,2.0,1,,4,0.7802066591939592,12,43,32,10,0,stale_recreate@bbpssw_bds.py:received_message x16,844,86,168,16,0,0,0,0,0,16,0,0,0,0,0
+chain1,theoretical_ops,a->r1->b,0.78,once,0.3,2.0,2,,4,0.78233372723474,7,41,22,18,0,stale_recreate@bbpssw_bds.py:received_message x11,800,82,160,11,0,0,0,0,0,11,0,0,0,0,0
+chain1,theoretical_ops,a->r1->b,0.78,until_target,0.3,2.0,0,,12,0.7885772109161261,0,46,44,12,0,stale_recreate@bbpssw_bds.py:received_message x12,1010,92,224,12,0,0,0,0,0,12,0,0,0,0,0
+chain1,theoretical_ops,a->r1->b,0.78,until_target,0.3,2.0,1,,7,0.7907780872323279,0,43,32,20,0,stale_recreate@bbpssw_bds.py:received_message x7,930,86,208,7,0,0,0,0,0,7,0,0,0,0,0
+chain1,theoretical_ops,a->r1->b,0.78,until_target,0.3,2.0,2,,5,0.7896783025724499,0,40,28,20,0,stale_recreate@bbpssw_bds.py:received_message x5,864,80,192,5,0,0,0,0,0,5,0,0,0,0,0
+chain2,literature,a->r1->r2->b,0.55,never,0.3,2.0,0,,34,0.5864564532305898,0,70,0,0,0,stale_recreate@swapping_bds.py:received_message x34,708,140,0,34,0,0,0,0,0,34,0,0,0,0,0
+chain2,literature,a->r1->r2->b,0.55,never,0.3,2.0,1,,43,0.5863724254437449,0,86,0,0,0,stale_recreate@swapping_bds.py:received_message x43,860,172,0,43,0,0,0,0,0,43,0,0,0,0,0
+chain2,literature,a->r1->r2->b,0.55,never,0.3,2.0,2,,33,0.5863916286485903,1,71,0,0,0,stale_recreate@swapping_bds.py:received_message x34,718,142,0,34,0,0,0,0,0,34,0,0,0,0,0
+chain2,theoretical_ops,a->r1->r2->b,0.66,until_target,0.3,0.02,0,,0,,0,56,10,0,0,,878,112,40,0,0,0,0,0,0,0,0,0,0,0,0
+chain2,theoretical_ops,a->r1->r2->b,0.66,until_target,0.3,0.02,1,,0,,0,49,4,0,0,,788,98,16,0,0,0,0,0,0,0,0,0,0,0,0
+chain2,theoretical_ops,a->r1->r2->b,0.66,until_target,0.3,0.02,2,,0,,0,56,2,0,0,,812,112,8,0,0,0,0,0,0,0,0,0,0,0,0
+chain2,theoretical_ops,a->r1->r2->b,0.68,until_target,0.3,2.0,0,,4,0.6874518822889968,0,66,24,16,0,stale_recreate@bbpssw_bds.py:received_message x4,1050,132,160,4,0,0,0,0,0,4,0,0,0,0,0
+chain2,theoretical_ops,a->r1->r2->b,0.68,until_target,0.3,2.0,1,,4,0.6899800646961213,0,73,28,18,0,stale_recreate@bbpssw_bds.py:received_message x4,1174,146,184,4,0,0,0,0,0,4,0,0,0,0,0
+chain2,theoretical_ops,a->r1->r2->b,0.68,until_target,0.3,2.0,2,,3,0.6873441310009709,0,58,20,14,0,stale_recreate@bbpssw_bds.py:received_message x3,914,116,136,3,0,0,0,0,0,3,0,0,0,0,0
+chain2,theoretical_ops,a->r1->r2->b,0.7,until_target,0.3,2.0,0,,0,,0,62,26,16,0,,1032,124,168,0,0,0,0,0,0,0,0,0,0,0,0
+chain2,theoretical_ops,a->r1->r2->b,0.7,until_target,0.3,2.0,1,,0,,0,73,26,22,0,,1196,146,192,0,0,0,0,0,0,0,0,0,0,0,0
+chain2,theoretical_ops,a->r1->r2->b,0.7,until_target,0.3,2.0,2,,0,,0,58,26,14,0,,974,116,160,0,0,0,0,0,0,0,0,0,0,0,0
+diamond,literature,r1->bad->r3,0.6,never,0.5,2.0,0,,2,0.6631315411304584,1,3,0,0,0,stale_recreate@swapping_bds.py:received_message x3,30,6,0,3,0,0,0,0,0,3,0,0,0,0,0
+diamond,literature,r1->bad->r3,0.6,never,0.5,2.0,1,,3,0.6494878026180436,0,3,0,0,0,stale_recreate@swapping_bds.py:received_message x3,32,6,0,3,0,0,0,0,0,3,0,0,0,0,0
+diamond,literature,r1->bad->r3,0.6,never,0.5,2.0,2,,2,0.7031920004052783,0,2,0,0,0,stale_recreate@swapping_bds.py:received_message x2,22,4,0,2,0,0,0,0,0,2,0,0,0,0,0
+diamond,theoretical_ops,r1->good1->good2->r3,0.6,never,0.3,2.0,0,,46,0.6431850470028336,0,92,0,0,0,stale_recreate@swapping_bds.py:received_message x46,928,184,0,46,0,0,0,0,0,46,0,0,0,0,0
+diamond,theoretical_ops,r1->good1->good2->r3,0.6,never,0.3,2.0,1,,46,0.643862950460334,0,92,0,0,0,stale_recreate@swapping_bds.py:received_message x46,922,184,0,46,0,0,0,0,0,46,0,0,0,0,0
+diamond,theoretical_ops,r1->good1->good2->r3,0.6,never,0.3,2.0,2,,40,0.6442813105911263,0,80,0,0,0,stale_recreate@swapping_bds.py:received_message x40,804,160,0,40,0,0,0,0,0,40,0,0,0,0,0
+diamond,theoretical_ops,r1->good1->good2->r3,0.65,until_target,0.3,2.0,0,,18,0.6592755888376067,0,78,24,8,0,no_state@bbpssw_bds.py:received_message x4; stale_recreate@bbpssw_bds.py:received_message x10; stale_recreate@swapping_bds.py:received_message x8,1096,156,128,14,0,0,4,0,0,18,0,0,0,0,0
+diamond,theoretical_ops,r1->good1->good2->r3,0.65,until_target,0.3,2.0,1,,14,0.6616060046694212,0,76,22,12,0,no_state@bbpssw_bds.py:received_message x6; stale_recreate@bbpssw_bds.py:received_message x10; stale_recreate@swapping_bds.py:received_message x4,1098,152,136,8,0,0,6,0,0,14,0,0,0,0,0
+diamond,theoretical_ops,r1->good1->good2->r3,0.65,until_target,0.3,2.0,2,,15,0.6599414853654838,0,68,16,10,0,no_state@bbpssw_bds.py:received_message x4; stale_recreate@bbpssw_bds.py:received_message x8; stale_recreate@swapping_bds.py:received_message x7,936,136,104,11,0,0,4,0,0,15,0,0,0,0,0
+mesh,theoretical_ops,a0->a1->a2->a3->b3,0.6,until_target,0.3,2.0,0,,1,0.6000123948939076,0,105,36,14,0,no_state@bbpssw_bds.py:received_message x1; stale_recreate@bbpssw_bds.py:received_message x1,1554,210,200,0,0,0,1,0,0,1,0,0,0,0,0
+mesh,theoretical_ops,a0->a1->a2->a3->b3,0.6,until_target,0.3,2.0,1,,0,,0,116,30,22,0,,1672,232,208,0,0,0,0,0,0,0,0,0,0,0,0
+mesh,theoretical_ops,a0->a1->a2->a3->b3,0.6,until_target,0.3,2.0,2,,1,0.6017043925047728,0,99,36,14,0,stale_recreate@bbpssw_bds.py:received_message x1,1484,198,200,1,0,0,0,0,0,1,0,0,0,0,0
+mesh,theoretical_ops,a0->a1->a2->b2,0.67,until_target,0.3,2.0,0,,8,0.6746459829210107,0,92,24,24,0,no_state@bbpssw_bds.py:received_message x4; stale_recreate@bbpssw_bds.py:received_message x8,1388,184,192,4,0,0,4,0,0,8,0,0,0,0,0
+mesh,theoretical_ops,a0->a1->a2->b2,0.67,until_target,0.3,2.0,1,,9,0.6765207464340306,0,82,28,18,0,no_state@bbpssw_bds.py:received_message x8; stale_recreate@bbpssw_bds.py:received_message x9,1266,164,184,1,0,0,8,0,0,9,0,0,0,0,0
+mesh,theoretical_ops,a0->a1->a2->b2,0.67,until_target,0.3,2.0,2,,7,0.6770592649950224,0,66,26,12,0,no_state@bbpssw_bds.py:received_message x6; stale_recreate@bbpssw_bds.py:received_message x7,1038,132,152,1,0,0,6,0,0,7,0,0,0,0,0

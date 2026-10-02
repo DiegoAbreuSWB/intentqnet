@@ -1,0 +1,19 @@
+hardware,planner_level,rejection_reason,rejected,false_rejection_count,false_rejection_of,false_rejection_rate,false_rejection_ci_low,false_rejection_ci_high
+literature,L1,no candidate route is feasible: a->r1->b (min_fidelity 0.760 exceeds the achievable estimate 0.697 (one-round static estimate; SeQUeNCe's 'until_target' mode ma,10,0,10,0.0,0.0,0.2775327998628892
+literature,L1,no candidate route is feasible: a->r1->b (min_fidelity 0.800 exceeds the achievable estimate 0.697 (one-round static estimate; SeQUeNCe's 'until_target' mode ma,20,0,20,0.0,0.0,0.16112515805281938
+literature,L1,no candidate route is feasible: a->r1->r2->b (min_fidelity 0.670 exceeds the achievable estimate 0.575 (one-round static estimate; SeQUeNCe's 'until_target' mod,10,0,10,0.0,0.0,0.2775327998628892
+literature,L1,no candidate route is feasible: a->r1->r2->b (min_fidelity 0.700 exceeds the achievable estimate 0.575 (one-round static estimate; SeQUeNCe's 'until_target' mod,10,0,10,0.0,0.0,0.2775327998628892
+literature,L1,no candidate route is feasible: a0->a1->a2->b2 (min_fidelity 0.670 exceeds the achievable estimate 0.575 (one-round static estimate; SeQUeNCe's 'until_target' m,10,0,10,0.0,0.0,0.2775327998628892
+literature,L2,no candidate route is feasible: a->r1->b (min_fidelity 0.760 exceeds the achievable estimate 0.697 (no further gain after round 1 (fixed point reached))),10,0,10,0.0,0.0,0.2775327998628892
+literature,L2,no candidate route is feasible: a->r1->b (min_fidelity 0.800 exceeds the achievable estimate 0.697 (no further gain after round 1 (fixed point reached))),20,0,20,0.0,0.0,0.16112515805281938
+literature,L2,no candidate route is feasible: a->r1->r2->b (min_fidelity 0.670 exceeds the achievable estimate 0.575 (no further gain after round 1 (fixed point reached))),10,0,10,0.0,0.0,0.2775327998628892
+literature,L2,no candidate route is feasible: a->r1->r2->b (min_fidelity 0.700 exceeds the achievable estimate 0.575 (no further gain after round 1 (fixed point reached))),10,0,10,0.0,0.0,0.2775327998628892
+literature,L2,no candidate route is feasible: a0->a1->a2->b2 (min_fidelity 0.670 exceeds the achievable estimate 0.575 (no further gain after round 1 (fixed point reached)));,10,0,10,0.0,0.0,0.2775327998628892
+literature,L2-R,DELIVERY_TARGET_EXCEEDS_WINDOW,160,122,160,0.7625,0.6908943322868297,0.8217964152481301
+literature,L2-R,TARGET_FIDELITY_UNREACHABLE,60,0,60,0.0,0.0,0.06017185214208986
+literature,L2-RB,DELIVERY_TARGET_EXCEEDS_WINDOW,40,5,40,0.125,0.05459500250945401,0.261121198388511
+literature,L2-RB,TARGET_FIDELITY_UNREACHABLE,60,0,60,0.0,0.0,0.06017185214208986
+theoretical_ops,L1,no candidate route is feasible: a->r1->b (min_fidelity 0.800 exceeds the achievable estimate 0.784 (one-round static estimate; SeQUeNCe's 'until_target' mode ma,20,8,20,0.4,0.21880653237281705,0.6134184992377469
+theoretical_ops,L1,no candidate route is feasible: a->r1->r2->b (min_fidelity 0.700 exceeds the achievable estimate 0.683 (one-round static estimate; SeQUeNCe's 'until_target' mod,10,0,10,0.0,0.0,0.2775327998628892
+theoretical_ops,L2-R,DELIVERY_TARGET_EXCEEDS_WINDOW,220,168,220,0.7636363636363637,0.7032724353438924,0.8149514924804906
+theoretical_ops,L2-RB,DELIVERY_TARGET_EXCEEDS_WINDOW,50,5,50,0.1,0.04347576493189041,0.21360231437479654

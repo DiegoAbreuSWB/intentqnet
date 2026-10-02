@@ -59,12 +59,13 @@ used only by the `buffered` law under `ket_vector`."""
 SINGLE_HERALDED_CYCLE_FACTOR = 4.0
 """Single-heralded attempt cycle, in one-way classical delays of the link,
 when the node that requests the pairing is NOT the protocol's primary
-(measured 4.002, std 0.001 - docs/generation_model_audit.md)."""
+(measured 4.002 on 72 direct-link runs - docs/generation_model_audit.md)."""
 
 SINGLE_HERALDED_PRIMARY_REQUESTER_CYCLE_FACTOR = 5.0
 """The same cycle when the requesting node IS the primary: its NEGOTIATE
 can only leave after the pairing RESPONSE came back, one more one-way
-delay (measured 5.000 on every such link of the audit)."""
+delay (measured 4.99 on the same direct link reserved in the opposite
+direction, 24 runs)."""
 
 GENERATION_MODELS: tuple[str, ...] = ("same_cycle", "buffered")
 

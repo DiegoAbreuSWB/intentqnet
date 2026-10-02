@@ -148,7 +148,30 @@ def purification(root: Path) -> dict[str, pd.DataFrame]:
             targets_falsely_rejected=", ".join(
                 f"{v:g}" for v in sorted(g.loc[g["satisfiable_by_another_policy"], "requested_fidelity"].unique())),
         ))
-    return {"r03_purification_by_policy": by_policy, "r03_purification_false_rejections": pd.DataFrame(rows)}
+    false_rejections = pd.DataFrame(rows)
+
+    # Paired comparison, seed by seed, of never purifying against purifying until the target - wherever
+    # both policies executed the same intent. Wilcoxon signed-rank on the delivered pairs.
+    rows = []
+    delivered = raw[raw["final_status"].isin(["SATISFIED", "VIOLATED"])].pivot_table(
+        index=["hardware", "topology", "requested_fidelity", "seed"], columns="purification_policy", values="delivered_pairs")
+    if {"disabled", "automatic"} <= set(delivered.columns):
+        both = delivered.dropna(subset=["disabled", "automatic"])
+        for key, g in both.groupby(level=["hardware", "topology", "requested_fidelity"]):
+            difference = g["disabled"] - g["automatic"]
+            if (difference == 0).all():
+                p_value, verdict = 1.0, "identical"
+            else:
+                p_value = float(stats.wilcoxon(g["disabled"], g["automatic"]).pvalue)
+                verdict = "never delivers more" if difference.mean() > 0 else "until-target delivers more"
+            rows.append(dict(
+                zip(["hardware", "topology", "requested_fidelity"], key), paired_seeds=len(g),
+                never_mean=g["disabled"].mean(), until_target_mean=g["automatic"].mean(), mean_difference=difference.mean(),
+                seeds_never_higher=int((difference > 0).sum()), seeds_until_target_higher=int((difference < 0).sum()),
+                wilcoxon_p=p_value, verdict=verdict,
+            ))
+    return {"r03_purification_by_policy": by_policy, "r03_purification_false_rejections": false_rejections,
+            "r03_never_vs_until_target": pd.DataFrame(rows)}
 
 
 def resource_semantics(root: Path) -> dict[str, pd.DataFrame]:
@@ -214,6 +237,16 @@ def planners(root: Path) -> dict[str, pd.DataFrame]:
                 "regime", "seed"]
         matched = trials.merge(l4[case].drop_duplicates(), on=case)
         out["r04b_matched_grid"] = decision_quality(pd.concat([matched, l4]), ["hardware", "planner_level"])
+        # trial-by-trial agreement of every analytical level with the simulation-in-the-loop decision
+        rows = []
+        for level, g in matched.groupby("planner_level"):
+            pairs = g.merge(l4, on=case, suffixes=("", "_l4"))
+            rows.append(dict(
+                planner_level=level, matched_trials=len(pairs),
+                same_admission_decision=int((as_bool(pairs["feasible"]) == as_bool(pairs["feasible_l4"])).sum()),
+                same_final_status=int((pairs["final_status"] == pairs["final_status_l4"]).sum()),
+            ))
+        out["r04b_agreement_with_l4"] = pd.DataFrame(rows)
 
     # --- how good are the estimates the decisions rest on? -----------------
     executed = trials[trials["final_status"].isin(["SATISFIED", "VIOLATED"])].copy()
@@ -293,6 +326,24 @@ def planners(root: Path) -> dict[str, pd.DataFrame]:
     table = pd.DataFrame(rows)
     table["planner_level"] = pd.Categorical(table["planner_level"], PLANNER_ORDER, ordered=True)
     out["r04_planner_decision_table"] = table.sort_values(["hardware", "planner_level"]).reset_index(drop=True)
+
+    # --- what was each violation? one row per (model, intent, route) admitted and then violated ---
+    # The L3 family is left out: collected with admission disabled, its VIOLATED rows are not admissions.
+    violated = trials[(trials["final_status"] == "VIOLATED") & ~trials["planner_level"].isin(L3_FAMILY)]
+    group = ["hardware", "planner_level", "topology", "regime", "requested_fidelity", "reserved_memory_slots", "duration_s",
+             "min_delivered_pairs", "route"]
+    rows = []
+    for key, g in violated.groupby(group):
+        rows.append(dict(
+            zip(group, key), violated=len(g),
+            # the window ended with no pair at the requested fidelity (none formed, or none that was still above it)
+            delivered_no_pair=int((g["delivered_pairs"] == 0).sum()),
+            delivered_pairs_mean=g["delivered_pairs"].mean(),
+            predicted_delivered_pairs_mean=g["predicted_delivered_pairs"].mean(),
+        ))
+    table = pd.DataFrame(rows)
+    table["planner_level"] = pd.Categorical(table["planner_level"], PLANNER_ORDER, ordered=True)
+    out["r04_violations_by_case"] = table.sort_values(["hardware", "planner_level", "topology", "regime"]).reset_index(drop=True)
 
     if oracle is not None:
         rows = []

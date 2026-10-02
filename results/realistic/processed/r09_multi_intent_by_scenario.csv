@@ -1,0 +1,13 @@
+hardware,scenario,planner_level,groups,intents_submitted,admitted,satisfied,violated,failed
+literature,C1_non_conflicting,L1,10,20,20,20,0,0
+literature,C1_non_conflicting,L2-RB,10,20,20,20,0,0
+literature,C2_resource_contention,L1,10,20,20,10,0,10
+literature,C2_resource_contention,L2-RB,10,20,20,10,0,10
+literature,C3_sequential_admission,L1,10,20,20,20,0,0
+literature,C3_sequential_admission,L2-RB,10,20,20,20,0,0
+theoretical_ops,C1_non_conflicting,L1,10,20,20,20,0,0
+theoretical_ops,C1_non_conflicting,L2-RB,10,20,20,20,0,0
+theoretical_ops,C2_resource_contention,L1,10,20,20,10,0,10
+theoretical_ops,C2_resource_contention,L2-RB,10,20,20,10,0,10
+theoretical_ops,C3_sequential_admission,L1,10,20,20,20,0,0
+theoretical_ops,C3_sequential_admission,L2-RB,10,20,20,20,0,0

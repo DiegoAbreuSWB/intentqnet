@@ -94,7 +94,7 @@ def run_native_sequence_baseline(
     table -> network_manager.request(...) -> execution`, with no
     `EntanglementIntent`-based planning, assurance, or reconciliation at
     all - routing is whatever `RouterNetTopo`'s auto-generated static
-    routing table already computed (unweighted shortest path), the same
+    routing table already computed (shortest path by fiber distance), the same
     default SeQUeNCe ships with when no external planner intervenes."""
     metrics.configure()
     t0 = time.perf_counter()

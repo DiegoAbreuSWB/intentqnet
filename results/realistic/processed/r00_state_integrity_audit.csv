@@ -1,0 +1,2 @@
+decohere_ok,swap_input_ok,purification_input_ok,decohere_reset_noop,swap_input_reset_noop,purification_input_reset_noop,decohere_no_state,swap_input_no_state,purification_input_no_state,decohere_stale_recreate,swap_input_stale_recreate,purification_input_stale_recreate,decohere_stale_overwrite,swap_input_stale_overwrite,purification_input_stale_overwrite,runs,aborted,dangling_states_at_end
+33804,4656,3704,518,0,0,33,0,0,551,0,0,0,0,0,39,0,0

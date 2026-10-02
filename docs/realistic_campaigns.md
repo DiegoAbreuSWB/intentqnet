@@ -17,6 +17,10 @@ são pulados, então uma execução interrompida (ou estendida com mais
 sementes) continua de onde parou. Um processo trabalhador morto pelo
 sistema operacional não derruba a campanha (`experiments.parallel`).
 
+A suíte foi executada por completo em 2026-10-01/02. O que ela mostrou está
+em `docs/realistic_results.md`; o conteúdo e a proveniência dos arquivos, em
+`results/realistic/README.md`.
+
 ## Duas condições de hardware
 
 Cada campanha roda nas duas (`experiments.realistic_suite.HARDWARE`):
@@ -67,7 +71,7 @@ o objetivo de entrega padrão é 10 pares.
 
 | Id | Pergunta | Grade | Sementes | Saída |
 |---|---|---|---|---|
-| R00 | O modelo de geração dos planejadores reproduz o simulador? | cadeias de 0–3 repetidores × {2, 5, 10} km × {2, 4} memórias | 12 | `audit/generation_model_audit*.csv` |
+| R00 | O modelo de geração dos planejadores reproduz o simulador? | cadeias de 0–3 repetidores × {2, 5, 10} km × {2, 4} memórias; o enlace direto também reservado no sentido oposto | 12 (4 no sentido oposto) | `audit/generation_model_audit*.csv` |
 | R00b | Swaps e purificações só consomem pares íntegros? | 13 reservas representativas | 3 | `audit/state_integrity_audit.csv` |
 | R01 | O que cada camada da arquitetura acrescenta? | diamante; SeQUeNCe nativo, provisionamento estático, IBQN sem/com garantia, com reconciliação, com planejador ciente de recursos, oráculo offline | 20 | `baselines/R01_architecture_baselines/` |
 | R02 | O critério de rota importa? | diamante e malha × {menos saltos, menor perda, maior fidelidade} | 20 | `raw/R02_routing/` |
@@ -107,6 +111,9 @@ Decisões de desenho que diferem das campanhas antigas:
   intervalo de Wilson, 95%;
 - médias (pares entregues, fidelidade): intervalo t de Student, 95%, sobre
   sementes;
+- comparação pareada de políticas de purificação (nunca purificar contra
+  purificar até o alvo, mesma semente): teste de postos sinalizados de
+  Wilcoxon, bilateral;
 - **falsa viabilidade** = VIOLATED / (SATISFIED + VIOLATED) entre os intents
   admitidos que executaram; **falsa rejeição** = satisfazíveis segundo o
   oráculo / testados pelo oráculo, entre os rejeitados. Populações

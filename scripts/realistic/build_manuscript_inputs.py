@@ -70,6 +70,13 @@ class Macros:
     def percent(self, name, value, source, digits=1):
         self.add(name, "n/a" if pd.isna(value) else f"{100 * float(value):.{digits}f}\\%", source)
 
+    def pairs(self, name, value, source):
+        """A mean number of delivered pairs: one decimal, two below ten (1.15 pairs is not "1.1")."""
+        if pd.isna(value):
+            self.add(name, "n/a", source)
+        else:
+            self.add(name, f"{float(value) + 1e-9:.{2 if abs(float(value)) < 10 else 1}f}", source)
+
     def number(self, name, value, source, digits=1):
         self.add(name, "n/a" if pd.isna(value) else f"{float(value):.{digits}f}", source)
 
@@ -194,7 +201,7 @@ def routing_macros(m: Macros, processed: Path) -> None:
     for _, row in table.iterrows():
         prefix = macro_name("RTwo", row["hardware"], row["topology"], row["routing_strategy"])
         src = f"r02_routing.csv[{row['hardware']},{row['topology']},{row['routing_strategy']}]"
-        m.number(prefix + "Delivered", row["delivered_pairs_mean"], src)
+        m.pairs(prefix + "Delivered", row["delivered_pairs_mean"], src)
         m.number(prefix + "Fidelity", row["average_fidelity_mean"], src, 3)
         m.number(prefix + "EstimatedFidelity", row["estimated_fidelity"], src, 3)
         m.percent(prefix + "SatisfiedRate", row["satisfied_rate"], src, 0)
@@ -214,10 +221,21 @@ def purification_macros(m: Macros, processed: Path) -> None:
         m.count(prefix + "Satisfied", row["n_satisfied"], src)
         m.count(prefix + "Violated", row["n_violated"], src)
         m.count(prefix + "Rejected", row["n_rejected"], src)
-        m.number(prefix + "Delivered", row["delivered_pairs_mean"], src)
+        m.pairs(prefix + "Delivered", row["delivered_pairs_mean"], src)
         m.number(prefix + "Fidelity", row["average_fidelity_mean"], src, 3)
         m.number(prefix + "Rounds", row["purification_rounds_mean"], src)
         m.number(prefix + "Discarded", row["discarded_pairs_mean"], src)
+    paired = read(processed, "r03_never_vs_until_target")
+    if paired is not None:
+        for _, row in paired.iterrows():
+            prefix = macro_name("RThreePaired", row["hardware"], row["topology"], fidelity_key(row["requested_fidelity"]))
+            src = f"r03_never_vs_until_target.csv[{row['hardware']},{row['topology']},{row['requested_fidelity']}]"
+            m.count(prefix + "Seeds", row["paired_seeds"], src)
+            m.number(prefix + "Difference", row["mean_difference"], src)
+            m.count(prefix + "NeverHigher", row["seeds_never_higher"], src)
+            m.count(prefix + "UntilTargetHigher", row["seeds_until_target_higher"], src)
+            p_value = row["wilcoxon_p"]  # math-mode content, relation included: use as $\Macro$
+            m.add(prefix + "PValue", "p<10^{-3}" if p_value < 1e-3 else f"p={p_value:.3f}", src)
 
 
 def planner_macros(m: Macros, processed: Path) -> None:
@@ -263,6 +281,14 @@ def planner_macros(m: Macros, processed: Path) -> None:
             src = f"r04_l3_calibration.csv[{row['hardware']},{row['planner_level']}]"
             m.number(prefix + "Brier", row["brier_score"], src, 3)
             m.proportion(prefix + "ThresholdCorrect", row, "threshold_half_correct", src)
+    agreement = read(processed, "r04b_agreement_with_l4")
+    if agreement is not None:
+        for _, row in agreement.iterrows():
+            prefix = macro_name("RFourBAgreement", row["planner_level"])
+            src = f"r04b_agreement_with_l4.csv[{row['planner_level']}]"
+            m.count(prefix + "Trials", row["matched_trials"], src)
+            m.count(prefix + "SameDecision", row["same_admission_decision"], src)
+            m.count(prefix + "SameStatus", row["same_final_status"], src)
     for name, label in (("r04b_simulation_planner", "RFourB"), ("r04b_matched_grid", "RFourBMatched")):
         table = read(processed, name)
         if table is None:
@@ -287,8 +313,8 @@ def reconciliation_macros(m: Macros, processed: Path) -> None:
             m.count(prefix + "Violated", row["initial_violated"], src)
             m.count(prefix + "RejectedAtPlanning", row["initial_rejected"], src)
             m.proportion(prefix + "Recovered", row, "recovered", src)
-            m.number(prefix + "EpisodeOnePairs", row["episode1_delivered_pairs_mean"], src)
-            m.number(prefix + "EpisodeTwoPairs", row["episode2_delivered_pairs_mean"], src)
+            m.pairs(prefix + "EpisodeOnePairs", row["episode1_delivered_pairs_mean"], src)
+            m.pairs(prefix + "EpisodeTwoPairs", row["episode2_delivered_pairs_mean"], src)
     by_action = read(processed, "r06_reconciliation_by_action")
     if by_action is not None:
         for _, row in by_action.iterrows():
@@ -305,7 +331,7 @@ def baseline_macros(m: Macros, processed: Path) -> None:
         src = f"r01_architecture_baselines.csv[{row['hardware']},{row['condition']}]"
         m.percent(prefix + "AcceptedRate", row["accepted_rate"], src, 0)
         m.percent(prefix + "SatisfiedRate", row["satisfied_rate"], src, 0)
-        m.number(prefix + "Delivered", row["delivered_pairs_mean"], src)
+        m.pairs(prefix + "Delivered", row["delivered_pairs_mean"], src)
         m.number(prefix + "Fidelity", row["average_fidelity_mean"], src, 3)
         m.number(prefix + "Episodes", row["episodes_mean"], src)
         m.count(prefix + "Seeds", row["seeds"], src)
@@ -333,7 +359,7 @@ def resource_macros(m: Macros, processed: Path) -> None:
         prefix = macro_name("REight", row["hardware"], f"S{int(row['reserved_memory_slots'])}",
                             f"T{int(round(row['duration_s'] * 1000))}ms")
         src = f"r08_resource_semantics.csv[{row['hardware']},{row['reserved_memory_slots']},{row['duration_s']}]"
-        m.number(prefix + "Delivered", row["delivered_pairs_mean"], src)
+        m.pairs(prefix + "Delivered", row["delivered_pairs_mean"], src)
         m.percent(prefix + "SatisfiedRate", row["satisfied_rate"], src, 0)
         m.number(prefix + "PairsPerSlotSecond", row["pairs_per_slot_second"], src, 0)
 

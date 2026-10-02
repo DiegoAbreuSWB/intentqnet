@@ -1,0 +1,160 @@
+{
+  "campaign": "R08_resource_semantics",
+  "description": "Fase J10 final campaign: R08_resource_semantics",
+  "created_at": "2026-10-02T12:35:56.044526+00:00",
+  "project_git_commit": "c68f9e134eb5a57162815f4876faa6846004a3ae",
+  "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
+  "python_version": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "dependencies": {
+    "pydantic": "2.13.4",
+    "yaml": "6.0.3",
+    "networkx": "3.6.1",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "matplotlib": "3.11.0",
+    "pandas": "3.0.3",
+    "qutip": "5.3.0",
+    "stim": "1.16.0",
+    "gmpy2": "2.3.1",
+    "nbformat": "5.10.4",
+    "nbclient": "0.11.0"
+  },
+  "campaign_file": null,
+  "blocks": [
+    {
+      "scenario": "chain1@literature",
+      "intent_files": [
+        "r08_resource_semantics-chain1"
+      ],
+      "swept_factors": {
+        "duration_s": [
+          0.15,
+          0.3
+        ],
+        "reserved_memory_slots": [
+          2,
+          4
+        ]
+      },
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "base_configuration": {
+        "routing_strategy": "shortest_hop_count",
+        "purification_policy": "automatic",
+        "fidelity_estimator": "conservative_min",
+        "reconciliation_enabled": false
+      },
+      "expected_trials": 80,
+      "completed_trials": 80,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    },
+    {
+      "scenario": "chain1@theoretical_ops",
+      "intent_files": [
+        "r08_resource_semantics-chain1"
+      ],
+      "swept_factors": {
+        "duration_s": [
+          0.15,
+          0.3
+        ],
+        "reserved_memory_slots": [
+          2,
+          4
+        ]
+      },
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "base_configuration": {
+        "routing_strategy": "shortest_hop_count",
+        "purification_policy": "automatic",
+        "fidelity_estimator": "conservative_min",
+        "reconciliation_enabled": false
+      },
+      "expected_trials": 80,
+      "completed_trials": 80,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    }
+  ],
+  "updated_at": "2026-10-02T12:47:54.307261+00:00",
+  "scenario_files": [
+    "chain1@literature",
+    "chain1@theoretical_ops"
+  ],
+  "intent_files": [
+    "r08_resource_semantics-chain1"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "expected_trials": 160,
+  "completed_trials": 160,
+  "skipped_trials": 0,
+  "failed_trials": 0,
+  "output_files": [
+    "C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\results\\realistic\\raw\\R08_resource_semantics\\trials.csv",
+    "C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\results\\realistic\\raw\\R08_resource_semantics\\errors.jsonl"
+  ]
+}

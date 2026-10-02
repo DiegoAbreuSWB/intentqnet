@@ -1,0 +1,243 @@
+{
+  "campaign": "R02_routing",
+  "description": "Fase J10 final campaign: R02_routing",
+  "created_at": "2026-10-01T23:18:44.951871+00:00",
+  "project_git_commit": "aab2fed4abefb1f154584317fbc782ec2b7d3fdc",
+  "sequence_git_commit": "1f2680a5b9065e708a7497adc53a95b108029b98",
+  "python_version": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "dependencies": {
+    "pydantic": "2.13.4",
+    "yaml": "6.0.3",
+    "networkx": "3.6.1",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "matplotlib": "3.11.0",
+    "pandas": "3.0.3",
+    "qutip": "5.3.0",
+    "stim": "1.16.0",
+    "gmpy2": "2.3.1",
+    "nbformat": "5.10.4",
+    "nbclient": "0.11.0"
+  },
+  "campaign_file": null,
+  "blocks": [
+    {
+      "scenario": "diamond@literature",
+      "intent_files": [
+        "r02_routing-diamond"
+      ],
+      "swept_factors": {
+        "routing_strategy": [
+          "highest_fidelity",
+          "least_loss",
+          "shortest_hop_count"
+        ]
+      },
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "base_configuration": {
+        "purification_policy": "automatic",
+        "fidelity_estimator": "conservative_min",
+        "reconciliation_enabled": false
+      },
+      "expected_trials": 60,
+      "completed_trials": 60,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    },
+    {
+      "scenario": "diamond@theoretical_ops",
+      "intent_files": [
+        "r02_routing-diamond"
+      ],
+      "swept_factors": {
+        "routing_strategy": [
+          "highest_fidelity",
+          "least_loss",
+          "shortest_hop_count"
+        ]
+      },
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "base_configuration": {
+        "purification_policy": "automatic",
+        "fidelity_estimator": "conservative_min",
+        "reconciliation_enabled": false
+      },
+      "expected_trials": 60,
+      "completed_trials": 60,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    },
+    {
+      "scenario": "mesh@literature",
+      "intent_files": [
+        "r02_routing-mesh"
+      ],
+      "swept_factors": {
+        "routing_strategy": [
+          "highest_fidelity",
+          "least_loss",
+          "shortest_hop_count"
+        ]
+      },
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "base_configuration": {
+        "purification_policy": "automatic",
+        "fidelity_estimator": "conservative_min",
+        "reconciliation_enabled": false
+      },
+      "expected_trials": 60,
+      "completed_trials": 60,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    },
+    {
+      "scenario": "mesh@theoretical_ops",
+      "intent_files": [
+        "r02_routing-mesh"
+      ],
+      "swept_factors": {
+        "routing_strategy": [
+          "highest_fidelity",
+          "least_loss",
+          "shortest_hop_count"
+        ]
+      },
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "base_configuration": {
+        "purification_policy": "automatic",
+        "fidelity_estimator": "conservative_min",
+        "reconciliation_enabled": false
+      },
+      "expected_trials": 60,
+      "completed_trials": 60,
+      "skipped_trials": 0,
+      "failed_trials": 0
+    }
+  ],
+  "updated_at": "2026-10-02T12:35:28.084867+00:00",
+  "scenario_files": [
+    "diamond@literature",
+    "diamond@theoretical_ops",
+    "mesh@literature",
+    "mesh@theoretical_ops"
+  ],
+  "intent_files": [
+    "r02_routing-diamond",
+    "r02_routing-mesh"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "expected_trials": 240,
+  "completed_trials": 240,
+  "skipped_trials": 0,
+  "failed_trials": 0,
+  "output_files": [
+    "C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\results\\realistic\\raw\\R02_routing\\trials.csv",
+    "C:\\Users\\diego\\Desktop\\PROJETOS DE DESENVOLVIMENTO\\intent no sequence\\results\\realistic\\raw\\R02_routing\\errors.jsonl"
+  ]
+}

@@ -176,23 +176,23 @@ def fig_routing(processed: Path, out: Path) -> None:
 def fig_reconciliation(processed: Path, out: Path) -> None:
     table = pd.read_csv(processed / "r06_reconciliation_by_case.csv")
     cases = [("route_change_recoverable", "Route\nchange"), ("duration_increase_recoverable", "Longer\nwindow"),
-             ("slot_increase_recoverable", "More\nmemories"), ("decoherence_margin", "Decoherence\nmargin"),
+             ("slot_increase_recoverable", "More\nmemories"), ("decoherence_margin", "Fidelity\nmargin"),
              ("severe_loss_attempt", "Severe\nloss"), ("fidelity_ceiling_unrecoverable", "Fidelity\nceiling")]
-    fig, axes = plt.subplots(1, 2, figsize=(DOUBLE_COLUMN, 2.3), sharey=True)
-    for ax, (hardware, title) in zip(axes, HARDWARE):
-        cell = table[table["hardware"] == hardware].set_index("case").reindex([c for c, _ in cases])
-        x = np.arange(len(cases))
-        ax.bar(x - 0.2, cell["initial_violated"].fillna(0), 0.4, color="white", hatch="//", edgecolor="black", lw=0.5,
-               label="Violated in episode 1")
-        ax.bar(x + 0.2, cell["recovered_count"].fillna(0), 0.4, color="#2ca02c", hatch="..", edgecolor="black", lw=0.5,
-               label="Satisfied in episode 2")
-        for xi, rejected in zip(x, cell["initial_rejected"].fillna(0)):
-            if rejected:
-                ax.text(xi, 0.5, f"{int(rejected)} rejected\nat planning", ha="center", va="bottom", fontsize=5.5)
-        ax.set_xticks(x, [label for _, label in cases])
-        ax.set_title(title)
-    axes[0].set_ylabel("Intents (of 20 seeds)")
-    axes[1].legend(loc="upper right", frameon=True)
+    # one column, literature hardware (the ideal-operations condition differs in a single case, stated in the text)
+    fig, ax = plt.subplots(figsize=(SINGLE_COLUMN, 2.2))
+    cell = table[table["hardware"] == "literature"].set_index("case").reindex([c for c, _ in cases])
+    x = np.arange(len(cases))
+    ax.bar(x - 0.2, cell["initial_violated"].fillna(0), 0.4, color="white", hatch="//", edgecolor="black", lw=0.5,
+           label="Violated in episode 1")
+    ax.bar(x + 0.2, cell["recovered_count"].fillna(0), 0.4, color="#2ca02c", hatch="..", edgecolor="black", lw=0.5,
+           label="Satisfied in episode 2")
+    for xi, rejected in zip(x, cell["initial_rejected"].fillna(0)):
+        if rejected:
+            ax.text(xi, 0.5, f"{int(rejected)} rejected\nat planning", ha="center", va="bottom", fontsize=5.5)
+    ax.set_xticks(x, [label for _, label in cases], fontsize=6)
+    ax.set_ylabel(f"Intents (of {int(cell['seeds'].max())} seeds)")
+    ax.set_ylim(0, cell["seeds"].max() * 1.45)
+    ax.legend(loc="upper center", frameon=False, ncol=2, columnspacing=1.0)
     fig.tight_layout()
     save(fig, out, "fig_reconciliation")
 

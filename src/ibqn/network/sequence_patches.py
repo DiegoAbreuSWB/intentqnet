@@ -95,9 +95,9 @@ half already consumed, stock SeQUeNCe then does one of two things:
 
 The integrity audit (`scripts/realistic/audit_state_integrity.py`, 39
 reservations over chains, the diamond and the mesh, three purification
-modes, 2 s down to 5 ms of coherence) counts both: of 34,076 decoherence
-calls, 34 were case (a) and 549 case (b), none of them onto a re-entangled
-memory; all 4,548 swap inputs and 3,608 purification inputs were pairs
+modes, 2 s down to 5 ms of coherence) counts both: of 34,906 decoherence
+calls, 33 were case (a) and 551 case (b), none of them onto a re-entangled
+memory; all 4,656 swap inputs and 3,704 purification inputs were pairs
 both ends still held, and no run ended with a dangling state.
 
 `ibqn_bds_decohere` keeps the stock channel and changes only its reach:

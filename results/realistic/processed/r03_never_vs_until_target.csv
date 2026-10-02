@@ -1,0 +1,15 @@
+hardware,topology,requested_fidelity,paired_seeds,never_mean,until_target_mean,mean_difference,seeds_never_higher,seeds_until_target_higher,wilcoxon_p,verdict
+literature,chain1,0.6,20,47.2,47.2,0.0,0,0,1.0,identical
+literature,chain1,0.66,20,47.1,46.35,0.75,2,0,0.17971249487899976,never delivers more
+literature,chain1,0.7,20,37.7,30.95,6.75,18,1,0.0001615649280712088,never delivers more
+literature,chain2,0.5,20,42.4,42.4,0.0,0,0,1.0,identical
+literature,chain2,0.56,20,41.8,40.15,1.65,6,0,0.027281171477617997,never delivers more
+literature,chain2,0.58,20,36.15,29.65,6.5,19,1,0.00016008679810677857,never delivers more
+theoretical_ops,chain1,0.6,20,47.2,47.2,0.0,0,0,1.0,identical
+theoretical_ops,chain1,0.66,20,47.2,47.2,0.0,0,0,1.0,identical
+theoretical_ops,chain1,0.7,20,46.9,45.0,1.9,5,0,0.04216819709715596,never delivers more
+theoretical_ops,chain1,0.72,20,46.1,43.15,2.95,12,2,0.0027494229016221776,never delivers more
+theoretical_ops,chain2,0.5,20,42.4,42.4,0.0,0,0,1.0,identical
+theoretical_ops,chain2,0.56,20,42.4,42.4,0.0,0,0,1.0,identical
+theoretical_ops,chain2,0.58,20,42.4,42.4,0.0,0,0,1.0,identical
+theoretical_ops,chain2,0.62,20,41.15,39.0,2.15,12,1,0.0024978730136396812,never delivers more
