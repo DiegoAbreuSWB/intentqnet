@@ -74,6 +74,10 @@ def run_episode_1(topology_spec, intent, seed):
 
 
 def run_scenario_case(case_name, topology_spec, intent, seed, *, duration_multiplier=2.0, slot_multiplier=2.0):
+    # F05 predates IntentPolicy.max_resource_scale: its intents grant the budget growth it applies, so a
+    # rerun reproduces the frozen results
+    intent = intent.model_copy(update={"policy": intent.policy.model_copy(
+        update={"max_resource_scale": max(duration_multiplier, slot_multiplier, 1.0)})})
     ep1_slots = intent.requirements.reserved_memory_slots
     ep1_duration = intent.requirements.duration_s
 
@@ -108,7 +112,8 @@ def run_scenario_case(case_name, topology_spec, intent, seed, *, duration_multip
     violations = classify_violations(evaluation)
     capabilities = NetworkCapabilities(topology_spec)
     decision = decide_reconciliation_action(
-        violations, capabilities=capabilities, source=intent.endpoints.source, destination=intent.endpoints.destination,
+        violations, policy=intent.policy, capabilities=capabilities, source=intent.endpoints.source,
+        destination=intent.endpoints.destination,
         current_route=plan.route, current_reserved_memory_slots=intent.requirements.reserved_memory_slots,
         min_fidelity=intent.requirements.min_fidelity, allow_purification=intent.policy.allow_purification,
     )

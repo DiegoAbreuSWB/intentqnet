@@ -120,6 +120,7 @@ def intent_table(intent: EntanglementIntent) -> pd.DataFrame:
         {"field": "policy.allow_rerouting", "value": intent.policy.allow_rerouting},
         {"field": "policy.allow_purification", "value": intent.policy.allow_purification},
         {"field": "policy.allow_multiple_paths", "value": intent.policy.allow_multiple_paths},
+        {"field": "policy.max_resource_scale", "value": intent.policy.max_resource_scale},
         {"field": "validation.metrics", "value": ", ".join(intent.validation.metrics)},
         {
             "field": "validation.success_conditions",

@@ -33,6 +33,26 @@ fixo e pequeno de fatos físicos (rotas candidatas de três estratégias já
 existentes) e aplica regras simples - no mesmo espírito do próprio
 `IntentPlanner` (também uma heurística, não um otimizador).
 
+**Só alavancas que o intent permite** (revisão de 2026-10-02). As memórias
+reservadas e a duração do intent são um orçamento. A política do intent
+(`IntentPolicy`) diz o que a reconciliação pode fazer com ele:
+
+| Alavanca | Permissão exigida |
+|---|---|
+| `route_change` | `allow_rerouting` (padrão: permitido) |
+| `slot_increase`, `duration_increase` | `max_resource_scale > 1` (padrão 1: não permitido); o aumento nunca passa de `max_resource_scale` vezes o valor declarado |
+
+Uma alavanca não permitida é pulada e a próxima regra é avaliada; se nenhuma
+alavanca permitida resta, a decisão é `no_action` e a explicação diz qual
+permissão faltou. `reconcile()` recusa, antes de rodar qualquer coisa, um
+episódio cujo `intent_override` passe do orçamento permitido, e o executor
+de ensaios (`experiments.runner.execute_trial`), cuja única alavanca é trocar
+de rota, só reconcilia um intent que permite reroteamento. Antes desta
+revisão a política do intent não era consultada: as ações dobravam o
+orçamento e mudavam a rota sem permissão. A campanha de reconciliação
+calibrada (R06) declara `max_resource_scale = 2`, e seus resultados não
+mudam com a regra (conferido reexecutando parte da campanha).
+
 ## Aplicando a decisão (`apply_reconciliation_decision`)
 
 - `route_change`/`no_action`: retornam o intent inalterado - a estratégia
@@ -40,7 +60,9 @@ existentes) e aplica regras simples - no mesmo espírito do próprio
   passado a `reconcile(routing_strategy=...)`).
 - `duration_increase`/`slot_increase`: retornam uma cópia do intent com
   `duration_s`/`reserved_memory_slots` multiplicado por um fator fixo (2x
-  por padrão) - não uma busca pelo valor mínimo suficiente.
+  por padrão), limitado a `policy.max_resource_scale` - não uma busca pelo
+  valor mínimo suficiente. Se a política não deixa espaço para o aumento,
+  levantam `ValueError`.
 
 `reconcile()` ganhou um parâmetro `intent_override` (Fase J6): quando
 presente, o episódio 2 planeja/implanta/avalia contra ele em vez do

@@ -175,7 +175,8 @@ def run_instrumented_trial(
         t0 = time.perf_counter()
         violations = classify_violations(evaluation)
         decision: ReconciliationDecision = decide_reconciliation_action(
-            violations, capabilities=capabilities, source=intent.endpoints.source, destination=intent.endpoints.destination,
+            violations, policy=intent.policy, capabilities=capabilities, source=intent.endpoints.source,
+            destination=intent.endpoints.destination,
             current_route=plan.route, current_reserved_memory_slots=intent.requirements.reserved_memory_slots,
             min_fidelity=intent.requirements.min_fidelity, allow_purification=intent.policy.allow_purification,
             fidelity_estimator=fidelity_estimator, purification_strategy=purification_strategy,

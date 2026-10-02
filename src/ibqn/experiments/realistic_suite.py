@@ -107,12 +107,15 @@ def build_topology(name: str, hardware: str, *, duration_s: float, **kwargs: Any
 
 def build_intent(
     intent_id: str, source: str, destination: str, combo: dict, *, check_fidelity: bool = True,
+    max_resource_scale: float = 1.0,
 ) -> EntanglementIntent:
     """An intent whose success conditions are exactly its declared service
     goals: `delivered_pairs >= min_delivered_pairs` and (unless
     `check_fidelity` is off) `average_fidelity >= min_fidelity`. (The legacy
     campaigns inherited `simple_intent`'s default, which compares delivered
-    pairs against the reserved slot count instead.)"""
+    pairs against the reserved slot count instead.) `max_resource_scale`:
+    how far a later episode may enlarge the intent's slots and duration
+    (`IntentPolicy`; 1 = never)."""
     conditions = [SuccessCondition(metric="delivered_pairs", operator=">=", expected=combo["min_delivered_pairs"])]
     if check_fidelity:
         conditions.append(SuccessCondition(metric="average_fidelity", operator=">=", expected=combo["min_fidelity"]))
@@ -120,7 +123,8 @@ def build_intent(
         intent_id=intent_id, source=source, destination=destination, min_fidelity=combo["min_fidelity"],
         requested_pairs=combo["reserved_memory_slots"], min_delivered_pairs=combo["min_delivered_pairs"],
         start_time=WINDOW_START_S, duration=combo["duration_s"],
-        allow_purification=combo.get("allow_purification", True), success_conditions=conditions,
+        allow_purification=combo.get("allow_purification", True), max_resource_scale=max_resource_scale,
+        success_conditions=conditions,
     )
 
 
@@ -275,11 +279,22 @@ def run_oracle_job(job: dict) -> dict:
 # reconciliation (port of scripts/run_f05_reconciliation.py)
 # --------------------------------------------------------------------------
 
+def reconciliation_intent(job: dict) -> EntanglementIntent:
+    """The intent a reconciliation job submits (also rendered as the
+    manuscript's intent example). Its policy lets a second episode enlarge
+    the budget by `job["max_resource_scale"]` (1, never, when absent)."""
+    return build_intent(
+        f"recon-{job['case']}", job["source"], job["destination"], job["combo"],
+        check_fidelity=job.get("check_fidelity", False), max_resource_scale=job.get("max_resource_scale", 1.0),
+    )
+
+
 def run_reconciliation_job(job: dict) -> dict:
     """Episode 1 with the default (shortest-hop) planner; if VIOLATED, the
     reconciliation policy picks one lever (route change / duration / slots)
-    and episode 2 runs on a fresh timeline. `job` keys: case, topology,
-    hardware, seed, combo, source, destination, [check_fidelity],
+    among those the intent's policy permits, and episode 2 runs on a fresh
+    timeline. `job` keys: case, topology, hardware, seed, combo, source,
+    destination, [check_fidelity], [max_resource_scale],
     [duration_multiplier], [slot_multiplier], [topology_kwargs]."""
     combo = job["combo"]
     duration_multiplier = job.get("duration_multiplier", 2.0)
@@ -288,9 +303,7 @@ def run_reconciliation_job(job: dict) -> dict:
         job["topology"], job["hardware"], duration_s=combo["duration_s"] * max(duration_multiplier, 1.0),
         **job.get("topology_kwargs", {}),
     )
-    intent = build_intent(
-        f"recon-{job['case']}", job["source"], job["destination"], combo, check_fidelity=job.get("check_fidelity", False),
-    )
+    intent = reconciliation_intent(job)
     seed = job["seed"]
     row: dict[str, Any] = dict(
         case=job["case"], topology=job["topology"], hardware=job["hardware"], platform=spec.platform, seed=seed,
@@ -331,7 +344,7 @@ def run_reconciliation_job(job: dict) -> dict:
         return row
 
     decision = decide_reconciliation_action(
-        classify_violations(evaluation), capabilities=capabilities, source=intent.endpoints.source,
+        classify_violations(evaluation), policy=intent.policy, capabilities=capabilities, source=intent.endpoints.source,
         destination=intent.endpoints.destination, current_route=plan.route,
         current_reserved_memory_slots=intent.requirements.reserved_memory_slots,
         min_fidelity=intent.requirements.min_fidelity, allow_purification=intent.policy.allow_purification,
@@ -361,6 +374,62 @@ def run_reconciliation_job(job: dict) -> dict:
         final_status=result.final_status.value,
     )
     return row
+
+
+# --------------------------------------------------------------------------
+# application layer: stock SeQUeNCe and IBQN on the same route and seed
+# --------------------------------------------------------------------------
+
+STOCK_PURIFICATION_MODE = "until_target"
+"""`sequence.network_management.reservation.Reservation.purification_mode`'s default."""
+
+
+def run_application_layer_job(job: dict) -> list[dict]:
+    """One intent, topology and seed through stock SeQUeNCe - its own
+    request application, routing table and default purification mode - and
+    through IBQN with the default one-round planner, whose purification
+    policy executes the same mode. On a single-route chain both reserve the
+    same route, so any difference comes from the application layer. Two
+    rows, `path` = "stock_sequence" / "ibqn". `job` keys: topology,
+    hardware, seed, combo, source, destination, [project_commit],
+    [sequence_commit]."""
+    combo, seed = job["combo"], job["seed"]
+    spec = build_topology(job["topology"], job["hardware"], duration_s=combo["duration_s"])
+    intent = build_intent("application-layer", job["source"], job["destination"], combo, check_fidelity=False)
+    base = dict(topology=job["topology"], hardware=job["hardware"], platform=spec.platform, seed=seed,
+                requested_fidelity=combo["min_fidelity"], min_delivered_pairs=combo["min_delivered_pairs"],
+                reserved_memory_slots=combo["reserved_memory_slots"], duration_s=combo["duration_s"])
+
+    stock = run_native_sequence_baseline(spec, intent, seed=seed)
+    rows = [dict(
+        base, path="stock_sequence", reservation_accepted=stock.accepted, reported_outcome=None,
+        delivered_pairs=stock.delivered_pairs, average_fidelity=stock.average_fidelity,
+        # judged afterwards, for comparison only: stock SeQUeNCe has no notion of the goal
+        satisfied=bool(stock.accepted and (stock.delivered_pairs or 0) >= combo["min_delivered_pairs"]),
+        purification_mode=STOCK_PURIFICATION_MODE, route=" -> ".join(stock.route) if stock.route else None,
+        simulation_wall_time_s=stock.simulation_wall_time_s,
+    )]
+
+    identity = TrialIdentity(
+        campaign="R10_application_layer", scenario=f"{job['topology']}@{job['hardware']}",
+        parameter_hash=compute_parameter_hash(combo), strategy="shortest_hop_count__automatic", seed=seed,
+        intent_id=intent.id,
+    )
+    params = TrialParameters(
+        topology_spec=spec, intent=intent, routing_strategy_name="shortest_hop_count",
+        purification_policy_name="automatic", reconciliation_enabled=False,
+    )
+    record = execute_trial(identity, params, project_commit=job.get("project_commit"), sequence_commit=job.get("sequence_commit"))
+    rows.append(dict(
+        base, path="ibqn", reservation_accepted=record.final_status not in ("REJECTED", "FAILED"),
+        reported_outcome=record.final_status, delivered_pairs=record.delivered_pairs,
+        average_fidelity=record.average_fidelity, satisfied=bool(record.satisfied),
+        purification_mode=record.purification_mode, route=record.route or None,
+        simulation_wall_time_s=record.simulation_wall_time_s,
+        project_git_commit=record.project_git_commit, sequence_git_commit=record.sequence_git_commit,
+    ))
+    rows[0].update(project_git_commit=record.project_git_commit, sequence_git_commit=record.sequence_git_commit)
+    return rows
 
 
 # --------------------------------------------------------------------------

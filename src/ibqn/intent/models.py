@@ -148,7 +148,15 @@ class IntentRequirements(BaseModel):
 class IntentPolicy(BaseModel):
     """Optional knobs the network is *allowed* to use while satisfying the
     intent - never a specification of *how* (no route, no swap order, no
-    purification round count)."""
+    purification round count).
+
+    The intent's `reserved_memory_slots` and `duration_s` are the resource
+    BUDGET it grants the network. Planning reserves exactly that budget; a
+    later episode may use more only as far as `max_resource_scale` allows
+    (`assurance.reconciliation_policy`). Likewise `allow_rerouting` decides
+    whether reconciliation may move the intent to another route, and
+    `allow_purification` whether any purification is executed
+    (`planning.purification.executed_purification_mode`)."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -156,6 +164,14 @@ class IntentPolicy(BaseModel):
     allow_rerouting: bool = True
     allow_purification: bool = True
     allow_multiple_paths: bool = False
+    max_resource_scale: float = Field(
+        default=1.0, ge=1.0,
+        description=(
+            "how far a later episode may enlarge the declared budget (reserved_memory_slots and "
+            "duration_s) when the system reconciles a violated intent: 1 (default) never, 2 up to "
+            "twice the declared values"
+        ),
+    )
 
 
 class SuccessCondition(BaseModel):

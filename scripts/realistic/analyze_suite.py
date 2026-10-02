@@ -409,7 +409,52 @@ def baselines(root: Path) -> dict[str, pd.DataFrame]:
         ))
     table = pd.DataFrame(rows)
     table["condition"] = pd.Categorical(table["condition"], order, ordered=True)
-    return {"r01_architecture_baselines": table.sort_values(["hardware", "condition"]).reset_index(drop=True)}
+
+    # stock SeQUeNCe and IBQN's resource-aware planner reach the same route here: same pairs, seed by seed?
+    native = raw[raw["condition"] == "native_sequence"].set_index(["hardware", "seed"])
+    planned = raw[raw["condition"] == "ibqn_resource_aware_planner"].set_index(["hardware", "seed"])
+    identity = []
+    for hardware, g in native.groupby(level="hardware"):
+        other = planned.loc[g.index]
+        identity.append(dict(
+            hardware=hardware, seeds=len(g), same_route_seeds=int((g["route"] == other["route"]).sum()),
+            same_delivered_pairs_seeds=int((g["delivered_pairs"] == other["delivered_pairs"]).sum()),
+            same_average_fidelity_seeds=int(_same_values(g["average_fidelity"], other["average_fidelity"]).sum()),
+        ))
+    return {"r01_architecture_baselines": table.sort_values(["hardware", "condition"]).reset_index(drop=True),
+            "r01_native_vs_resource_aware": pd.DataFrame(identity)}
+
+
+def _same_values(a: pd.Series, b: pd.Series) -> pd.Series:
+    """Elementwise equality of two float columns of the same simulations (bit-identical runs), NaN == NaN."""
+    a, b = a.astype(float).to_numpy(), b.astype(float).to_numpy()
+    return pd.Series((np.isnan(a) & np.isnan(b)) | (np.abs(a - b) <= 1e-12))
+
+
+def application_layer(root: Path) -> dict[str, pd.DataFrame]:
+    """R10: the same intent, route and seed through stock SeQUeNCe and through IBQN."""
+    raw = pd.read_csv(root / "baselines" / "R10_application_layer" / "trials.csv")
+    stock = raw[raw["path"] == "stock_sequence"].set_index(["hardware", "requested_fidelity", "seed"])
+    ibqn = raw[raw["path"] == "ibqn"].set_index(["hardware", "requested_fidelity", "seed"])
+    rows = []
+    for key, s in stock.groupby(level=["hardware", "requested_fidelity"]):
+        i = ibqn.loc[s.index]
+        executed = i["reported_outcome"].isin(["SATISFIED", "VIOLATED"]).to_numpy()
+        same_pairs = (s["delivered_pairs"].to_numpy() == i["delivered_pairs"].to_numpy()) & executed
+        same_fidelity = _same_values(s["average_fidelity"], i["average_fidelity"]).to_numpy() & executed
+        rows.append(dict(
+            hardware=key[0], requested_fidelity=key[1], seeds=len(s),
+            stock_reservations_accepted=int(as_bool(s["reservation_accepted"]).sum()),
+            **mean_columns("stock_delivered_pairs", s["delivered_pairs"]),
+            stock_seeds_with_no_pair=int((s["delivered_pairs"].fillna(0) == 0).sum()),
+            stock_satisfied=int(as_bool(s["satisfied"]).sum()),
+            **{f"ibqn_{k}": v for k, v in status_counts(i["reported_outcome"]).items()},
+            **mean_columns("ibqn_delivered_pairs", i.loc[executed, "delivered_pairs"]),
+            ibqn_purification_mode=i["purification_mode"].dropna().mode().iat[0] if i["purification_mode"].notna().any() else None,
+            same_route_seeds=int(((s["route"].to_numpy() == i["route"].to_numpy()) & executed).sum()),
+            identical_outcome_seeds=int((same_pairs & same_fidelity).sum()),
+        ))
+    return {"r10_application_layer": pd.DataFrame(rows)}
 
 
 def overhead(root: Path) -> dict[str, pd.DataFrame]:
@@ -504,8 +549,8 @@ def assurance_consistency(root: Path) -> dict[str, pd.DataFrame]:
 CAMPAIGNS = [
     ("audits", audits), ("R02 routing", routing), ("R03 purification", purification),
     ("R08 resource semantics", resource_semantics), ("R04/R04b/R05 planners", planners),
-    ("R06 reconciliation", reconciliation), ("R01 baselines", baselines), ("R07 overhead", overhead),
-    ("R09 multi-intent", multi_intent), ("assurance consistency", assurance_consistency),
+    ("R06 reconciliation", reconciliation), ("R01 baselines", baselines), ("R10 application layer", application_layer),
+    ("R07 overhead", overhead), ("R09 multi-intent", multi_intent), ("assurance consistency", assurance_consistency),
 ]
 
 

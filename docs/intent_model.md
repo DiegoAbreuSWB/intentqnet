@@ -18,15 +18,17 @@ intent:
     min_fidelity: 0.90        # adimensional, em [0, 1]
     min_throughput: 10        # pares entrelaçados por segundo
     max_latency: 0.5          # segundos, orçamento de latência fim-a-fim por par
-    requested_pairs: 100      # número de pares fim-a-fim solicitados
-    start_time: 0             # segundos, relativo ao início do cenário/simulação
-    duration: 10              # segundos, duração da janela de reserva
+    min_delivered_pairs: 100  # opcional: meta de pares entregues
+    reserved_memory_slots: 10 # orçamento: memórias reservadas por par de nós
+    start_time_s: 0           # segundos, relativo ao início do cenário/simulação
+    duration_s: 10            # orçamento: duração da janela de reserva, em segundos
 
   policy:
     priority: normal          # low | normal | high
-    allow_rerouting: true
-    allow_purification: true
+    allow_rerouting: true     # a reconciliação pode mudar a rota num novo episódio
+    allow_purification: true  # a rede pode purificar
     allow_multiple_paths: false
+    max_resource_scale: 1.0   # quanto um novo episódio pode ampliar o orçamento (1 = nunca)
 
   validation:
     metrics:
@@ -39,6 +41,20 @@ intent:
       average_fidelity: ">= 0.90"
       throughput: ">= 10"
 ```
+
+Os nomes antigos `requested_pairs`, `start_time` e `duration` continuam aceitos na
+entrada e são migrados para `reserved_memory_slots`, `start_time_s` e `duration_s`
+(`docs/intent_resource_semantics.md`).
+
+**Orçamento e permissões.** `reserved_memory_slots` e `duration_s` são o orçamento de
+recursos que o intent concede à rede: o planejamento reserva exatamente esse orçamento
+na rota escolhida e verifica se ele basta. A política diz o que a rede pode fazer além
+disso: `allow_purification` decide se alguma purificação é executada;
+`allow_rerouting`, se a reconciliação pode levar o intent a outra rota num novo
+episódio; `max_resource_scale`, até quanto esse episódio pode ampliar memórias e
+duração (o padrão, 1, não permite ampliar). A reconciliação só escolhe alavancas
+permitidas e recusa um episódio acima do orçamento (`assurance.reconciliation_policy`,
+`docs/reconciliation_scope.md`).
 
 Todos os campos de tempo (`start_time`, `duration`, `max_latency`) são expressos em
 **segundos** na camada de intent, independentemente da convenção interna de

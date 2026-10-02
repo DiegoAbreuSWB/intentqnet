@@ -83,6 +83,7 @@ o objetivo de entrega padrão é 10 pares.
 | R07 | Quanto custa a orquestração? | chain1 (rota única); IBQN instrumentado, SeQUeNCe nativo, estático | 20 | `overhead/R07_overhead/` |
 | R08 | O que significam memórias reservadas e duração? | chain1 × {2, 4} memórias × {0,15; 0,3} s | 20 | `raw/R08_resource_semantics/` |
 | R09 | Vários intents sobre recursos compartilhados | não conflitante (malha), contenção e admissão sequencial (estrela) × {L1, L2-RB} | 10 | `multi_intent/R09_multi_intent/` |
+| R10 | O IBQN muda o que a rede entrega? O que o SeQUeNCe puro faz quando um par só atinge o alvo purificado? | chain1, mesma rota e semente pelos dois caminhos (aplicativo, roteamento e modo de purificação padrão do SeQUeNCe × IBQN com o planejador de uma rodada); literatura com alvos 0,60, 0,70 e 0,76; operações ideais com 0,60 e 0,76 | 20 | `baselines/R10_application_layer/` |
 
 Decisões de desenho que diferem das campanhas antigas:
 

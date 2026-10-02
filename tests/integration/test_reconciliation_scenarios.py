@@ -69,7 +69,8 @@ def test_recoverable_by_route_change():
     violations = classify_violations(evaluation)
     capabilities = NetworkCapabilities(spec)
     decision = decide_reconciliation_action(
-        violations, capabilities=capabilities, source=intent.endpoints.source, destination=intent.endpoints.destination,
+        violations, policy=intent.policy, capabilities=capabilities, source=intent.endpoints.source,
+        destination=intent.endpoints.destination,
         current_route=plan.route, current_reserved_memory_slots=intent.requirements.reserved_memory_slots,
         min_fidelity=intent.requirements.min_fidelity, allow_purification=intent.policy.allow_purification,
     )
@@ -94,6 +95,7 @@ def test_recoverable_by_duration_increase():
         intent_id="dur-recon", source="a", destination="b", min_fidelity=0.6,
         requested_pairs=10, min_delivered_pairs=30, start_time=0.01, duration=0.03,
         success_conditions=[SuccessCondition(metric="delivered_pairs", operator=">=", expected=30)],
+        max_resource_scale=2.0,  # the intent lets a second episode double its budget
     )
 
     repository, plan, evaluation = _run_episode_1(spec, intent, seed=0, routing_strategy=ShortestHopCountRouting())
@@ -102,7 +104,8 @@ def test_recoverable_by_duration_increase():
     violations = classify_violations(evaluation)
     capabilities = NetworkCapabilities(spec)
     decision = decide_reconciliation_action(
-        violations, capabilities=capabilities, source=intent.endpoints.source, destination=intent.endpoints.destination,
+        violations, policy=intent.policy, capabilities=capabilities, source=intent.endpoints.source,
+        destination=intent.endpoints.destination,
         current_route=plan.route, current_reserved_memory_slots=intent.requirements.reserved_memory_slots,
         min_fidelity=intent.requirements.min_fidelity, allow_purification=intent.policy.allow_purification,
     )
@@ -129,6 +132,7 @@ def test_recoverable_by_slot_increase():
         intent_id="slot-recon", source="a", destination="b", min_fidelity=0.6,
         requested_pairs=2, min_delivered_pairs=30, start_time=0.01, duration=0.02,
         success_conditions=[SuccessCondition(metric="delivered_pairs", operator=">=", expected=30)],
+        max_resource_scale=2.0,  # the intent lets a second episode double its budget
     )
 
     repository, plan, evaluation = _run_episode_1(spec, intent, seed=0, routing_strategy=ShortestHopCountRouting())
@@ -137,7 +141,8 @@ def test_recoverable_by_slot_increase():
     violations = classify_violations(evaluation)
     capabilities = NetworkCapabilities(spec)
     decision = decide_reconciliation_action(
-        violations, capabilities=capabilities, source=intent.endpoints.source, destination=intent.endpoints.destination,
+        violations, policy=intent.policy, capabilities=capabilities, source=intent.endpoints.source,
+        destination=intent.endpoints.destination,
         current_route=plan.route, current_reserved_memory_slots=intent.requirements.reserved_memory_slots,
         min_fidelity=intent.requirements.min_fidelity, allow_purification=intent.policy.allow_purification,
     )

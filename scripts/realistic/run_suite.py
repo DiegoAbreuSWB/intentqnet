@@ -18,6 +18,7 @@ Campaigns (replacing the legacy F0x/P0x/P1x set; results under results/realistic
   r07  orchestration overhead
   r08  resource semantics (reserved slots vs. duration)
   r09  multi-intent (non-conflicting / contention / sequential)
+  r10  application layer: stock SeQUeNCe vs IBQN on the same route and seed
   all  everything, in dependency order
 
 Campaigns resume: completed jobs found in the output files are skipped.
@@ -44,6 +45,7 @@ from ibqn.experiments.realistic_suite import (  # noqa: E402
     OVERHEAD_CONDITIONS,
     build_intent,
     build_topology,
+    run_application_layer_job,
     run_baseline_job,
     run_jobs_to_csv,
     run_multi_intent_job,
@@ -267,14 +269,23 @@ RECONCILIATION_CASES = [
     ("severe_loss_attempt", "chain1", combo(0.60, 4, 0.15, 30, ""), {"topology_kwargs": {"link_m": 10_000.0}}),
     ("fidelity_ceiling_unrecoverable", "chain1", combo(0.90, 4, 0.3, 10, ""), {}),
 ]
+RECONCILIATION_MAX_RESOURCE_SCALE = 2.0
+"""The intents of the reconciliation campaign allow a second episode to double their declared slots or
+duration (`IntentPolicy.max_resource_scale`); the reconciliation levers double them."""
+
+
+def reconciliation_jobs(seeds: int) -> list[dict]:
+    jobs = []
+    for hardware, (case, topology, c, extra), seed in itertools.product(HARDWARE_CONDITIONS, RECONCILIATION_CASES, range(seeds)):
+        source, destination = ENDPOINTS[topology]
+        jobs.append(dict(case=case, topology=topology, hardware=hardware, seed=seed, combo=_combo_without_regime(c),
+                         source=source, destination=destination, max_resource_scale=RECONCILIATION_MAX_RESOURCE_SCALE,
+                         **extra))
+    return jobs
 
 
 def r06_reconciliation(args):
-    jobs = []
-    for hardware, (case, topology, c, extra), seed in itertools.product(HARDWARE_CONDITIONS, RECONCILIATION_CASES, range(args.seeds)):
-        source, destination = ENDPOINTS[topology]
-        jobs.append(dict(case=case, topology=topology, hardware=hardware, seed=seed, combo=_combo_without_regime(c),
-                         source=source, destination=destination, **extra))
+    jobs = reconciliation_jobs(args.seeds)
     frame = run_jobs_to_csv(
         jobs, run_reconciliation_job, args.out / "reconciliation" / "R06_reconciliation" / "trials.csv", workers=args.workers,
         key=lambda j: f"{j['case']}|{j['hardware']}|{j['seed']}",
@@ -375,13 +386,47 @@ def r09_multi_intent(args):
     ).round(4).to_string())
 
 
+# --------------------------------------------------------------------------
+APPLICATION_LAYER_CASES = [
+    # (hardware, requested fidelity) on the one-repeater chain, 4 slots, 0.3 s, 10-pair goal
+    ("literature", 0.60),       # no pair needs purification
+    ("literature", 0.70),       # just under the swap output (0.709): rounds run, but cannot raise fidelity
+    ("literature", 0.76),       # above the swap output: IBQN rejects at planning
+    ("theoretical_ops", 0.60),  # no pair needs purification
+    ("theoretical_ops", 0.76),  # one purification round needed (swap output 0.746, one round 0.784)
+]
+
+
+def r10_application_layer(args):
+    """Stock SeQUeNCe against IBQN on the same route and seed: does the layer change what the network
+    delivers, and what does the stock application do when a pair reaches the target by purification?"""
+    commits = _commits()
+    source, destination = ENDPOINTS["chain1"]
+    jobs = [
+        dict(topology="chain1", hardware=hardware, seed=seed, combo=_combo_without_regime(combo(fidelity, 4, 0.3, 10, "")),
+             source=source, destination=destination, **commits)
+        for (hardware, fidelity), seed in itertools.product(APPLICATION_LAYER_CASES, range(args.seeds))
+    ]
+    frame = run_jobs_to_csv(
+        jobs, run_application_layer_job, args.out / "baselines" / "R10_application_layer" / "trials.csv",
+        workers=args.workers, key=lambda j: f"{j['hardware']}|{j['combo']['min_fidelity']}|{j['seed']}",
+        describe=lambda j, rows: f"{j['hardware']} F={j['combo']['min_fidelity']} seed={j['seed']} -> "
+                                 + " ".join(f"{r['path']}:{r['delivered_pairs']}/{r['reported_outcome']}" for r in rows),
+    )
+    print(frame.groupby(["hardware", "requested_fidelity", "path"]).agg(
+        delivered=("delivered_pairs", "mean"), satisfied=("satisfied", "mean"),
+        outcomes=("reported_outcome", lambda s: "/".join(f"{k}:{v}" for k, v in s.value_counts(dropna=False).items())),
+    ).round(3).to_string())
+
+
 CAMPAIGNS = {
     "r01": r01_baselines, "r02": r02_routing, "r03": r03_purification, "r04": r04_planners, "r04b": r04b_l4,
     "r05": r05_oracle, "r06": r06_reconciliation, "r07": r07_overhead, "r08": r08_resource_semantics,
-    "r09": r09_multi_intent,
+    "r09": r09_multi_intent, "r10": r10_application_layer,
 }
-DEFAULT_SEEDS = {"r01": 20, "r02": 20, "r03": 20, "r04": 10, "r04b": 10, "r05": 0, "r06": 20, "r07": 20, "r08": 20, "r09": 10}
-ALL_ORDER = ["r02", "r03", "r08", "r04", "r04b", "r05", "r06", "r09", "r01", "r07"]
+DEFAULT_SEEDS = {"r01": 20, "r02": 20, "r03": 20, "r04": 10, "r04b": 10, "r05": 0, "r06": 20, "r07": 20, "r08": 20, "r09": 10,
+                 "r10": 20}
+ALL_ORDER = ["r02", "r03", "r08", "r04", "r04b", "r05", "r06", "r09", "r10", "r01", "r07"]
 
 
 def main() -> None:

@@ -276,7 +276,9 @@ def execute_trial(
 
     If the trial is `VIOLATED` and `params.reconciliation_enabled`, attempts
     exactly one reconciliation episode (`assurance.reconciliation.reconcile`,
-    which itself resets metrics before running) - every delivery-derived
+    which itself resets metrics before running) on another route - only if
+    the intent's policy allows rerouting (`IntentPolicy.allow_rerouting`),
+    since a route change is this runner's only lever - and every delivery-derived
     field then reflects the *final* episode only, never a mix of both (see
     the regression fixed in `assurance.reconciliation.reconcile`).
     `planning_time_s`/`simulation_wall_time_s` are summed across both
@@ -399,7 +401,7 @@ def execute_trial(
     estimated_fidelity = plan.estimated_metrics.fidelity if plan.estimated_metrics else None
     fidelity_estimator_used = plan.fidelity_estimator
     purification_mode_used = executed_purification_mode(plan.purification_mode, intent.policy.allow_purification)
-    if final_status == IntentStatus.VIOLATED and params.reconciliation_enabled:
+    if final_status == IntentStatus.VIOLATED and params.reconciliation_enabled and intent.policy.allow_rerouting:
         reconciliation_routing_strategy = resolve_routing_strategy(
             _reconciliation_routing_strategy_name(params.routing_strategy_name)
         )

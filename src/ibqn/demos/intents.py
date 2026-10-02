@@ -28,6 +28,8 @@ def simple_intent(
     max_latency: float = 1.0,
     min_delivered_pairs: int | None = None,
     allow_purification: bool = True,
+    allow_rerouting: bool = True,
+    max_resource_scale: float = 1.0,
     success_conditions: list[SuccessCondition] | None = None,
 ) -> EntanglementIntent:
     """One-hop-to-many-hop entanglement intent with a single `delivered_pairs`
@@ -43,7 +45,10 @@ def simple_intent(
     `intent.models.IntentRequirements`. Pass `min_delivered_pairs`
     explicitly to *also* declare a distinct, OPTIONAL service-level
     delivery goal (Fase J2, see docs/intent_resource_semantics.md) - it
-    stays `None` (not silently equal to `requested_pairs`) unless given."""
+    stays `None` (not silently equal to `requested_pairs`) unless given.
+
+    `allow_purification`, `allow_rerouting` and `max_resource_scale` fill
+    the intent's `IntentPolicy` (what the network may do on its behalf)."""
     conditions = success_conditions if success_conditions is not None else [
         SuccessCondition(metric="delivered_pairs", operator=">=", expected=requested_pairs),
         SuccessCondition(metric="average_fidelity", operator=">=", expected=min_fidelity),
@@ -57,7 +62,10 @@ def simple_intent(
             requested_pairs=requested_pairs, start_time=start_time, duration=duration,
             min_delivered_pairs=min_delivered_pairs,
         ),
-        policy=IntentPolicy(allow_purification=allow_purification),
+        policy=IntentPolicy(
+            allow_purification=allow_purification, allow_rerouting=allow_rerouting,
+            max_resource_scale=max_resource_scale,
+        ),
         validation=IntentValidation(metrics=declared_metrics, success_conditions=conditions),
     )
 

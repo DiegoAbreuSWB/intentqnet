@@ -28,6 +28,7 @@ from ..planning.swapping import SwappingStrategy
 from ..execution.sequence_executor import SequenceExecutor
 from ..utils.logging import get_logger
 from .evaluator import IntentEvaluation, evaluate_intent
+from .reconciliation_policy import check_within_budget
 from .telemetry import collect_intent_evidence
 from .violations import Violation, classify_violations
 
@@ -76,7 +77,10 @@ def reconcile(
     deployment, evidence collection, evaluation) uses it instead of
     `intent`, while repository bookkeeping stays keyed by the same `id`.
     Defaults to `None` (use `intent` unchanged), preserving this
-    function's exact prior behavior for every existing caller.
+    function's exact prior behavior for every existing caller. An override
+    that reserves more slots or a longer window than `intent`'s policy
+    allows (`IntentPolicy.max_resource_scale`) is refused with
+    `ValueError` before anything runs.
 
     Does not retry more than once: if the new plan is infeasible or the new
     run is still violated, `reconcile` returns that outcome directly rather
@@ -99,6 +103,8 @@ def reconcile(
             f"intent_override.id ({intent_override.id!r}) must match intent.id ({intent.id!r}) - "
             f"reconciliation continues the SAME intent's lifecycle, it never starts a new one"
         )
+    if intent_override is not None:
+        check_within_budget(intent, intent_override)
     working_intent = intent_override if intent_override is not None else intent
 
     trigger_violations = classify_violations(trigger_evaluation)

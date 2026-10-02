@@ -337,6 +337,33 @@ def baseline_macros(m: Macros, processed: Path) -> None:
         m.count(prefix + "Seeds", row["seeds"], src)
 
 
+def application_layer_macros(m: Macros, processed: Path) -> None:
+    """R10 (stock SeQUeNCe vs IBQN, same route and seed) and the R01 same-route check."""
+    table = read(processed, "r10_application_layer")
+    if table is not None:
+        for _, row in table.iterrows():
+            prefix = macro_name("RTen", row["hardware"], fidelity_key(row["requested_fidelity"]))
+            src = f"r10_application_layer.csv[{row['hardware']},{row['requested_fidelity']}]"
+            m.count(prefix + "Seeds", row["seeds"], src)
+            m.pairs(prefix + "StockDelivered", row["stock_delivered_pairs_mean"], src)
+            m.count(prefix + "StockNoPairSeeds", row["stock_seeds_with_no_pair"], src)
+            m.count(prefix + "StockSatisfied", row["stock_satisfied"], src)
+            m.count(prefix + "StockAccepted", row["stock_reservations_accepted"], src)
+            m.pairs(prefix + "IbqnDelivered", row["ibqn_delivered_pairs_mean"], src)
+            for status in ("satisfied", "violated", "rejected"):
+                m.count(prefix + macro_name("ibqn", status), row[f"ibqn_n_{status}"], src)
+            m.count(prefix + "IdenticalSeeds", row["identical_outcome_seeds"], src)
+    identity = read(processed, "r01_native_vs_resource_aware")
+    if identity is not None:
+        for _, row in identity.iterrows():
+            prefix = macro_name("ROne", row["hardware"], "native vs resource aware")
+            src = f"r01_native_vs_resource_aware.csv[{row['hardware']}]"
+            m.count(prefix + "Seeds", row["seeds"], src)
+            m.count(prefix + "SameRouteSeeds", row["same_route_seeds"], src)
+            m.count(prefix + "SamePairsSeeds", row["same_delivered_pairs_seeds"], src)
+            m.count(prefix + "SameFidelitySeeds", row["same_average_fidelity_seeds"], src)
+
+
 def overhead_macros(m: Macros, processed: Path) -> None:
     table = read(processed, "r07_overhead")
     if table is None:
@@ -451,8 +478,68 @@ def planner_table_compact(processed: Path) -> str | None:
     return "\n".join(lines) + "\n"
 
 
+INTENT_EXAMPLE = dict(case="route_change_recoverable", hardware="literature", seed=0)
+"""The reconciliation trial the manuscript shows as an intent and its verdicts."""
+
+
+def intent_example(root: Path) -> str | None:
+    """The intent of one reconciliation trial, built by the same code the
+    campaign used (`run_suite.reconciliation_jobs` ->
+    `realistic_suite.reconciliation_intent`), and the verdicts IBQN returned
+    for it, read from that trial's row in the R06 results. A verbatim block
+    for the manuscript."""
+    import importlib.util
+    import sys
+
+    trials = root / "reconciliation" / "R06_reconciliation" / "trials.csv"
+    if not trials.exists():
+        return None
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
+    from ibqn.experiments.realistic_suite import reconciliation_intent
+
+    spec = importlib.util.spec_from_file_location("run_suite", PROJECT_ROOT / "scripts" / "realistic" / "run_suite.py")
+    run_suite = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(run_suite)
+    job = next(j for j in run_suite.reconciliation_jobs(INTENT_EXAMPLE["seed"] + 1)
+               if all(j[k] == v for k, v in INTENT_EXAMPLE.items()))
+    intent = reconciliation_intent(job)
+    frame = pd.read_csv(trials)
+    row = frame[(frame["case"] == job["case"]) & (frame["hardware"] == job["hardware"]) & (frame["seed"] == job["seed"])].iloc[0]
+
+    req, pol = intent.requirements, intent.policy
+    granted = [name for name, flag in (("allow_purification", pol.allow_purification),
+                                       ("allow_rerouting", pol.allow_rerouting)) if flag]
+    conditions = ", ".join(f"{c.metric} {c.operator} {c.expected:g}" for c in intent.validation.success_conditions)
+    pad = " " * 16
+    lines = [
+        f"intent {intent.id}, {intent.endpoints.source} -> {intent.endpoints.destination}",
+        f"  requirements  min_fidelity {req.min_fidelity:g}, min_delivered_pairs {req.min_delivered_pairs},",
+        f"{pad}reserved_memory_slots {req.reserved_memory_slots}, duration_s {req.duration_s:g}",
+        f"  policy        {', '.join(granted)},",
+        f"{pad}max_resource_scale {pol.max_resource_scale:g}",
+        f"  success       {conditions}",
+        "",
+    ]
+    condition = intent.validation.success_conditions[0]
+    indent = " " * 11
+    for episode, status in ((1, row["initial_status"]), (2, row["final_status"])):
+        delivered = int(row[f"episode{episode}_delivered_pairs"])
+        fidelity = row[f"episode{episode}_average_fidelity"]
+        lines.append(f"episode {episode}  route {row[f'episode{episode}_route'].replace('->', ' -> ')}")
+        lines.append(f"{indent}{delivered} pair{'s' if delivered != 1 else ''} delivered, average fidelity {fidelity:.3f}")
+        lines.append(f"{indent}{condition.metric} {condition.operator} {condition.expected:g} "
+                     f"{'holds' if status == 'SATISFIED' else 'fails'}: {status}")
+        if episode == 1:
+            lines.append(f"{indent}reconciliation decision: {row['action']}")
+    too_long = [line for line in lines if len(line) > 60]
+    if too_long:
+        raise ValueError(f"intent example lines wider than a column: {too_long}")
+    return ("% Generated by scripts/realistic/build_manuscript_inputs.py - DO NOT EDIT BY HAND.\n"
+            "\\begin{verbatim}\n" + "\n".join(lines) + "\n\\end{verbatim}\n")
+
+
 BUILDERS = [physics_macros, audit_macros, routing_macros, purification_macros, planner_macros, reconciliation_macros, baseline_macros,
-            overhead_macros, resource_macros, multi_intent_macros, assurance_macros]
+            application_layer_macros, overhead_macros, resource_macros, multi_intent_macros, assurance_macros]
 
 
 def main() -> None:
@@ -477,6 +564,10 @@ def main() -> None:
         if table is not None:
             (tables / name).write_text(table, encoding="utf-8")
             print(f"wrote {name}")
+    example = intent_example(args.root)
+    if example is not None:
+        (tables / "generated_intent_example.tex").write_text(example, encoding="utf-8")
+        print("wrote generated_intent_example.tex")
 
     copied = 0
     for figure in sorted((args.root / "figures").glob("*.pdf")):
