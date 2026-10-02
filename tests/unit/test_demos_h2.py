@@ -227,8 +227,9 @@ def test_compare_purification_policies_distinguishes_feasible_from_rejected():
     )
 
     assert set(df.columns) == {
-        "min_fidelity", "policy", "requires_purification", "estimated_fidelity",
-        "feasible", "final_status", "observed_delivered_pairs", "observed_average_fidelity",
+        "min_fidelity", "policy", "requires_purification", "rounds_estimate", "estimated_fidelity",
+        "execution_mode", "feasible", "final_status", "observed_delivered_pairs", "observed_average_fidelity",
+        "discarded_pairs",
     }
     row = df[(df["min_fidelity"] == 0.65) & (df["policy"] == "NeverPurify")].iloc[0]
     assert bool(row["feasible"]) is True
@@ -242,6 +243,11 @@ def test_compare_purification_policies_distinguishes_feasible_from_rejected():
     assert bool(row_purify["feasible"]) is True
     assert bool(row_purify["requires_purification"]) is True
     assert row_purify["final_status"] == "SATISFIED"
+    # the estimate is one round, and the policy each reservation ran is its strategy's own
+    assert row_purify["rounds_estimate"] == 1
+    assert row_purify["execution_mode"] == "until_target"
+    assert row["execution_mode"] == "never" and row["discarded_pairs"] == 0
+    assert pd.isna(row_never["execution_mode"])  # rejected at planning: nothing was executed
 
 
 @pytest.mark.unit

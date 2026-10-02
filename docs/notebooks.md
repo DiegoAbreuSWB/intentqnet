@@ -2,8 +2,8 @@
 
 ## Regras gerais
 
-Todo notebook em `notebooks/` (fora de `notebooks/article/`, que terá sua
-própria infraestrutura de campanha na Fase H3):
+Todo notebook em `notebooks/` (fora de `notebooks/article/` e
+`notebooks/planner_study/`, que só leem dados de campanha já persistidos):
 
 - importa `ibqn` e (quando necessário) módulos de `ibqn.demos` — nunca
   reimplementa lógica que já existe em `src/ibqn/`;
@@ -27,10 +27,31 @@ própria infraestrutura de campanha na Fase H3):
 Estrutura mínima de cada notebook (células Markdown): objetivo, conceitos,
 configuração, execução, resultados, interpretação, limitações, conclusão.
 
+## Modelo físico dos notebooks
+
+Os notebooks das Fases H1 e H2 (`00`–`19`) rodam simulações reais no
+formalismo padrão, `bell_diagonal` (`docs/physical_model.md`): geração
+*single-heralded*, swap e purificação sobre estados Bell-diagonais,
+decoerência durante a espera, política de purificação executada. Usam as
+topologias de demonstração de `ibqn.demos.topologies`, com portas e
+medições **ideais** (par elementar 0,85; swap 0,73; um round de BBPSSW
+~0,768) - o comportamento de referência, não o hardware da literatura que
+as campanhas do artigo usam (`docs/parameter_calibration.md`). As saídas
+gravadas nos `.ipynb` foram regeneradas sob esse modelo em 2026-10-02
+(antes disso ainda traziam os números do modelo escalar legado, p. ex.
+0,6864 para o swap).
+
+Os notebooks de `notebooks/article/`, `notebooks/article/final/` e
+`notebooks/planner_study/` **não** rodam simulações: analisam campanhas
+congeladas do modelo escalar (`ket_vector`), anteriores à revisão. Cada um
+abre com um aviso de "dados legados"; os resultados que o manuscrito V2 usa
+estão em `results/realistic/` e são analisados por
+`scripts/realistic/analyze_suite.py` (`docs/realistic_results.md`).
+
 ## Validação automática
 
-`tests/notebooks/test_notebooks.py` descobre todo `.ipynb` em `notebooks/`
-(não recursivo em `notebooks/article/`) e, para cada um:
+`tests/notebooks/test_notebooks.py` descobre todo `.ipynb` em `notebooks/`,
+`notebooks/article/` e `notebooks/article/final/` e, para cada um:
 
 1. confirma que os notebooks obrigatórios das Fases H1 e H2 existem;
 2. executa cada notebook do início ao fim em kernel limpo (`nbclient`,
@@ -105,9 +126,17 @@ jupyter nbconvert --execute --to notebook --inplace notebooks/01_sequence_two_no
 | `14_satisfied_violated_rejected.ipynb` | `SATISFIED`/`VIOLATED`/`REJECTED` lado a lado, com a distinção entre inviabilidade de planejamento e violação observada |
 | `15_reconciliation_between_episodes.ipynb` | Reconciliation real entre dois episódios (`VIOLATED` → `SATISFIED`) na topologia em diamante, com classificação da violação |
 | `16_routing_strategy_comparison.ipynb` | As três estratégias de roteamento comparadas em poucas seeds (descritivo, não uma campanha estatística) |
-| `17_purification_policy_comparison.ipynb` | `NeverPurify` vs. `PurifyUntilTarget` em quatro requisitos de fidelidade, incluindo o teto real de um round de purificação |
+| `17_purification_policy_comparison.ipynb` | As quatro estratégias de purificação (`NeverPurify`, `PurifyOnce`, `PurifyUntilTarget`, `IterativeAnalyticalPurification`) em cinco requisitos de fidelidade: o que cada uma estima, o modo que cada uma executa (`never`/`once`/`until_target`) e o custo em pares de cada round |
 | `18_multiple_intents_and_constraints.ipynb` | `ValueError` real de conflito de nó, caso suportado de intents em nós disjuntos, e alternativas arquiteturais documentadas (não implementadas) |
 | `19_complete_ibqn_demonstration.ipynb` | Demonstração de ponta a ponta da arquitetura completa, incluindo reconciliation, com diagrama de arquitetura |
 
-Os notebooks da Fase H3 (infraestrutura de campanhas e notebooks do
-artigo) serão adicionados a este documento conforme forem implementados.
+## Notebooks de análise (dados legados)
+
+| Pasta | Conteúdo |
+|---|---|
+| `notebooks/article/` (`A00`–`A07`) | campanhas-piloto C01–C04 (Fase H3) |
+| `notebooks/article/final/` (`R01`–`R09`) | campanhas finais F01–F08 do manuscrito V1 |
+| `notebooks/planner_study/` (`P01`) | estudo L1 vs. L2 sobre a campanha P01 |
+
+Todos leem dados já persistidos em `results/raw/` e `results/processed/`
+(modelo escalar legado - ver "Modelo físico dos notebooks" acima).

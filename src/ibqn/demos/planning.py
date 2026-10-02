@@ -27,12 +27,13 @@ from collections.abc import Callable
 
 import pandas as pd
 
+from ..assurance.telemetry import collect_intent_evidence
 from ..intent.models import EntanglementIntent
 from ..network.capabilities import NetworkCapabilities
 from ..network.topology import NetworkTopologySpec
 from ..planning.feasibility import evaluate_route
 from ..planning.planner import IntentPlanner
-from ..planning.purification import PurificationStrategy
+from ..planning.purification import PurificationStrategy, executed_purification_mode
 from ..planning.routing import RoutingStrategy
 from .scenarios import ad_hoc_scenario
 
@@ -139,9 +140,17 @@ def compare_purification_policies(
     given (target, policy) pair, the row records `feasible=False` and
     leaves the observed columns empty - no simulation is run for it (an
     infeasible plan never reaches SeQUeNCe, see notebook 14). Columns:
-    min_fidelity, policy, requires_purification, estimated_fidelity,
-    feasible, final_status, observed_delivered_pairs,
-    observed_average_fidelity."""
+    min_fidelity, policy, requires_purification, rounds_estimate,
+    estimated_fidelity, execution_mode, feasible, final_status,
+    observed_delivered_pairs, observed_average_fidelity, discarded_pairs.
+
+    `rounds_estimate`/`estimated_fidelity` are the strategy's planning-time
+    estimate; `execution_mode` is the purification policy the reservation
+    actually ran (`never`/`once`/`until_target`, see
+    `planning.purification`); `discarded_pairs` counts the end-to-end pairs
+    the application released because that policy could never deliver them
+    (below the target under `never`, or still below it after their one
+    round under `once`)."""
     from ..experiments.runner import run_scenario  # deferred: experiments.runner also imports from demos, see module docstring
 
     capabilities = NetworkCapabilities(topology_spec)
@@ -154,10 +163,11 @@ def compare_purification_policies(
                 rows.append(
                     {
                         "min_fidelity": target, "policy": policy_name,
-                        "requires_purification": False,
-                        "estimated_fidelity": None, "feasible": False,
+                        "requires_purification": False, "rounds_estimate": None,
+                        "estimated_fidelity": None, "execution_mode": None, "feasible": False,
                         "final_status": "REJECTED",
                         "observed_delivered_pairs": None, "observed_average_fidelity": None,
+                        "discarded_pairs": None,
                     }
                 )
                 continue
@@ -165,6 +175,9 @@ def compare_purification_policies(
             scenario = ad_hoc_scenario(topology_spec, [intent], seed=seed, name=f"{policy_name}-{target}")
             result = run_scenario(scenario, seed=seed, purification_strategy=policy)
             trial = result.get(intent.id)
+            # this trial's records stay in `sequence.utils.metrics.storage` until the next
+            # `run_scenario` resets it, so its released pairs can still be counted here
+            discarded = collect_intent_evidence(intent).discarded_pairs
 
             delivered = None
             avg_fidelity = None
@@ -179,11 +192,14 @@ def compare_purification_policies(
                 {
                     "min_fidelity": target, "policy": policy_name,
                     "requires_purification": plan.requires_purification,
+                    "rounds_estimate": plan.purification_rounds_estimate,
                     "estimated_fidelity": round(plan.estimated_metrics.fidelity, 4) if plan.estimated_metrics else None,
+                    "execution_mode": executed_purification_mode(plan.purification_mode, intent.policy.allow_purification),
                     "feasible": True,
                     "final_status": trial.final_status.value,
                     "observed_delivered_pairs": delivered,
                     "observed_average_fidelity": round(avg_fidelity, 4) if avg_fidelity is not None else None,
+                    "discarded_pairs": discarded,
                 }
             )
     return pd.DataFrame(rows)
