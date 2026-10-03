@@ -60,3 +60,21 @@ article/icc2027_ibqn/main.out
 
 # Locally compiled manuscript PDFs (see paper_ibqn_v2/README.md, "Building")
 paper_ibqn_v2/build/
+
+# Manuscript texts stay local and out of the repository: paper sources,
+# Overleaf packages, the LaTeX tables generated for the first manuscript,
+# paper-planning documents, and the tests that read the manuscripts.
+/paper_ibqn/
+/paper_ibqn_v2/
+/paper_ibqn_v1_updated/
+/paper_ibqn_overleaf/
+/paper_predictability/
+/article/
+/*Overleaf*.zip
+/ICC2027_IBQN_*
+/results/paper_ibqn/tables/
+/docs/paper_ibqn_validation/
+/docs/paper_predictability/
+/tests/paper_ibqn/
+/tests/paper_ibqn_v1_updated/
+/tests/paper_ibqn_v2/
