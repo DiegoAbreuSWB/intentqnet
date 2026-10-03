@@ -7,6 +7,12 @@ auditoria de rastreabilidade da Fase K1. Ver também
 `scripts/audit_final_results.py`) para a verificação programática destes
 mesmos fatos.
 
+**Hashes de commit.** As mensagens de commit do histórico foram reescritas
+em 2026-10-03 (só as mensagens; árvores, autores e datas não mudaram). Os
+hashes citados aqui, nos manifestos, nas colunas `project_git_commit` e nas
+saídas dos notebooks são os anteriores; `docs/commit_hash_map.csv` dá o
+commit atual de cada um.
+
 ## Piloto (Fase H3) versus final (Fase J10) - separação definitiva
 
 Este projeto tem DOIS conjuntos de campanhas, que nunca devem ser
