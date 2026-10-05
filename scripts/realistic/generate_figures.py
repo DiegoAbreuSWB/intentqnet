@@ -57,69 +57,6 @@ def errorbars(table: pd.DataFrame, prefix: str) -> np.ndarray:
 
 
 # --------------------------------------------------------------------------
-def fig_architecture(processed: Path, out: Path) -> None:
-    """IBQN architecture and intent lifecycle, drawn at column width so the
-    text is legible in print. Conceptual: it uses no processed table."""
-    from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
-
-    width, height = SINGLE_COLUMN, 2.12
-    fig = plt.figure(figsize=(width, height))
-    ax = fig.add_axes((0, 0, 1, 1))
-    ax.set_xlim(0, width), ax.set_ylim(0, height)
-    ax.axis("off")
-
-    box_w, box_h, gap = 0.80, 0.54, 0.10
-    xs = [i * (box_w + gap) for i in range(4)]
-    top, bottom = 1.28, 0.44  # lower edges of the two rows
-    blue, amber, grey, green, red = "#d8e8f5", "#f7e6c4", "#e8e8e8", "#d6ead6", "#f2d0d0"
-
-    def box(x, y, title, body, color, *, emphasized=False):
-        ax.add_patch(FancyBboxPatch((x + 0.02, y + 0.02), box_w - 0.04, box_h - 0.04, boxstyle="round,pad=0.02",
-                                    fc=color, ec="black", lw=1.2 if emphasized else 0.7))
-        ax.text(x + box_w / 2, y + box_h - 0.09, title, ha="center", va="top", fontsize=6.0, fontweight="bold")
-        ax.text(x + box_w / 2, y + 0.07, body, ha="center", va="bottom", fontsize=5.3, linespacing=1.05)
-
-    def arrow(start, end, *, dashed=False):
-        ax.add_patch(FancyArrowPatch(start, end, arrowstyle="-|>", mutation_scale=6, lw=0.8, color="black",
-                                     linestyle=(0, (3, 2)) if dashed else "solid", shrinkA=0, shrinkB=0))
-
-    box(xs[0], top, "Intent (WHAT)", "resources, objective,\npolicy, success\ncondition", blue)
-    box(xs[1], top, "Validation", "typed schema", blue)
-    box(xs[2], top, "Planning model", "replaceable:\nfeasibility, route,\npurification policy", amber, emphasized=True)
-    box(xs[3], top, "Execution plan", "(HOW) route,\nmemories,\npurification policy", blue)
-    box(xs[3], bottom, "SeQUeNCe", "reservation,\ngeneration, swap,\npurification", grey)
-    box(xs[2], bottom, "Observation", "delivery evidence\nper intent", blue)
-    box(xs[1], bottom, "Assurance", "SATISFIED or\nVIOLATED", green)
-    box(xs[0], bottom, "Reconciliation", "new episode,\nadjusted plan", red)
-
-    middle_top, middle_bottom = top + box_h / 2, bottom + box_h / 2
-    for left in xs[:3]:
-        arrow((left + box_w, middle_top), (left + box_w + gap, middle_top))
-    arrow((xs[3] + box_w / 2, top), (xs[3] + box_w / 2, bottom + box_h))
-    for left in xs[1:]:
-        arrow((left, middle_bottom), (left - gap, middle_bottom))
-
-    # a violated intent is planned again in a new episode
-    lane = (top + bottom + box_h) / 2
-    ax.plot([xs[0] + box_w / 2, xs[0] + box_w / 2, xs[2] + box_w / 2], [bottom + box_h, lane, lane], color="black", lw=0.8,
-            ls=(0, (3, 2)))
-    arrow((xs[2] + box_w / 2, lane), (xs[2] + box_w / 2, top), dashed=True)
-    ax.text((xs[0] + xs[2] + box_w) / 2, lane + 0.025, "new episode (new simulation timeline)", ha="center", va="bottom",
-            fontsize=5.4, style="italic")
-
-    # the two outcomes that are decided outside assurance
-    arrow((xs[2] + box_w / 2, top + box_h), (xs[2] + box_w / 2, top + box_h + 0.10))
-    ax.text(xs[2] + box_w / 2, top + box_h + 0.115, "REJECTED: no feasible plan", ha="center", va="bottom", fontsize=5.6)
-    arrow((xs[3] + box_w / 2, bottom), (xs[3] + box_w / 2, bottom - 0.10))
-    ax.text(xs[3] + box_w, bottom - 0.115, "FAILED: reservation declined", ha="right", va="top", fontsize=5.6)
-
-    ax.text(0.0, 0.0, "Planning models behind the same interface: one-round, iterative, resource-aware\n"
-            "(same-cycle, buffered), probabilistic, simulation in the loop.", ha="left", va="bottom", fontsize=5.6,
-            style="italic", linespacing=1.1)
-    save(fig, out, "fig_architecture")
-
-
-# --------------------------------------------------------------------------
 def fig_generation_model(processed: Path, out: Path) -> None:
     """Simulator vs planner generation laws, every audited chain."""
     table = pd.read_csv(processed / "r00_generation_model_audit.csv")
@@ -305,7 +242,9 @@ def fig_resource_semantics(processed: Path, out: Path) -> None:
     save(fig, out, "fig_resource_semantics")
 
 
-FIGURES = [fig_architecture, fig_generation_model, fig_purification_policies, fig_purification_policies_compact,
+# The architecture figure (Fig. 1) is drawn in TikZ inside the manuscript,
+# not here.
+FIGURES = [fig_generation_model, fig_purification_policies, fig_purification_policies_compact,
            fig_planner_decision_quality, fig_routing, fig_reconciliation, fig_resource_semantics]
 
 
