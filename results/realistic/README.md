@@ -32,14 +32,15 @@ scenario name) identifies it.
 
 ## Provenance
 
-- Commit hashes: the commit messages of the repository history were
-  rewritten on 2026-10-03 (messages only; every tree, author and date is
-  unchanged). The `project_git_commit` columns, the manifests and the text
+- Commit hashes: the repository history was rewritten on 2026-10-03 and
+  2026-10-04: commit messages were edited and the manuscript sources were
+  removed from every commit; code, data, authors and dates are otherwise
+  unchanged. The `project_git_commit` columns, the manifests and the text
   below name the earlier hashes, as the rows do; `docs/commit_hash_map.csv`
   gives the current commit of each, and the `git diff` command below uses
-  the current ones. Those named here are now `aab2fed` -> `7e2bebf`,
-  `c68f9e1` -> `d63f7d1`, `0a4f18a` -> `a75376b`, `85b7553` -> `d54b79f`,
-  `1014042` -> `aacd32a`, `11e8444` -> `edec597`.
+  the current ones. Those named here are now `aab2fed` -> `36ff401`,
+  `c68f9e1` -> `80f6f00`, `0a4f18a` -> `8ff7385`, `85b7553` -> `f976e8c`,
+  `1014042` -> `fe5677d`, `11e8444` -> `11547f4`.
 - Simulator: SeQUeNCe submodule, source unmodified (commit in the
   `sequence_git_commit` column where recorded).
 - Project code: rows carry the commit that was checked out when their
@@ -50,7 +51,7 @@ scenario name) identifies it.
   `experiments/realistic_suite.py`: checkpoint frequency and atomic writes;
   `utils/power.py`: keep the machine awake). Nothing that affects a
   simulation, a planning decision or an evaluation changed, so the rows are
-  mutually consistent (`git diff 7e2bebf aacd32a -- src`).
+  mutually consistent (`git diff 36ff401 fe5677d -- src`).
 - R10 ran later, at `11e8444`, the commit that makes the intent's policy
   bound reconciliation (`policy.max_resource_scale`, `allow_rerouting`).
   That change touches only the reconciliation decision, and R06 declares

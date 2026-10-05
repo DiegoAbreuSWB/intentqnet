@@ -7,8 +7,10 @@ auditoria de rastreabilidade da Fase K1. Ver também
 `scripts/audit_final_results.py`) para a verificação programática destes
 mesmos fatos.
 
-**Hashes de commit.** As mensagens de commit do histórico foram reescritas
-em 2026-10-03 (só as mensagens; árvores, autores e datas não mudaram). Os
+**Hashes de commit.** O histórico foi reescrito em 2026-10-03 e 2026-10-04:
+as mensagens de commit foram editadas e os fontes dos manuscritos foram
+retirados de todos os commits (código, dados, autores e datas não mudaram).
+Os textos dos artigos não ficam no repositório. Os
 hashes citados aqui, nos manifestos, nas colunas `project_git_commit` e nas
 saídas dos notebooks são os anteriores; `docs/commit_hash_map.csv` dá o
 commit atual de cada um.
